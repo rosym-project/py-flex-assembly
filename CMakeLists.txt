@@ -66,6 +66,9 @@ add_service_files(
   gym_flexassembly/srv
   FILES
   ClampEstimation.srv
+  ClampPose.srv
+  DeleteClamp.srv
+  SpawnClamp.srv
 )
 
 ## Generate actions in the 'action' folder
