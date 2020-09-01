@@ -1,0 +1,6 @@
+#TODO: variant could be replaced by the clamp byte type defined in Clamp.msg or vice versa
+
+geometry_msgs/Pose pose
+string variant
+---
+int32 model_id
