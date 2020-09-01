@@ -34,6 +34,9 @@ from gym_flexassembly.robots.kuka_iiwa_egp_40 import KukaIIWA_EGP40, KukaIIWA7_E
 # FLEX ASSEMBLY SMARTOBJECTS IMPORTS
 from gym_flexassembly.smartobjects.spring_clamp import SpringClamp
 
+# FLEX ASSEMBLY ROS SERVICE
+from gym_flexassembly.envs.clamp_spawn_service import ClampService
+
 from gym_flexassembly.envs.env_interface import EnvInterface
 
 class FlexAssemblyEnv(EnvInterface):
@@ -75,6 +78,7 @@ class FlexAssemblyEnv(EnvInterface):
                     'framerate': 30,
                     'up': [0, -1.0, 0]}
             self.cam_global_name = 'global'
+            self.clamp_service = ClampService()
 
         self.reset()
 
@@ -117,14 +121,22 @@ class FlexAssemblyEnv(EnvInterface):
         workpiece_1_offset_table_z = 0.75
         workpiece_1_offset_world = [table_offset_world_x + workpiece_1_offset_table_x, table_offset_world_y + workpiece_1_offset_table_y, table_offset_world_z + workpiece_1_offset_table_z]
         # workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])
-        workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
+        print('Clamp1: ', workpiece_1_offset_world)
+        if self.ros_loaded:
+            self.clamp_service.spawn_clamp(pos=workpiece_1_offset_world)
+        else:
+            workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
 
         # Workpiece clamp 2
         workpiece_2_offset_table_x = 0.70
         workpiece_2_offset_table_y = 0.20
         workpiece_2_offset_table_z = 0.75
         workpiece_2_offset_world = [table_offset_world_x + workpiece_2_offset_table_x, table_offset_world_y + workpiece_2_offset_table_y, table_offset_world_z + workpiece_2_offset_table_z]
-        workpiece_2 = SpringClamp(pos=workpiece_2_offset_world)
+        print('Clamp2: ', workpiece_2_offset_world)
+        if self.ros_loaded:
+            self.clamp_service.spawn_clamp(pos=workpiece_2_offset_world)
+        else:
+            workpiece_2 = SpringClamp(pos=workpiece_2_offset_world)
 
         # Workpiece clamp 3
         workpiece_3_offset_table_x = 0.80
@@ -132,6 +144,11 @@ class FlexAssemblyEnv(EnvInterface):
         workpiece_3_offset_table_z = 0.75
         workpiece_3_offset_world = [table_offset_world_x + workpiece_3_offset_table_x, table_offset_world_y + workpiece_3_offset_table_y, table_offset_world_z + workpiece_3_offset_table_z]
         workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
+        print('Clamp3: ', workpiece_3_offset_world)
+        if self.ros_loaded:
+            self.clamp_service.spawn_clamp(pos=workpiece_3_offset_world)
+        else:
+            workpiece_2 = SpringClamp(pos=workpiece_3_offset_world)
 
         # Global camera
         self.cam_global_settings['pos'] = [workpiece_2_offset_world[0], workpiece_2_offset_world[1], workpiece_2_offset_world[2] + 0.6]
