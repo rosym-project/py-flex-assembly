@@ -86,42 +86,43 @@ class FlexAssemblyEnv(EnvInterface):
         # self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly, "objects/plane_solid.urdf"), useMaximalCoordinates=True) # Brauche ich fuer die hit rays
 
         # Table
-        table_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects", "table_profile_1.urdf"), useFixedBase=True, flags = self._p.URDF_USE_INERTIA_FROM_FILE)
-        table_offset_world_x = -0.85
-        table_offset_world_y = 0
+        table_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects", "table_2.urdf"), useFixedBase=True, flags = self._p.URDF_USE_INERTIA_FROM_FILE)
+        table_offset_world_x = 0.1
+        table_offset_world_y = 1.2
         table_offset_world_z = 0
         self._p.resetBasePositionAndOrientation(table_id, [table_offset_world_x, table_offset_world_y, table_offset_world_z], [0,0,0,1])
 
         # Load Rail
         rail_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/flexassembly", "rail.urdf"), useFixedBase=True)
-        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x+0.50, table_offset_world_y+0.25, table_offset_world_z+0.75], [0,0,0,1])
+        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.70, table_offset_world_y-1.75, table_offset_world_z+0.7], [0, 0, 0.7071068, 0.7071068])
 
         # Workpiece clamp 1
-        workpiece_1_offset_table_x = 0.60
-        workpiece_1_offset_table_y = 0.20
-        workpiece_1_offset_table_z = 0.75
+        workpiece_1_offset_table_x = -0.5
+        workpiece_1_offset_table_y = -0.3
+        workpiece_1_offset_table_z = 1.3#0.707
         workpiece_1_offset_world = [table_offset_world_x + workpiece_1_offset_table_x, table_offset_world_y + workpiece_1_offset_table_y, table_offset_world_z + workpiece_1_offset_table_z]
         # workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])
         workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
 
         # Workpiece clamp 2
-        workpiece_2_offset_table_x = 0.70
-        workpiece_2_offset_table_y = 0.20
-        workpiece_2_offset_table_z = 0.75
+        workpiece_2_offset_table_x = -0.5
+        workpiece_2_offset_table_y = -0.5
+        workpiece_2_offset_table_z = 1.3#0.707
         workpiece_2_offset_world = [table_offset_world_x + workpiece_2_offset_table_x, table_offset_world_y + workpiece_2_offset_table_y, table_offset_world_z + workpiece_2_offset_table_z]
         workpiece_2 = SpringClamp(pos=workpiece_2_offset_world)
 
         # Workpiece clamp 3
-        workpiece_3_offset_table_x = 0.80
-        workpiece_3_offset_table_y = 0.20
-        workpiece_3_offset_table_z = 0.75
+        workpiece_3_offset_table_x = -0.5
+        workpiece_3_offset_table_y = -0.7
+        workpiece_3_offset_table_z = 1.3#0.707
         workpiece_3_offset_world = [table_offset_world_x + workpiece_3_offset_table_x, table_offset_world_y + workpiece_3_offset_table_y, table_offset_world_z + workpiece_3_offset_table_z]
         workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
 
         # Global camera
-        self.cam_global_settings['pos'] = [workpiece_2_offset_world[0], workpiece_2_offset_world[1], workpiece_2_offset_world[2] + 0.6]
-        self.cam_global_settings['orn'] = [0,0,0,1]
-        self.cam_global_settings['target_pos'] = workpiece_2_offset_world
+        self.cam_global_settings['pos'] = [table_offset_world_x-0.29, table_offset_world_y-0.54, table_offset_world_z + 1.375]
+        self.cam_global_settings['orn'] = [0, 0, -0.7071068, 0.7071068]
+        self.cam_global_settings['target_pos'] = [self.cam_global_settings['pos'][0], self.cam_global_settings['pos'][1], self.cam_global_settings['pos'][2] - 0.85]
+        self.cam_global_settings['up'] = [-1, 0, 0]
         realsense_camera_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects", "RealSense_D435.urdf"), useFixedBase=True)
         self._p.resetBasePositionAndOrientation(realsense_camera_id, self.cam_global_settings['pos'], self.cam_global_settings['orn'])
         # tmp_name = str(self._p.getBodyInfo(realsense_camera_id)[1].decode()) + "_0"
@@ -135,7 +136,7 @@ class FlexAssemblyEnv(EnvInterface):
         # Disable rendering
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 0)
 
-        self.kuka7_1 = KukaIIWA7_EGP40(pos=[0,-0.2,0.5], orn=[0,0,0,1])
+        self.kuka7_1 = KukaIIWA7_EGP40(pos=[0,-0.2,0.7], orn=[0,0,0,1])
 
         # Enable rendering again
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 1)
@@ -148,7 +149,7 @@ class FlexAssemblyEnv(EnvInterface):
     def loadCameras(self):
         if not self._use_real_interface:
             return
-        
+
         for k,v in self._camera_map.items():
             self.remove_camera(name=k)
             self.add_camera(settings=self.cam_global_settings, name=k, model_id=v)
