@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+    <model name="clamp_1_marker_2">
+        <link name="clamp">
+            <!-- initial pose: centered, no rotation -->
+            <pose>0 0 0 0 0 0</pose>
+
+            <!-- the collision of the clamp -->
+            <collision name="clamp_collision">
+                <geometry>
+                    <mesh>
+                        <uri>clamp_1_marker_2.obj</uri>
+                    </mesh>
+                </geometry>
+            </collision>
+
+            <!-- the visual of the clamp-->
+            <visual name="clamp_visual">
+                <geometry>
+                    <mesh>
+                        <uri>clamp_1_marker_2.obj</uri>
+                    </mesh>
+                </geometry>
+            </visual>
+        </link>
+    </model>
+</sdf>
