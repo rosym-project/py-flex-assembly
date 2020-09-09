@@ -99,7 +99,7 @@ class FlexAssemblyEnv(EnvInterface):
         # Workpiece clamp 1
         workpiece_1_offset_table_x = -0.5
         workpiece_1_offset_table_y = -0.3
-        workpiece_1_offset_table_z = 0.707
+        workpiece_1_offset_table_z = 0.71
         workpiece_1_offset_world = [table_offset_world_x + workpiece_1_offset_table_x, table_offset_world_y + workpiece_1_offset_table_y, table_offset_world_z + workpiece_1_offset_table_z]
         # workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])
         workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
@@ -107,14 +107,14 @@ class FlexAssemblyEnv(EnvInterface):
         # Workpiece clamp 2
         workpiece_2_offset_table_x = -0.5
         workpiece_2_offset_table_y = -0.5
-        workpiece_2_offset_table_z = 0.707
+        workpiece_2_offset_table_z = 0.71
         workpiece_2_offset_world = [table_offset_world_x + workpiece_2_offset_table_x, table_offset_world_y + workpiece_2_offset_table_y, table_offset_world_z + workpiece_2_offset_table_z]
         workpiece_2 = SpringClamp(pos=workpiece_2_offset_world)
 
         # Workpiece clamp 3
         workpiece_3_offset_table_x = -0.5
         workpiece_3_offset_table_y = -0.7
-        workpiece_3_offset_table_z = 0.707
+        workpiece_3_offset_table_z = 0.71
         workpiece_3_offset_world = [table_offset_world_x + workpiece_3_offset_table_x, table_offset_world_y + workpiece_3_offset_table_y, table_offset_world_z + workpiece_3_offset_table_z]
         workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
 
