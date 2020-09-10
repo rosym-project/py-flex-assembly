@@ -19,10 +19,10 @@ def generate_image(path, t, r):
     p.resetBasePositionAndOrientation(clamp_id, t, r)
 
     # set up the camera
-    width = 1080
+    width = 1280
     height = 720
 
-    camera_eye_pos = [0, 0, 0.7]
+    camera_eye_pos = [0, 0, 0.35]
     camera_target_pos = [0, 0, 0]
     camera_up = [1, 0, 0]
     view_matrix = p.computeViewMatrix(camera_eye_pos, camera_target_pos, camera_up)
@@ -45,55 +45,45 @@ def generate_image(path, t, r):
     p.disconnect()
     return rgba
 
-# measures the distances between each pixel of an image and a reference color
-# if a distance is smaller than max_dist the pixel is marked in the mask
-def marker_mask(img, marker_color, max_dist):
-    mask = np.zeros(img.shape[:2], dtype=np.byte)
-    dists = img - np.full(img.shape, marker_color)
-
-    for r in range(0, img.shape[0]):
-        for c in range(0, img.shape[1]):
-            if np.linalg.norm(dists[r, c, :]) <= max_dist:
-                mask[r, c] = 1
-
-    return mask
-
 def main(args):
     translation = [0, 0, 0]
     rotation = [0, 0, 0, 1]
 
-    # generate the images
-    unmarked = generate_image("../data/objects/marked_clamps/clamp_1/unmarked/clamp_1_unmarked.sdf", translation, rotation)[:, :, 0:3]
+    # load the csv file containing the marker points and the paths
+    paths = np.loadtxt("../data/objects/marked_clamps/clamp_1/marker.csv", delimiter=',', skiprows=1, usecols=[0], dtype=str)
+    marker = np.loadtxt("../data/objects/marked_clamps/clamp_1/marker.csv", delimiter=',', skiprows=2, usecols=[1,2,3])
+
+    # generate the image of the unmarked clamp
+    unmarked = generate_image(paths[0], translation, rotation)[:, :, 0:3]
     unmarked = cv.cvtColor(unmarked, cv.COLOR_RGB2BGR)
-    marked = generate_image("../data/objects/marked_clamps/clamp_1/marker_5/clamp_1_marker_5.sdf", translation, rotation)[:, :, 0:3]
-    marked = cv.cvtColor(marked, cv.COLOR_RGB2BGR)
 
-    # generate the mask
-    marker_color = [0, 0, 255]
-    max_dist = 40
-    # mask = marker_mask(marked, marker_color, max_dist) * 255
+    marker_positions = []
+    for i, path in enumerate(paths[1:]):
+        # generate the image of the current marker
+        marker = generate_image(path, translation, rotation)[:, :, 0:3]
 
-    lower = np.array([0, 200, 200])
-    upper = np.array([10, 255, 255])
-    mask = cv.inRange(cv.cvtColor(marked, cv.COLOR_BGR2HSV), lower, upper)
+        # generate the mask
+        marker = cv.cvtColor(marker, cv.COLOR_RGB2HSV)
+        marker[:, :, 0] = (marker[:, :, 0] + 5) % 180
+        lower = np.array([0, 200, 200])
+        upper = np.array([10, 255, 255])
+        mask = cv.inRange(marker, lower, upper)
 
-    cv.imshow("mask", mask)
-    cv.imshow("img", marked)
-    cv.waitKey(0)
+        # calculate the marker position
+        num_labels, _, _, centroids = cv.connectedComponentsWithStats(mask, connectivity=8)
+        if num_labels > 2:
+            print("\nError: multiple marker detected\n")
+            exit()
+        elif num_labels == 1:
+            # only the background label was found
+            continue
+        marker_positions.append(centroids[1] / [1280, 720])
 
-    # calculate the marker position
-    num_labels, _, _, centroids = cv.connectedComponentsWithStats(mask, connectivity=8)
-    if num_labels > 2:
-        print("Error: multiple marker detected")
-        return(-1)
-    elif num_labels == 1:
-        print("No marker found")
-        #continue
-    marker_pos = centroids[1]
-    print(marker_pos/[1080, 720])
+        # draw the marker onto the image
+        cv.circle(unmarked, tuple(np.round(centroids[1]).astype(np.int)), 2, [0, 255, 0], -1)
 
-    # draw the marker onto the image
-    cv.circle(unmarked, tuple(np.round(marker_pos).astype(np.int)), 2, [0, 255, 0], -1)
+    print("\nMarker positions:")
+    print(marker_positions)
     cv.imshow("img", unmarked)
     cv.waitKey(0)
 
