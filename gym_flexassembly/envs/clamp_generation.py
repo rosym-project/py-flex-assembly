@@ -1,5 +1,7 @@
 import sys
+import os
 import time
+import json
 
 import cv2 as cv
 import numpy as np
@@ -46,18 +48,28 @@ def generate_image(path, t, r):
     return rgba
 
 def main(args):
+    # create the output directory
+    if not os.path.exists("./output"):
+        os.mkdir("./output")
+
+    # create the json object that stores the marker positions
+    data = {}
+
+    img_name = "0001.png"
+    data[img_name] = []
+
     translation = [0, 0, 0]
     rotation = [0, 0, 0, 1]
 
     # load the csv file containing the marker points and the paths
     paths = np.loadtxt("../data/objects/marked_clamps/clamp_1/marker.csv", delimiter=',', skiprows=1, usecols=[0], dtype=str)
-    marker = np.loadtxt("../data/objects/marked_clamps/clamp_1/marker.csv", delimiter=',', skiprows=2, usecols=[1,2,3])
+    marker = np.loadtxt("../data/objects/marked_clamps/clamp_1/marker.csv", delimiter=',', skiprows=2, usecols=[2, 3, 4])
 
     # generate the image of the unmarked clamp
     unmarked = generate_image(paths[0], translation, rotation)[:, :, 0:3]
     unmarked = cv.cvtColor(unmarked, cv.COLOR_RGB2BGR)
+    cv.imwrite("./output/" + img_name, unmarked)
 
-    marker_positions = []
     for i, path in enumerate(paths[1:]):
         # generate the image of the current marker
         marker = generate_image(path, translation, rotation)[:, :, 0:3]
@@ -77,13 +89,19 @@ def main(args):
         elif num_labels == 1:
             # only the background label was found
             continue
-        marker_positions.append(centroids[1] / [1280, 720])
+
+        data[img_name].append({
+            "id": i,
+            "x": str(centroids[1].round().astype(int)[0]),
+            "y": str(centroids[1].round().astype(int)[1])
+        })
 
         # draw the marker onto the image
-        cv.circle(unmarked, tuple(np.round(centroids[1]).astype(np.int)), 2, [0, 255, 0], -1)
+        cv.circle(unmarked, tuple(centroids[1].round().astype(int)), 2, [0, 255, 0], -1)
 
-    print("\nMarker positions:")
-    print(marker_positions)
+    with open("./output/data.json", "w") as outfile:
+        json.dump(data, outfile, indent=2)
+
     cv.imshow("img", unmarked)
     cv.waitKey(0)
 
