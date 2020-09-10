@@ -71,7 +71,11 @@ def main(args):
     # generate the mask
     marker_color = [0, 0, 255]
     max_dist = 40
-    mask = marker_mask(marked, marker_color, max_dist)
+    # mask = marker_mask(marked, marker_color, max_dist) * 255
+
+    lower = np.array([0, 200, 200])
+    upper = np.array([10, 255, 255])
+    mask = cv.inRange(cv.cvtColor(marked, cv.COLOR_BGR2HSV), lower, upper)
 
     cv.imshow("mask", mask)
     cv.imshow("img", marked)
