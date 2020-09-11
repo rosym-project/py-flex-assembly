@@ -8,22 +8,24 @@ import math
 import numpy as np
 import cv2 as cv
 
+from scipy.spatial.transform import Rotation as R
+
 # import ros libraries
 import roslib
 import rospy
 import message_filters
-from py_flex_assembly.srv import ClampEstimation, ClampEstimationResponse
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Pose, Point, Quaternion
-from py_flex_assembly.msg import Clamp, ClampArray
 from cv_bridge import CvBridge, CvBridgeError
-from scipy.spatial.transform import Rotation as R
+
+from py_flex_assembly.srv import ClampEstimation, ClampEstimationResponse
+from py_flex_assembly.msg import Clamp, ClampArray
 
 # NOTE: this import has to come after all ROS imports, else I get the following error:
 #   from cv_bridge.boost.cv_bridge_boost import getCvType',
 #     'ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: cannot allocate memory in static TLS block'
-from pose_estimator import PoseEstimator
+from gym_flexassembly.vision.pose_estimator import PoseEstimator
 
 class pose_server:
     def __init__(self, args):

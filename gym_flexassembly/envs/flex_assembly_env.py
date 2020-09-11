@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-"""TODO.
+""" MAIN: Environment for the clamp assembly scenario.
 :Author:
   `Dennis Leroy Wigand <dwigand@cor-lab.de>`
 """
@@ -13,6 +13,7 @@ import math
 import numpy as np
 import random
 import time
+import sys
 
 # PYBULLET IMPORTS
 import pybullet as p
@@ -32,6 +33,7 @@ from gym_flexassembly import data as flexassembly_data
 # FLEX ASSEMBLY ROBOT IMPORTS
 from gym_flexassembly.robots.kuka_iiwa import KukaIIWA, KukaIIWA7, KukaIIWA14
 from gym_flexassembly.robots.kuka_iiwa_egp_40 import KukaIIWA_EGP40, KukaIIWA7_EGP40
+from gym_flexassembly.robots.prismatic_2_finger_gripper_plugin import Prismatic2FingerGripperPlugin
 
 # FLEX ASSEMBLY SMARTOBJECTS IMPORTS
 from gym_flexassembly.smartobjects.spring_clamp import SpringClamp
@@ -39,16 +41,15 @@ from gym_flexassembly.smartobjects.spring_clamp import SpringClamp
 from gym_flexassembly.envs.env_interface import EnvInterface
 
 class FlexAssemblyEnv(EnvInterface):
-    metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50} # TODO do we need this?
+    metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50} # TODO do we need this?)
 
     def __init__(self,
                stepping=True,
                gui=True,
                direct=False,
                use_real_interface=True):
-        super().__init__(gui, direct, use_real_interface=use_real_interface, hz=1000.0)
+        super().__init__(gui, direct, use_real_interface=use_real_interface, hz=1000.0, stepping=stepping)
 
-        self._stepping = stepping
         self._urdfRoot_pybullet = pybullet_data.getDataPath()
         self._urdfRoot_flexassembly = flexassembly_data.getDataPath()
         # self._observation = []
@@ -67,12 +68,11 @@ class FlexAssemblyEnv(EnvInterface):
                                     'fov': 65,
                                     'near': 0.16,
                                     'far': 10,
-                                    'framerate': 30,
+                                    'framerate': 5,
                                     'up': [0, -1.0, 0]}
 
         self.env_reset()
 
-        self.set_running(True) # TODO
         self.env_loop() # TODO
 
     def loadEnvironment(self):
@@ -86,42 +86,43 @@ class FlexAssemblyEnv(EnvInterface):
         # self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly, "objects/plane_solid.urdf"), useMaximalCoordinates=True) # Brauche ich fuer die hit rays
 
         # Table
-        table_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects", "table_profile_1.urdf"), useFixedBase=True, flags = self._p.URDF_USE_INERTIA_FROM_FILE)
-        table_offset_world_x = -0.85
-        table_offset_world_y = 0
+        table_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/table_2", "table_2.urdf"), useFixedBase=True, flags = self._p.URDF_USE_INERTIA_FROM_FILE)
+        table_offset_world_x = 0.1
+        table_offset_world_y = 1.2
         table_offset_world_z = 0
         self._p.resetBasePositionAndOrientation(table_id, [table_offset_world_x, table_offset_world_y, table_offset_world_z], [0,0,0,1])
 
         # Load Rail
         rail_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/flexassembly", "rail.urdf"), useFixedBase=True)
-        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x+0.50, table_offset_world_y+0.25, table_offset_world_z+0.75], [0,0,0,1])
+        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.70, table_offset_world_y-1.75, table_offset_world_z+0.7], [0, 0, 0.7071068, 0.7071068])
 
         # Workpiece clamp 1
-        workpiece_1_offset_table_x = 0.60
-        workpiece_1_offset_table_y = 0.20
-        workpiece_1_offset_table_z = 0.75
+        workpiece_1_offset_table_x = -0.5
+        workpiece_1_offset_table_y = -0.3
+        workpiece_1_offset_table_z = 0.71
         workpiece_1_offset_world = [table_offset_world_x + workpiece_1_offset_table_x, table_offset_world_y + workpiece_1_offset_table_y, table_offset_world_z + workpiece_1_offset_table_z]
         # workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])
         workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
 
         # Workpiece clamp 2
-        workpiece_2_offset_table_x = 0.70
-        workpiece_2_offset_table_y = 0.20
-        workpiece_2_offset_table_z = 0.75
+        workpiece_2_offset_table_x = -0.5
+        workpiece_2_offset_table_y = -0.5
+        workpiece_2_offset_table_z = 0.71
         workpiece_2_offset_world = [table_offset_world_x + workpiece_2_offset_table_x, table_offset_world_y + workpiece_2_offset_table_y, table_offset_world_z + workpiece_2_offset_table_z]
         workpiece_2 = SpringClamp(pos=workpiece_2_offset_world)
 
         # Workpiece clamp 3
-        workpiece_3_offset_table_x = 0.80
-        workpiece_3_offset_table_y = 0.20
-        workpiece_3_offset_table_z = 0.75
+        workpiece_3_offset_table_x = -0.5
+        workpiece_3_offset_table_y = -0.7
+        workpiece_3_offset_table_z = 0.71
         workpiece_3_offset_world = [table_offset_world_x + workpiece_3_offset_table_x, table_offset_world_y + workpiece_3_offset_table_y, table_offset_world_z + workpiece_3_offset_table_z]
         workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
 
         # Global camera
-        self.cam_global_settings['pos'] = [workpiece_2_offset_world[0], workpiece_2_offset_world[1], workpiece_2_offset_world[2] + 0.6]
-        self.cam_global_settings['orn'] = [0,0,0,1]
-        self.cam_global_settings['target_pos'] = workpiece_2_offset_world
+        self.cam_global_settings['pos'] = [table_offset_world_x-0.29, table_offset_world_y-0.54, table_offset_world_z + 1.375]
+        self.cam_global_settings['orn'] = [0, 0, -0.7071068, 0.7071068]
+        self.cam_global_settings['target_pos'] = [self.cam_global_settings['pos'][0], self.cam_global_settings['pos'][1], self.cam_global_settings['pos'][2] - 0.85]
+        self.cam_global_settings['up'] = [-1, 0, 0]
         realsense_camera_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects", "RealSense_D435.urdf"), useFixedBase=True)
         self._p.resetBasePositionAndOrientation(realsense_camera_id, self.cam_global_settings['pos'], self.cam_global_settings['orn'])
         # tmp_name = str(self._p.getBodyInfo(realsense_camera_id)[1].decode()) + "_0"
@@ -135,20 +136,26 @@ class FlexAssemblyEnv(EnvInterface):
         # Disable rendering
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 0)
 
-        self.kuka7_1 = KukaIIWA7_EGP40(pos=[0,-0.2,0.5], orn=[0,0,0,1])
+        self.kuka7_1 = KukaIIWA7_EGP40(pos=[0,-0.2,0.7], orn=[0,0,0,1])
 
         # Enable rendering again
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 1)
         # Store name with as unique identified + "_0" and the id
         self._robot_map[str(self._p.getBodyInfo(self.kuka7_1.getUUid())[1].decode()) + "_0"] = self.kuka7_1.getUUid()
 
+        # Load gripper
+        self.kuka7_1_egp = Prismatic2FingerGripperPlugin(self.kuka7_1.getUUid(), "gripper1", "SchunkEGP40_Finger1_joint", "SchunkEGP40_Finger2_joint")
+
     def loadCameras(self):
         if not self._use_real_interface:
             return
-        
+
         for k,v in self._camera_map.items():
             self.remove_camera(name=k)
             self.add_camera(settings=self.cam_global_settings, name=k, model_id=v)
+
+    def step_internal(self):
+        self.kuka7_1_egp.update()
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)
@@ -241,4 +248,15 @@ class FlexAssemblyEnv(EnvInterface):
         _step = super().env_step
 
 if __name__ == "__main__":
-    inst = FlexAssemblyEnv(stepping=False)
+    tmp = ""
+    if len(sys.argv) == 2:
+        tmp = str(sys.argv[1])
+    elif len(sys.argv) > 2:
+        print("Invalid arguments!", file=sys.stderr)
+        print("Usage: python3 -m gym_flexassembly.planning.flex_planning_ros [extrigger]\n")
+        sys.exit(1)
+
+    if tmp == "extrigger":
+        inst = FlexAssemblyEnv(stepping=False)
+    else:
+        inst = FlexAssemblyEnv(stepping=True)

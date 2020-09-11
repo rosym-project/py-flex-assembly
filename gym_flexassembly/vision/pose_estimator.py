@@ -3,7 +3,7 @@ import numpy as np
 import cv2 as cv
 import json
 
-from clamp_classification import ClampClassificator
+from gym_flexassembly.vision.clamp_classification import ClampClassificator
 
 # normalizes a vector
 def normalize(vec):
