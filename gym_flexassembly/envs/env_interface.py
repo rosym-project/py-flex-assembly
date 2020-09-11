@@ -40,7 +40,7 @@ from gym_flexassembly.smartobjects import camera
 class EnvInterface(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, gui=True, ros_frame_broadcaster=None, direct=False, use_real_interface=True, hz=250.0, stepping=False):
+    def __init__(self, gui=True, ros_frame_broadcaster=None, direct=False, use_real_interface=True, hz=250.0, stepping=False, override_rospy_init=False):
         ''' Initialize the base class for the environments.
             >>> Using use_real_interface the ros interfaces are exposed that the real system will utilize.
         '''
@@ -50,6 +50,7 @@ class EnvInterface(gym.Env):
         self._camera_map = {}
         self._cameras = {}
         self._node_name = "env"
+        self._override_rospy_init = override_rospy_init
 
         # self._hz = 1000.0
         self._hz = hz
@@ -68,7 +69,8 @@ class EnvInterface(gym.Env):
                 global rospy, cv_bridge, Pose, Image, Header
 
                 # create ros node
-                rospy.init_node(self._node_name, anonymous=False)
+                if not override_rospy_init:
+                    rospy.init_node(self._node_name, anonymous=False)
 
                 self.rate = rospy.Rate(self._hz) # 250hz
             except ImportError:
