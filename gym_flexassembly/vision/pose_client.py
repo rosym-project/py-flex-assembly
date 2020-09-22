@@ -28,8 +28,8 @@ class pose_client():
 
         self.bridge = CvBridge()
 
-        self.sub_depth = message_filters.Subscriber("/camera/global/depth/image_raw", Image)
-        self.sub_color = message_filters.Subscriber("/camera/global/color/image_raw", Image)
+        self.sub_depth = message_filters.Subscriber("/env/camera/global/depth/image_raw", Image)
+        self.sub_color = message_filters.Subscriber("/env/camera/global/color/image_raw", Image)
 
         ts = message_filters.TimeSynchronizer([self.sub_depth, self.sub_color], 10)
         ts.registerCallback(self.callback)
@@ -168,8 +168,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
 
-    pose_subscriber = pose_client(args)
     rospy.init_node('pose_client', anonymous=True)
+    pose_subscriber = pose_client(args)
 
     cv.namedWindow("estimated clamp poses", cv.WINDOW_NORMAL & cv.WINDOW_KEEPRATIO)
     cv.resizeWindow("estimated clamp poses", 1280, 720)

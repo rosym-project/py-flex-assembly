@@ -111,7 +111,7 @@ class ROSCommManager(object):
         """
         if self._sim_id == -1:
             print("ROSCommManager launching simulator")
-            self._env = EnvInterface(ros_frame_broadcaster=self._fb)
+            self._env = EnvInterface(ros_frame_broadcaster=self._fb, override_rospy_init=True)
             self._sim_id = self._env.get_client_id()
         print("ROSCommManager connected to simulator " + str(self._sim_id))
         # TODO check if self._env in this case is not None!

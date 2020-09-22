@@ -1,4 +1,4 @@
-#!/home/dwigand/code/cogimon/CoSimA/pyBullet/vPyBullet/bin/python3
+#!/usr/bin/python3
 import os
 
 from gym_flexassembly.envs.flex_assembly_env import FlexAssemblyEnv
@@ -30,7 +30,7 @@ from pybullet_planning.interfaces.robots import get_movable_joints
 import numpy as np
 
 class DigitalTwinFlexAssembly(object):
-    def __init__(self):
+    def __init__(self, node_name):
         # Load the flex assembly environment
         # global environment
         self.environment = FlexAssemblyEnv(stepping=False)
@@ -43,7 +43,7 @@ class DigitalTwinFlexAssembly(object):
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
         # Init ROS node
-        rospy.init_node('dt', anonymous=False)
+        rospy.init_node(node_name, anonymous=False)
         
         rate = rospy.Rate(250) # 250hz
 
@@ -60,14 +60,18 @@ class DigitalTwinFlexAssembly(object):
         self.environment.set_running(run)
 
         # Setup a service to retrieve the objects i.e. clamp poses.
-        self.service_get_object_poses = rospy.Service('dt/get_object_poses', RequestObjectsOfInterest, self.service_get_object_poses_func)
-        print("\n\t> Initialized object poses service\n\t(RequestObjectsOfInterest/Response) on dt/get_object_poses\n")
+        self.service_get_object_poses = rospy.Service(str(node_name)+'/get_object_poses', RequestObjectsOfInterest, self.service_get_object_poses_func)
+        print("\n\t> Initialized object poses service\n\t(RequestObjectsOfInterest/Response) on " + str(node_name) + "/get_object_poses\n")
 
         # Setup service to retrieve the robot joint states.
-        self.service_joints_state = rospy.Service('dt/get_robot_joints_state', RequestJointState, self.service_joints_state_func)
-        print("\n\t> Initialized robot joints state service\n\t(RequestJointState/Response) on dt/get_robot_joints_state\n")
+        self.service_joints_state = rospy.Service(str(node_name)+'/get_robot_joints_state', RequestJointState, self.service_joints_state_func)
+        print("\n\t> Initialized robot joints state service\n\t(RequestJointState/Response) on " + str(node_name) + "/get_robot_joints_state\n")
 
         print("\n############################################\n")
+
+        # ######################### TODO Plugins
+        # Gripper plugin
+        gripper_1 = Prismatic2FingerGripperPlugin(self.environment.getRobotMap()[""], finger_1_joint_name, finger_2_joint_name)
 
         while not rospy.is_shutdown():
             # if run:
@@ -83,7 +87,8 @@ class DigitalTwinFlexAssembly(object):
                 #         msg.velocity.append(0.0)
                 #         msg.effort.append(0.0)
 
-            p.stepSimulation()
+            # p.stepSimulation() # Only use this is we are not triggered externally...
+            gripper_1.update()
 
             rate.sleep()
         try:
@@ -135,4 +140,4 @@ class DigitalTwinFlexAssembly(object):
         return ret
 
 if __name__ == "__main__":
-    dt = DigitalTwinFlexAssembly()
+    dt = DigitalTwinFlexAssembly('dt')

@@ -33,7 +33,7 @@ class Frame(object):
         elif scale > 0:
             scaling = scale
 
-        self.frame_ghost_id = self.p.loadURDF(os.path.join(urdfRootPath, "frame_full.urdf"), useFixedBase=fixed_base, globalScaling=scaling)
+        self.frame_ghost_id = self.p.loadURDF(os.path.join(urdfRootPath, "visualization/frame_full.urdf"), useFixedBase=fixed_base, globalScaling=scaling)
         self.p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
         self.p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
         self.p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
