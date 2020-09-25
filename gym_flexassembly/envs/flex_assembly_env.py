@@ -70,10 +70,11 @@ class FlexAssemblyEnv(EnvInterface):
                                     'far': 10,
                                     'framerate': 5,
                                     'up': [0, -1.0, 0]}
+        self.object_ids = {}
 
         self.env_reset()
 
-        self.env_loop() # TODO
+        # self.env_loop() # TODO
 
     def loadEnvironment(self):
         # print("pybullet_data.getDataPath() = " + str(pybullet_data.getDataPath()))
@@ -91,10 +92,12 @@ class FlexAssemblyEnv(EnvInterface):
         table_offset_world_y = 1.2
         table_offset_world_z = 0
         self._p.resetBasePositionAndOrientation(table_id, [table_offset_world_x, table_offset_world_y, table_offset_world_z], [0,0,0,1])
+        self.object_ids['table'] = table_id
 
         # Load Rail
         rail_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/flexassembly", "rail.urdf"), useFixedBase=True)
         self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.70, table_offset_world_y-1.75, table_offset_world_z+0.7], [0, 0, 0.7071068, 0.7071068])
+        self.object_ids['rail'] = rail_id
 
         # Workpiece clamp 1
         workpiece_1_offset_table_x = -0.5
@@ -116,6 +119,7 @@ class FlexAssemblyEnv(EnvInterface):
         workpiece_3_offset_table_z = 0.71
         workpiece_3_offset_world = [table_offset_world_x + workpiece_3_offset_table_x, table_offset_world_y + workpiece_3_offset_table_y, table_offset_world_z + workpiece_3_offset_table_z]
         workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
+        self.object_ids['clamps'] = [workpiece._model_id for workpiece in [workpiece_1, workpiece_2, workpiece_3]]
 
         # Global camera
         self.cam_global_settings['pos'] = [table_offset_world_x-0.29, table_offset_world_y-0.54, table_offset_world_z + 1.375]
@@ -259,3 +263,4 @@ if __name__ == "__main__":
         inst = FlexAssemblyEnv(stepping=False)
     else:
         inst = FlexAssemblyEnv(stepping=True)
+    inst.env_loop()
