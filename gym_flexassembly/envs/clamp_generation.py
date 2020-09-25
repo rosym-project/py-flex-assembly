@@ -141,10 +141,8 @@ def main(args):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-o', '--output_dir', type=str, default='./output/',
                         help='the directory in which the resulting images and annotations are saved')
-    parser.add_argument('-n', '--number', type=int, default=1,
+    parser.add_argument('-n', '--number', type=int, default=10,
                         help='the number of images to be generated')
-    parser.add_argument('--starting_number', type=int, default=0,
-                        help='the number with which image generation starts')
     parser.add_argument('-c', '--clamp_dir', type=str, default='objects/marked_clamps/clamp_1',
                         help='the directory of the clamp of which data is generated relative to the flex assembly data dir')
     args = parser.parse_args(args[1:])
@@ -154,8 +152,18 @@ def main(args):
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    # create the json object that stores the marker positions
     data = {}
+    annotation_file = os.path.join(args.output_dir, 'data.json')
+    if os.path.isfile(annotation_file):
+        with open(annotation_file, mode='r') as f:
+            data = json.load(f)
+    else:
+        data = {}
+
+    starting_number = -1
+    for i in data:
+        starting_number = max(starting_number, int(i.split('.')[0]))
+    starting_number += 1
 
     # load the csv file containing the marker points and the paths
     clamp_dir = os.path.join(flexassembly_data.getDataPath(), args.clamp_dir)
@@ -169,7 +177,7 @@ def main(args):
     for clamp_id in env.object_ids['clamps']:
         p.removeBody(clamp_id)
 
-    for j in tqdm.trange(args.starting_number, args.number):
+    for j in tqdm.trange(starting_number, args.number):
         img_name = '{:05d}'.format(j) + '.png'
         data[img_name] = []
 
