@@ -114,11 +114,19 @@ def generate_random_model_pose():
             # pitch = 3 * math.pi / 2
         # z = 0.73
     
-    roll = 0
-    if random.randint(0, 1) == 1:
-        roll = math.pi
+    # roll = 0
+    # if random.randint(0, 1) == 1:
+        # roll = math.pi
+    # pitch = 0
+    # z = 0.71
+
+    if random.randint(0, 1) == 0:
+        roll = math.pi / 2
+        z = 0.72
+    else:
+        roll = 3 * math.pi / 2
     pitch = 0
-    z = 0.71
+    z = 0.72
 
     yaw = random.uniform(0, 2 * math.pi) 
     rotation = p.getQuaternionFromEuler([roll, pitch, yaw])
@@ -164,7 +172,6 @@ def main(args):
     for i in data:
         starting_number = max(starting_number, int(i.split('.')[0]))
     starting_number += 1
-    print(starting_number, args.number + starting_number)
 
     # load the csv file containing the marker points and the paths
     clamp_dir = os.path.join(flexassembly_data.getDataPath(), args.clamp_dir)
