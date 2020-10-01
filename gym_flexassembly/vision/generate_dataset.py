@@ -51,7 +51,7 @@ def get_random_camera_settings(target_pos, min_dist=0.2, max_dist=0.4, range_upp
 
     target_x = target_pos[0] + random.uniform(-range_lower, range_lower)
     target_y = target_pos[1] + random.uniform(-range_lower, range_lower)
-    target_z = target_pos[2] 
+    target_z = target_pos[2]
     target_pos = [target_x, target_y, target_z]
 
     up_x = random.uniform(-1, 1)
@@ -113,7 +113,7 @@ def generate_random_model_pose():
         # else:
             # pitch = 3 * math.pi / 2
         # z = 0.73
-    
+
     # roll = 0
     # if random.randint(0, 1) == 1:
         # roll = math.pi
@@ -128,7 +128,7 @@ def generate_random_model_pose():
     pitch = 0
     z = 0.72
 
-    yaw = random.uniform(0, 2 * math.pi) 
+    yaw = random.uniform(0, 2 * math.pi)
     rotation = p.getQuaternionFromEuler([roll, pitch, yaw])
 
     # table top goes from x[-1.07, -0.01] y[-0.03, -1.05]
@@ -210,7 +210,7 @@ def main(args):
 
             # generate the mask
             marker = cv.cvtColor(marker, cv.COLOR_RGB2HSV)
-            marker[:, :, 0] = (marker[:, :, 0] + 5) % 180
+            #marker[:, :, 0] = (marker[:, :, 0] + 5) % 180
             lower = np.array([0, 200, 200])
             upper = np.array([10, 255, 255])
             mask = cv.inRange(marker, lower, upper)
@@ -219,6 +219,10 @@ def main(args):
             num_labels, _, _, centroids = cv.connectedComponentsWithStats(mask, connectivity=8)
             if num_labels > 2:
                 print('\nError: multiple marker detected\n')
+                print('marker path:', path)
+                print('model pose:', model_pose)
+                print('camera settings:', camera_settings)
+
                 exit()
             elif num_labels == 1:
                 # only the background label was found
