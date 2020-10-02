@@ -210,7 +210,7 @@ def main(args):
 
             # generate the mask
             marker = cv.cvtColor(marker, cv.COLOR_RGB2HSV)
-            #marker[:, :, 0] = (marker[:, :, 0] + 5) % 180
+            marker[:, :, 0] = (marker[:, :, 0] + 5) % 180
             lower = np.array([0, 200, 200])
             upper = np.array([10, 255, 255])
             mask = cv.inRange(marker, lower, upper)
