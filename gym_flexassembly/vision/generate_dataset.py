@@ -223,6 +223,9 @@ def main(args):
                 print('model pose:', model_pose)
                 print('camera settings:', camera_settings)
 
+                #cv.imshow("marker", cv.cvtColor(marker, cv.COLOR_HSV2BGR))
+                #cv.waitKey(0)
+
                 exit()
             elif num_labels == 1:
                 # only the background label was found
