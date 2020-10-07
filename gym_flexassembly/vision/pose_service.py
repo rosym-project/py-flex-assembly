@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import sys
 import argparse
 import math
+import os
+import sys
 
 # import numpy and OpenCV
 import numpy as np
@@ -102,7 +103,7 @@ class pose_server:
         return clamp_array
 
 def main(args):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-a', '--accum_weight', type=float, default=0.2,
                         help='parameter for cv.accumulateWeighted')
     parser.add_argument('-c', '--calibration_frames', type=int, default=100,
@@ -120,7 +121,7 @@ def main(args):
     # Todo: set standard calibration input path
     parser.add_argument('--calibration_in', type=str, help='the path to an existing calibration', default=None)
     parser.add_argument('--calibration_out', type=str, help='the path where the calculated calibration should be saved', default=None)
-    parser.add_argument('--classification_model', type=str, default="resnet18_sides.model",
+    parser.add_argument('--classification_model', type=str, default=os.path.join(os.path.dirname(__file__), "resnet18_sides.model"),
                         help='the neural network used for classifying clamps')
     parser.add_argument('--clamp_border', type=float, default=0.2,
                         help='the size of the border drawn around a found clamp, when classifying it')
