@@ -110,14 +110,14 @@ def main(args):
                         help='number of initial frames used for calibration (averaging the depth image)')
     parser.add_argument('-t', '--threshold', type=float, default=3.0,
                         help='threshold applied to the difference between depth and average depth image'
-                        + '(should be a little smaller than height of detected objects in mm)')
+                        + ' (should be a little smaller than height of detected objects in mm)')
     parser.add_argument('-v', '--verbose', action='store_true', help='displays information about ingoing requests and outgoing replies')
     parser.add_argument('--area_threshold', type=int, default=500,
                         help='threshold used to filter out small found regions (has to be smaller than pixel of object)')
     parser.add_argument('--notch_width', type=int, default=50,
-                        help='the width of the notch of the clamp')
+                        help='the width of the notch of the clamp in pixels')
     parser.add_argument('--notch_height', type=int, default=8,
-                        help='the height of the notch of the clamp')
+                        help='the height of the notch of the clamp in pixels')
     # Todo: set standard calibration input path
     parser.add_argument('--calibration_in', type=str, help='the path to an existing calibration', default=None)
     parser.add_argument('--calibration_out', type=str, help='the path where the calculated calibration should be saved', default=None)
