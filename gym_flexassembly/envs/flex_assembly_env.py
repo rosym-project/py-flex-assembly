@@ -14,6 +14,7 @@ import numpy as np
 import random
 import time
 import sys
+from scipy.spatial.transform import Rotation as R
 
 # PYBULLET IMPORTS
 import pybullet as p
@@ -39,6 +40,10 @@ from gym_flexassembly.robots.prismatic_2_finger_gripper_plugin import Prismatic2
 from gym_flexassembly.smartobjects.spring_clamp import SpringClamp
 
 from gym_flexassembly.envs.env_interface import EnvInterface
+
+# ROS IMPORTS
+import rospy
+from geometry_msgs.msg import Pose, Point, Quaternion
 
 class FlexAssemblyEnv(EnvInterface):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50} # TODO do we need this?)
@@ -121,6 +126,15 @@ class FlexAssemblyEnv(EnvInterface):
         workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
         self.object_ids['clamps'] = [workpiece._model_id for workpiece in [workpiece_1, workpiece_2, workpiece_3]]
 
+        # Coordinate Systems
+        coordinate_system_1_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
+        self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_1_offset_world, [0,-0.131,0.991,0])
+        coordinate_system_2_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
+        self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_2_offset_world, [0,-0.131,0.991,0])
+        coordinate_system_3_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
+        self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_3_offset_world, [0,-0.131,0.991,0])
+        self.object_ids['coordinate_systems'] = [coordinate_system_1_id, coordinate_system_2_id, coordinate_system_3_id]
+
         # Global camera
         self.cam_global_settings['pos'] = [table_offset_world_x-0.29, table_offset_world_y-0.54, table_offset_world_z + 1.375]
         self.cam_global_settings['orn'] = [0, 0, -0.7071068, 0.7071068]
@@ -159,6 +173,26 @@ class FlexAssemblyEnv(EnvInterface):
 
     def step_internal(self):
         self.kuka7_1_egp.update()
+
+        # draw the pose of the clamps
+        glob = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        #base_pos, orn = self._p.getBasePositionAndOrientation(self._kuka.kukaUid)
+        #base_pos = np.array(base_pos)
+        #up = np.array(self.cam_global_settings['up'])
+        #camera = np.array([-base_pos, np.cross(-base_pos, up), up])
+        # simulated basis of camera coordinate system since the rendering is currently work in progress
+        camera = np.array([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
+        for i, clamp in enumerate(self.object_ids['clamps']):
+            # simulate the result of the pose detection
+            pose = Pose()
+            pos, orn = self._p.getBasePositionAndOrientation(clamp)
+            pose.position = Point(*pos)
+            pose.orientation = Quaternion(*orn)
+            pose = self.transform_pose(pose, glob, camera)
+
+            # transform the pose from camera coordinates to global coordinates
+            pose = self.transform_pose(pose, camera, glob)
+            self.draw_pose(pose, self.object_ids['coordinate_systems'][i])
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)
@@ -243,6 +277,26 @@ class FlexAssemblyEnv(EnvInterface):
 
     def __del__(self):
         self._p.disconnect()
+
+    def transform_pose(self, pose, camera, glob):
+        new_pose = Pose()
+        t = np.linalg.inv(camera).dot(glob)
+
+        pos = np.array([pose.position.x, pose.position.y, pose.position.z])
+        pos = t.dot(pos)
+        new_pose.position = Point(*pos)
+
+        r = R.from_quat([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
+        r = R.from_matrix(t.dot(r.as_matrix()))
+        new_pose.orientation = Quaternion(*r.as_quat())
+
+        return new_pose
+
+    def draw_pose(self, pose, coordinate_system_id):
+        pos = [pose.position.x, pose.position.y, pose.position.z]
+        orn = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
+
+        self._p.resetBasePositionAndOrientation(coordinate_system_id, pos, orn)
 
     if parse_version(gym.__version__) < parse_version('0.9.6'):
         _render = render
