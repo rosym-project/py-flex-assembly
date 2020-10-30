@@ -12,6 +12,53 @@ import cv2 as cv
 
 import transforms as T
 
+
+class HeatmapGenerator():
+
+    def __init__(self, point_number, output_size):
+        self.output_size = output_size
+        self.point_number = point_number
+        # self.sigma = min(self.output_size) / 64
+        self.sigma = 1
+        self.gaussian = self.compute_gaussian()
+
+    def compute_gaussian(self, sigma_multiplier : float=3.0):
+        size = int(sigma_multiplier * self.sigma + 3)
+        x = np.arange(size).reshape((1, size))
+        x_t = np.transpose(x)
+        mean = (sigma_multiplier / 2) * self.sigma + 1
+        return np.exp(- ((x - mean) ** 2 + (x_t - mean) ** 2) / (2 * self.sigma ** 2))
+
+    def add_point(self, point, heatmap):
+        x, y = point
+        if x < 0 or y < 0:
+            return
+        if x >= self.output_size[1] or y >= self.output_size[0]:
+            return
+
+        x_h = slice(max(x - int(self.gaussian.shape[1] / 2), 0),
+                    min(x + int(self.gaussian.shape[1] / 2), heatmap.shape[1]))
+        y_h = slice(max(y - int(self.gaussian.shape[0] / 2), 0),
+                    min(y + int(self.gaussian.shape[0] / 2), heatmap.shape[0]))
+
+        x_g = slice(int(self.gaussian.shape[1] / 2 - (x_h.stop - x_h.start) / 2),
+                    int(self.gaussian.shape[1] / 2 + (x_h.stop - x_h.start) / 2))
+        y_g = slice(int(self.gaussian.shape[0] / 2 - (y_h.stop - y_h.start) / 2),
+                    int(self.gaussian.shape[0] / 2 + (y_h.stop - y_h.start) / 2))
+
+        heatmap[y_h, x_h] = np.maximum(heatmap[y_h, x_h], self.gaussian[y_g, x_g])
+
+
+    def __call__(self, object_keypoints):
+        heatmaps = np.zeros((self.point_number, *self.output_size), np.float32)
+        for keypoints in object_keypoints:
+            for keypoint in keypoints:
+                x, y = int(keypoint['x']), int(keypoint['y'])
+                point_id = int(keypoint['id'])
+                self.add_point((x, y), heatmaps[point_id])
+        return heatmaps
+
+
 class HeatmapDataset(torch.utils.data.Dataset):
     """
     Dataset which is created by loading all images from the data directory and creating a heatmap
@@ -36,18 +83,9 @@ class HeatmapDataset(torch.utils.data.Dataset):
 
         self.transforms = transforms
 
-        # generate a 2d gaussian distribution
-        width, height = PIL.Image.open(os.path.join(self.image_dir, self.images[0])).size
-        x = np.arange(0, width * 2 - 1)
-        y = np.arange(0, height * 2 - 1)
+        output_size = cv.imread(os.path.join(self.image_dir, self.images[0]), cv.IMREAD_GRAYSCALE).shape
+        self.heatmap_generator = HeatmapGenerator(self.point_number, output_size)
 
-        mu_x = width - 1
-        mu_y = height - 1
-
-        x = 1 / (std * math.sqrt(2 * math.pi)) * np.exp(-1 * (x - mu_x) ** 2 / (2 * std ** 2))
-        y = 1 / (std * math.sqrt(2 * math.pi)) * np.exp(-1 * (y - mu_y) ** 2 / (2 * std ** 2))
-
-        self.gaussian = np.rot90(np.outer(x, y))
 
     def __len__(self):
         return len(self.images)
@@ -57,23 +95,8 @@ class HeatmapDataset(torch.utils.data.Dataset):
 
         # load the image
         image = PIL.Image.open(os.path.join(self.image_dir, image_file)).convert('RGB')
-        width, height = image.size
-
-        # create a list of empty heatmaps
-        heatmaps = torch.tensor(())
-        heatmaps = heatmaps.new_full([self.point_number, height, width], 0, dtype=torch.float)
-
-        # copy the corresponding section from the gaussian distribution for each visible point
-        for point in self.point_data[image_file]:
-            i = int(point['id'])
-            x = int(point['x'])
-            y = int(point['y'])
-
-            yFrom = height - 1 - y
-            yTo = 2 * height - 1 - y
-            xFrom = width - 1 - x
-            xTo = 2 * width - 1 - x
-            heatmaps[i, :, :] = torch.tensor(self.gaussian[yFrom:yTo, xFrom:xTo].copy())
+        heatmaps = self.heatmap_generator([self.point_data[image_file]])
+        heatmaps = torch.from_numpy(heatmaps)
 
         # apply the transforms
         if self.transforms is not None:
