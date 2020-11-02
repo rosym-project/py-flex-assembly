@@ -184,6 +184,8 @@ def main(args):
     env.remove_camera('global')
     for clamp_id in env.object_ids['clamps']:
         p.removeBody(clamp_id)
+    for coordinate_id in env.object_ids['coordinate_systems']:
+        p.removeBody(coordinate_id)
 
     for j in tqdm.trange(starting_number, starting_number + args.number):
         img_name = '{:05d}'.format(j) + '.png'
