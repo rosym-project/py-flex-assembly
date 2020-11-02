@@ -22,11 +22,11 @@ class VGG_Heatmap(torch.nn.Module):
 
         conv3 = torch.nn.Sequential()
         conv3.add_module('pool2', torch.nn.AvgPool2d(kernel_size=2, stride=2))
-        conv2.add_module('conv3_1', torch.nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1))
+        conv3.add_module('conv3_1', torch.nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1))
         conv3.add_module('relu3_1', torch.nn.ReLU())
-        conv2.add_module('conv3_2', torch.nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1))
+        conv3.add_module('conv3_2', torch.nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1))
         conv3.add_module('relu3_2', torch.nn.ReLU())
-        conv2.add_module('conv3_3', torch.nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1))
+        conv3.add_module('conv3_3', torch.nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1))
         conv3.add_module('relu3_3', torch.nn.ReLU())
         self.conv3 = conv3
 
@@ -77,7 +77,8 @@ class VGG_Heatmap(torch.nn.Module):
         return ((labels - predictions) ** 2).mean()
 
     def _initialize_weights(self):
-        keys = list(torchvision.models.vgg16(pretrained=True).state_dict())
+        pre_train = torchvision.models.vgg16(pretrained=True).state_dict()
+        keys = list(pre_train.keys())
         self.conv1.conv1_1.weight.data.copy_(pre_train[keys[0]])
         self.conv1.conv1_2.weight.data.copy_(pre_train[keys[2]])
         self.conv2.conv2_1.weight.data.copy_(pre_train[keys[4]])

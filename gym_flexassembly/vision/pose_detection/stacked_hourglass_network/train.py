@@ -3,23 +3,27 @@ import time
 
 import torch
 
-from models.vgg_heatmap import VGG_Heatmap
+from vgg_heatmap import VGG_Heatmap
 from point_detection import get_transform, HeatmapDataset
 
 
-dir_data = './data'
-dataset_train = HeatmapDataset(dir_data, os.path.join(dir_data, 'data.json'), get_transform(train=True))
-data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=1, shuffle=True)
+dir_data_train = os.path.join('data', 'flat')
+dir_data_val = os.path.join('data', 'standing')
+dataset_train = HeatmapDataset(dir_data_train, os.path.join(dir_data_train, 'data.json'), get_transform(train=True))
+data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=8, shuffle=True)
 
-dataset_val = HeatmapDataset(dir_data, os.path.join(dir_data, 'data.json'), get_transform(train=False))
-data_loader_val = torch.utils.data.DataLoader(dataset_val, batch_size=1, shuffle=True)
+dataset_val = HeatmapDataset(dir_data_val, os.path.join(dir_data_val, 'data.json'), get_transform(train=False))
+data_loader_val = torch.utils.data.DataLoader(dataset_val, batch_size=8, shuffle=True)
 
-
-detector = VGG_Heatmap(dataset_train.point_number)
-optimizer = torch.optim.SGD(detector.parameters(), lr=1e-4, momentum=0.95)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-epochs = 5
+detector = VGG_Heatmap(dataset_train.point_number)
+detector = detector.float()
+detector = detector.to(device)
+
+optimizer = torch.optim.SGD(detector.parameters(), lr=1e-4, momentum=0.95)
+
+epochs = 10
 for i in range(1, epochs + 1):
     detector = detector.train()
     epoch_loss = 0
@@ -28,11 +32,12 @@ for i in range(1, epochs + 1):
         optimizer.zero_grad()
 
         inputs = inputs.to(device)
+        annotations = annotations.to(device)
 
         outputs = detector(inputs)
         loss = detector.compute_loss(outputs, annotations)
 
-        epoch_loss += loss
+        epoch_loss += loss.detach()
 
         loss.backward()
         optimizer.step()
@@ -43,15 +48,19 @@ for i in range(1, epochs + 1):
     print(f'Epoch {i}/{epochs} - Training - Loss: {epoch_loss:.4f}')
 
     if i % 1 == 0:
-        path = f'./model/point_detector_{i}.model'
+        path = f'./snapshots/point_detector_{i}.model'
         torch.save(detector.state_dict(), path)
 
         detector = detector.eval()
-        loss = 0
-        for inputs, annotations in data_loader_train:
-            outputs = detector(inputs)
-            loss += detector.compute_loss(outputs, annotations)
-        print(f'Epoch {i}/{epochs} - Validation - Loss: {loss:.4f}')
+        with torch.no_grad():
+            loss = 0
+            for inputs, annotations in data_loader_train:
+                inputs = inputs.to(device)
+                annotations = annotations.to(device)
+
+                outputs = detector(inputs)
+                loss += detector.compute_loss(outputs, annotations).detach()
+            print(f'Epoch {i}/{epochs} - Validation - Loss: {loss:.4f}')
 
 # save the trained model
 # torch.save(detector.state_dict(), 'point_detector.model')
