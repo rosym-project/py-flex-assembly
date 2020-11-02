@@ -206,6 +206,7 @@ def main(args):
             # break
         cv.imwrite(os.path.join(args.output_dir, img_name), unmarked)
 
+        marker_count = 0
         for i, path in enumerate(paths[1:]):
             # generate the image of the current marker
             marker = generate_image(path, model_pose, camera_settings)
@@ -233,6 +234,7 @@ def main(args):
                 # only the background label was found
                 continue
 
+            marker_count += 1
             data[img_name].append({
                 'id': i,
                 'x': str(centroids[1].round().astype(int)[0]),
@@ -240,7 +242,11 @@ def main(args):
             })
 
             # draw the marker onto the image
-            # cv.circle(unmarked, tuple(centroids[1].round().astype(int)), 2, [0, 255, 0], -1)
+            #cv.circle(unmarked, tuple(centroids[1].round().astype(int)), 2, [0, 255, 0], -1)
+
+        print("\ndetected", str(marker_count), "markers")
+        #cv.imshow("detected markers", unmarked)
+        #cv.waitKey(0)
 
     with open(os.path.join(args.output_dir, 'data.json'), 'w') as outfile:
         json.dump(data, outfile, indent=2)
