@@ -123,7 +123,7 @@ def get_transform(train, noise_std=3.37, flip_prob=0.5, discrete_rot=True, crop_
         transforms.append(T.RandomHorizontalFlip(flip_prob))
         transforms.append(T.RandomVerticalFlip(flip_prob))
         transforms.append(T.RandomCrop(crop_size))
-        transforms.append(T.RandomRotation(discrete_rot))
+        # transforms.append(T.RandomRotation(discrete_rot))
     else:
         transforms.append(T.CenterCrop(crop_size))
     transforms.append(T.Resize(target_size))
