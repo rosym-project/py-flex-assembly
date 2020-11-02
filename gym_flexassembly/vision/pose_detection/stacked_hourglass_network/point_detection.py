@@ -18,8 +18,8 @@ class HeatmapGenerator():
     def __init__(self, point_number, output_size):
         self.output_size = output_size
         self.point_number = point_number
-        # self.sigma = min(self.output_size) / 64
-        self.sigma = 1
+        self.sigma = min(self.output_size) / 64
+        # self.sigma = 1
         self.gaussian = self.compute_gaussian()
 
     def compute_gaussian(self, sigma_multiplier : float=3.0):
