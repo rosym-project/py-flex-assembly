@@ -128,6 +128,7 @@ def get_transform(train, noise_std=3.37, flip_prob=0.5, discrete_rot=True, crop_
         transforms.append(T.CenterCrop(crop_size))
     transforms.append(T.Resize(target_size))
     transforms.append(T.ToTensor())
+    transforms.append(T.ImageNetNormalization())
 
     return T.Compose(transforms)
 
@@ -151,8 +152,9 @@ if __name__ == '__main__':
 
         t_img = np.zeros((512, 512), np.uint8)
         for i in range(target.shape[0]):
-            t_img = np.where(target[i] > 0, np.ones(t_img.shape) * 255, t_img)
+            t_img = cv.addWeighted(t_img, 1.0, (target[i].detach().numpy() * 255).astype(np.uint8), 1.0, 0.0)
 
+        # TODO: this should revert the image net normalization
         res = np.zeros((*img.shape[1:], img.shape[0]), np.uint8)
         res[:, :, 0] = img[2]
         res[:, :, 1] = img[1]

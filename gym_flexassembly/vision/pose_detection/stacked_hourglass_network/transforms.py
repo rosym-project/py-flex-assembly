@@ -123,6 +123,17 @@ class Resize(object):
         return image, target
 
 
+class ImageNetNormalization(object):
+
+    def __call__(self, image, target):
+        # Perform normalization as done for most models pre-trained on imagenet
+        # See https://github.com/pytorch/examples/blob/97304e232807082c2e7b54c597615dc0ad8f6173/imagenet/main.py#L197-L198
+        image = torchvision.transforms.functional.normalize(image,
+                                                            mean=[0.485, 0.456, 0.406],
+                                                            std=[0.229, 0.224, 0.225])
+        return image, target
+
+
 class ToTensor(object):
     def __call__(self, image, target):
         image = torchvision.transforms.functional.to_tensor(image)
