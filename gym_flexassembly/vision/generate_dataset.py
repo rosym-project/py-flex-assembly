@@ -201,22 +201,37 @@ def main(args):
         # generate the image of the unmarked clamp
         unmarked = generate_image(paths[0], model_pose, camera_settings)
         unmarked = cv.cvtColor(unmarked, cv.COLOR_RGB2BGR)
-        # cv.imshow('Unmarked', unmarked)
+        marker_vis = np.copy(unmarked)
+        #cv.imshow('Unmarked', unmarked)
         # if cv.waitKey(0) == ord('q'):
             # break
         cv.imwrite(os.path.join(args.output_dir, img_name), unmarked)
 
         marker_count = 0
+        a = None
         for i, path in enumerate(paths[1:]):
             # generate the image of the current marker
             marker = generate_image(path, model_pose, camera_settings)
 
+            """
+            # generate mask
+            # currently fails because of small errors in the marker textures
+            marker = cv.cvtColor(marker, cv.COLOR_RGB2BGR)
+            diff = np.abs(marker - unmarked)
+            mask = np.where(np.any(np.where(diff == 0, False, True), axis=2), 1, 0).astype(np.uint8)
+            cv.imshow("mask", mask)
+            cv.waitKey(0)
+            """
+
             # generate the mask
             marker = cv.cvtColor(marker, cv.COLOR_RGB2HSV)
-            marker[:, :, 0] = (marker[:, :, 0] + 5) % 180
-            lower = np.array([0, 200, 200])
-            upper = np.array([10, 255, 255])
+            marker[:, :, 0] = (marker[:, :, 0] + 10) % 180
+            lower = np.array([0, 200, 130])
+            upper = np.array([20, 255, 255])
             mask = cv.inRange(marker, lower, upper)
+
+            #cv.imshow("marker", cv.cvtColor(marker, cv.COLOR_HSV2BGR))
+            #cv.waitKey(0)
 
             # calculate the marker position
             num_labels, _, _, centroids = cv.connectedComponentsWithStats(mask, connectivity=8)
@@ -242,11 +257,12 @@ def main(args):
             })
 
             # draw the marker onto the image
-            #cv.circle(unmarked, tuple(centroids[1].round().astype(int)), 2, [0, 255, 0], -1)
+            cv.circle(marker_vis, tuple(centroids[1].round().astype(int)), 1, [0, 255, 0], -1)
 
         print("\ndetected", str(marker_count), "markers")
-        #cv.imshow("detected markers", unmarked)
-        #cv.waitKey(0)
+        cv.imshow("detected markers", marker_vis)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
     with open(os.path.join(args.output_dir, 'data.json'), 'w') as outfile:
         json.dump(data, outfile, indent=2)
