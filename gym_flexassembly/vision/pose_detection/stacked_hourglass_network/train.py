@@ -42,7 +42,7 @@ for i in range(1, epochs + 1):
         loss.backward()
         optimizer.step()
     to = time.time() - since
-    print(f'Epoch time {to:.3f} avg {to / len(data_loader_train):.3f}')
+    print(f'Epoch time {to:.3f}s avg {1000 * to / len(data_loader_train):.1f}ms')
 
     epoch_loss = epoch_loss / len(data_loader_train)
     print(f'Epoch {i}/{epochs} - Training - Loss: {epoch_loss:.4f}')
