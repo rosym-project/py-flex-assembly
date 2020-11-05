@@ -123,16 +123,31 @@ class Resize(object):
         return image, target
 
 
+IMAGE_NET_MEAN = [0.485, 0.456, 0.406]
+IMAGE_NET_STD  = [0.229, 0.224, 0.225]
 class ImageNetNormalization(object):
 
     def __call__(self, image, target):
         # Perform normalization as done for most models pre-trained on imagenet
         # See https://github.com/pytorch/examples/blob/97304e232807082c2e7b54c597615dc0ad8f6173/imagenet/main.py#L197-L198
-        image = torchvision.transforms.functional.normalize(image,
-                                                            mean=[0.485, 0.456, 0.406],
-                                                            std=[0.229, 0.224, 0.225])
+        image = torchvision.transforms.functional.normalize(image, mean=IMAGE_NET_MEAN, std=IMAGE_NET_STD)
         return image, target
 
+def revert_image_net_mean(img):
+    if len(img.shape) != 3 and img.shape[0] != 3:
+        raise ValueError(f'Expected RGB image in order (channels, height, width) but got {img.shape}')
+
+    result = torch.empty(img.shape, dtype=img.dtype)
+    for channel in range(img.shape[0]):
+        result[channel] = (img[channel] * IMAGE_NET_STD[channel]) + IMAGE_NET_MEAN[channel]
+    return result
+
+def to_opencv(img):
+    if len(img.shape) != 3 and img.shape[0] != 3:
+        raise ValueError(f'Expected RGB image in order (channels, height, width) but got {img.shape}')
+
+    _img = torchvision.transforms.functional.to_pil_image(img)
+    return np.array(_img)[:, :, ::-1].copy()
 
 class ToTensor(object):
     def __call__(self, image, target):
