@@ -31,6 +31,7 @@ class VGG_Heatmap(torch.nn.Module):
         self.conv3 = conv3
 
         self.conv_out = torch.nn.Conv2d(in_channels=256, out_channels=point_number, kernel_size=1, stride=1, padding=0)
+        self.activation = torch.nn.Sigmoid()
 
         # up3 = torch.nn.Sequential()
         # up3.add_module('up_conv3_2', torch.nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1))
@@ -63,6 +64,7 @@ class VGG_Heatmap(torch.nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv_out(x)
+        x = self.activation(x)
         x = torch.nn.functional.interpolate(x, scale_factor=4, mode='bilinear', align_corners=False)
         # x = self.up3(x)
         # x = self.up2(x)
