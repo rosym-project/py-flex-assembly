@@ -153,6 +153,8 @@ def main(args):
                         help='the number of images to be generated')
     parser.add_argument('-c', '--clamp_dir', type=str, default='objects/marked_clamps/clamp_1',
                         help='the directory of the clamp of which data is generated relative to the flex assembly data dir')
+    parser.add_argument('-v', '--visualize', action="store_true",
+                        help='visualize the marker rendering and the detected markers (used for debug purposes)')
     args = parser.parse_args(args[1:])
     print(args)
 
@@ -160,6 +162,7 @@ def main(args):
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
+    # load already existing data
     data = {}
     annotation_file = os.path.join(args.output_dir, 'data.json')
     if os.path.isfile(annotation_file):
@@ -178,8 +181,8 @@ def main(args):
     marker_file = os.path.join(clamp_dir, 'marker.csv')
     paths = np.loadtxt(marker_file, delimiter=',', skiprows=1, usecols=[0], dtype=str)
     paths = [os.path.join(clamp_dir, p) for p in paths]
-    marker = np.loadtxt(marker_file, delimiter=',', skiprows=2, usecols=[2, 3, 4])
 
+    # set up the simulation environment
     env = FlexAssemblyEnv(stepping=False, gui=False)
     env.remove_camera('global')
     for clamp_id in env.object_ids['clamps']:
@@ -187,6 +190,10 @@ def main(args):
     for coordinate_id in env.object_ids['coordinate_systems']:
         p.removeBody(coordinate_id)
 
+    # collect error messages to resend them at the end
+    error_msgs = ""
+
+    # loop over the number of target images
     for j in tqdm.trange(starting_number, starting_number + args.number):
         img_name = '{:05d}'.format(j) + '.png'
         data[img_name] = []
@@ -198,24 +205,29 @@ def main(args):
         # print('  target: ', [f'{val:.2f}' for val in camera_settings['target_pos']])
         # print('  up:     ', [f'{val:.2f}' for val in camera_settings['up']])
 
-        # generate the image of the unmarked clamp
+        # generate the image of the unmarked clamp and export it
         unmarked = generate_image(paths[0], model_pose, camera_settings)
         unmarked = cv.cvtColor(unmarked, cv.COLOR_RGB2BGR)
-        marker_vis = np.copy(unmarked)
-        #cv.imshow('Unmarked', unmarked)
-        # if cv.waitKey(0) == ord('q'):
-            # break
         cv.imwrite(os.path.join(args.output_dir, img_name), unmarked)
 
+        # copy of the unmarked image for used to create a debug visualization
+        marker_vis = np.copy(unmarked)
+        #cv.imshow('Unmarked', unmarked)
+        #if cv.waitKey(0) == ord('q'):
+            #break
+
         marker_count = 0
-        a = None
+        # loop over all markers
         for i, path in enumerate(paths[1:]):
             # generate the image of the current marker
             marker = generate_image(path, model_pose, camera_settings)
 
             """
+            alternative mask generation
+            currently fails because of small errors in the marker textures
+            preferrable version for future clamps that don't include those errors
+
             # generate mask
-            # currently fails because of small errors in the marker textures
             marker = cv.cvtColor(marker, cv.COLOR_RGB2BGR)
             diff = np.abs(marker - unmarked)
             mask = np.where(np.any(np.where(diff == 0, False, True), axis=2), 1, 0).astype(np.uint8)
@@ -223,28 +235,64 @@ def main(args):
             cv.waitKey(0)
             """
 
+            if args.visualize:
+                # copy the difference between the unmarked and the marked image (i.e. the marker) to the visualization
+                marker_img = cv.cvtColor(marker, cv.COLOR_RGB2BGR)
+                diff = np.abs(marker_img - unmarked)
+                mask = np.any(np.where(diff == 0, False, True), axis=2)
+                marker_vis[mask] = marker_img[mask]
+
             # generate the mask
             marker = cv.cvtColor(marker, cv.COLOR_RGB2HSV)
-            marker[:, :, 0] = (marker[:, :, 0] + 10) % 180
-            lower = np.array([0, 200, 130])
-            upper = np.array([20, 255, 255])
+            marker[:, :, 0] = (marker[:, :, 0] + 5) % 180
+            lower = np.array([0, 245, 140])
+            upper = np.array([10, 255, 255])
             mask = cv.inRange(marker, lower, upper)
 
-            #cv.imshow("marker", cv.cvtColor(marker, cv.COLOR_HSV2BGR))
-            #cv.waitKey(0)
-
             # calculate the marker position
-            num_labels, _, _, centroids = cv.connectedComponentsWithStats(mask, connectivity=8)
+            num_labels, _, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=8)
+
+            # check how many markers were found
             if num_labels > 2:
-                print('\nError: multiple marker detected\n')
-                print('marker path:', path)
-                print('model pose:', model_pose)
-                print('camera settings:', camera_settings)
+                max_dist = 3
+                # if the centroids are very close to each other,
+                # it is likely that they belong to the same marker
+                for i in range(1, len(centroids)):
+                    are_close = False
+                    # check if there is a centroid j that is close to centroid i
+                    for j in range(1, len(centroids)):
+                        if i == j:
+                            continue
+                        if np.linalg.norm(centroids[i] - centroids[j]) <= max_dist:
+                            are_close = True
+                            break
+                    if not are_close:
+                        break
 
-                #cv.imshow("marker", cv.cvtColor(marker, cv.COLOR_HSV2BGR))
-                #cv.waitKey(0)
+                if are_close:
+                    # if all centroids are close to each other,
+                    # use the weighted sum of the centroids as the new centroid
+                    total_area = np.sum(stats[1:, cv.CC_STAT_AREA])
+                    centroids[1] *= stats[1, cv.CC_STAT_AREA] / total_area
 
-                exit()
+                    for i in range(2, len(centroids)):
+                        centroids[1] += centroids[i] * stats[i, cv.CC_STAT_AREA] / total_area
+                else:
+                    print('\nError: multiple marker detected\n')
+                    print('marker path:', path)
+                    print('model pose:', model_pose)
+                    print('camera settings:', camera_settings)
+                    error_msgs += '\nError: multiple marker detected\n'
+                    error_msgs += 'marker path: ' + str(path) + '\n'
+                    error_msgs += 'model pose: ' + str(model_pose) + '\n'
+                    error_msgs += 'camera settings: ' + str(camera_settings) + '\n'
+
+                    #cv.imshow("marker", cv.cvtColor(marker, cv.COLOR_HSV2BGR))
+                    #cv.waitKey(0)
+
+                    # break the marker loop and decrease j to generate a new clamp pose for the current iteration
+                    j -= 1
+                    break
             elif num_labels == 1:
                 # only the background label was found
                 continue
@@ -256,19 +304,25 @@ def main(args):
                 'y': str(centroids[1].round().astype(int)[1])
             })
 
-            # draw the marker onto the image
-            cv.circle(marker_vis, tuple(centroids[1].round().astype(int)), 1, [0, 255, 0], -1)
+            if args.visualize:
+                # draw a circle around the detected marker
+                cv.circle(marker_vis, tuple(centroids[1].round().astype(int)), 5, [0, 255, 0], 1)
 
         print("\ndetected", str(marker_count), "markers")
-        cv.imshow("detected markers", marker_vis)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+
+        if args.visualize:
+            cv.imshow("detected markers", marker_vis)
+            cv.waitKey(0)
+            cv.destroyAllWindows()
 
     with open(os.path.join(args.output_dir, 'data.json'), 'w') as outfile:
         json.dump(data, outfile, indent=2)
 
-        # cv.imshow('img', unmarked)
-        # cv.waitKey(0)
+    if len(error_msgs) > 0:
+        print("==============================================")
+        print(" Errors that occured during marker generation")
+        print("==============================================")
+        print(error_msgs)
 
 if __name__ == '__main__':
     main(sys.argv)
