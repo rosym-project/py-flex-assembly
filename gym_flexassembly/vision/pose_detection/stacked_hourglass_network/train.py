@@ -24,8 +24,9 @@ detector = VGG_Heatmap(dataset_train.point_number)
 detector = detector.float()
 detector = detector.to(device)
 
-optimizer = torch.optim.SGD(detector.parameters(), lr=1e-4, momentum=0.95)
-lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 250, 0.1)
+optimizer = torch.optim.SGD([{'params': detector.encoder.parameters(), 'lr': 1e-4, 'momentum': 0.95},
+                             {'params': detector.decoder.parameters(), 'lr': 1e-3, 'momentum': 0.90}])
+lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 100, 0.1)
 
 
 epochs = 500
@@ -47,7 +48,7 @@ for i in range(1, epochs + 1):
         loss.backward()
         optimizer.step()
     to = time.time() - since
-    logger.debug(f'Epoch time {to:.3f}s avg {1000 * to / len(data_loader_train):.1f}ms')
+    # logger.debug(f'Epoch time {to:.3f}s avg {1000 * to / len(data_loader_train):.1f}ms')
     lr_scheduler.step()
 
     epoch_loss = epoch_loss / len(data_loader_train)

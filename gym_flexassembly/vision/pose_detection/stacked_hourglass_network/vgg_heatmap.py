@@ -30,45 +30,53 @@ class VGG_Heatmap(torch.nn.Module):
         conv3.add_module('relu3_3', torch.nn.ReLU())
         self.conv3 = conv3
 
-        self.conv_out = torch.nn.Conv2d(in_channels=256, out_channels=point_number, kernel_size=1, stride=1, padding=0)
-        self.activation = torch.nn.Sigmoid()
+        self.encoder = torch.nn.Sequential()
+        self.encoder.add_module('conv1', self.conv1)
+        self.encoder.add_module('conv2', self.conv2)
+        self.encoder.add_module('conv3', self.conv3)
 
-        # up3 = torch.nn.Sequential()
-        # up3.add_module('up_conv3_2', torch.nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1))
-        # up3.add_module('up_relu3_2', torch.nn.ReLU())
-        # up3.add_module('up_conv3_1', torch.nn.Conv2d(in_channels=256, out_channels=128, kernel_size=3, stride=1, padding=1))
-        # up3.add_module('up_relu3_1', torch.nn.ReLU())
-        # up3.add_module('deconv2', torch.nn.ConvTranspose2d(in_channels=128, out_channels=128, kernel_size=3, stride=2, padding=1, output_padding=1))
-        # self.up3 = up3
+        # self.conv_out = torch.nn.Conv2d(in_channels=256, out_channels=point_number, kernel_size=1, stride=1, padding=0)
+        # self.activation = torch.nn.Sigmoid()
+
+        up3 = torch.nn.Sequential()
+        up3.add_module('up_conv3_2', torch.nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1))
+        up3.add_module('up_relu3_2', torch.nn.ReLU())
+        up3.add_module('up_conv3_1', torch.nn.Conv2d(in_channels=256, out_channels=128, kernel_size=3, stride=1, padding=1))
+        up3.add_module('up_relu3_1', torch.nn.ReLU())
+        up3.add_module('deconv2', torch.nn.ConvTranspose2d(in_channels=128, out_channels=128, kernel_size=3, stride=2, padding=1, output_padding=1))
+        self.up3 = up3
         
-        # up2 = torch.nn.Sequential()
-        # up2.add_module('up_conv2_2', torch.nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, stride=1, padding=1))
-        # up2.add_module('up_relu2_2', torch.nn.ReLU())
-        # up2.add_module('up_conv2_1', torch.nn.Conv2d(in_channels=128, out_channels=64, kernel_size=3, stride=1, padding=1))
-        # up2.add_module('up_relu2_1', torch.nn.ReLU())
-        # up2.add_module('deconv1', torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, output_padding=1))
-        # self.up2 = up2
+        up2 = torch.nn.Sequential()
+        up2.add_module('up_conv2_2', torch.nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, stride=1, padding=1))
+        up2.add_module('up_relu2_2', torch.nn.ReLU())
+        up2.add_module('up_conv2_1', torch.nn.Conv2d(in_channels=128, out_channels=64, kernel_size=3, stride=1, padding=1))
+        up2.add_module('up_relu2_1', torch.nn.ReLU())
+        up2.add_module('deconv1', torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, output_padding=1))
+        self.up2 = up2
 
-        # up1 = torch.nn.Sequential()
-        # up1.add_module('up_conv1_2', torch.nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1))
-        # up1.add_module('up_relu1_2', torch.nn.ReLU())
-        # up1.add_module('up_conv1_1', torch.nn.Conv2d(in_channels=64, out_channels=point_number, kernel_size=3, stride=1, padding=1))
-        # up1.add_module('up_relu1_1', torch.nn.ReLU())
-        # self.up1 = up1
+        up1 = torch.nn.Sequential()
+        up1.add_module('up_conv1_2', torch.nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1))
+        up1.add_module('up_relu1_2', torch.nn.ReLU())
+        up1.add_module('up_conv1_1', torch.nn.Conv2d(in_channels=64, out_channels=point_number, kernel_size=3, stride=1, padding=1))
+        up1.add_module('up_relu1_1', torch.nn.Sigmoid())
+        self.up1 = up1
+
+        self.decoder = torch.nn.Sequential()
+        self.decoder.add_module('up3', self.up3)
+        self.decoder.add_module('up2', self.up2)
+        self.decoder.add_module('up1', self.up1)
 
         if init_vgg:
             self._initialize_weights()
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.conv_out(x)
-        x = self.activation(x)
-        x = torch.nn.functional.interpolate(x, scale_factor=4, mode='bilinear', align_corners=False)
-        # x = self.up3(x)
-        # x = self.up2(x)
-        # x = self.up1(x)
+        x = self.encoder(x)
+
+        # x = self.conv_out(x)
+        # x = self.activation(x)
+        # x = torch.nn.functional.interpolate(x, scale_factor=4, mode='bilinear', align_corners=False)
+
+        x = self.decoder(x)
         return x
 
     def compute_loss(self, labels, predictions):
