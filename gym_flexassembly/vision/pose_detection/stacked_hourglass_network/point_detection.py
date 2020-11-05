@@ -18,8 +18,8 @@ class HeatmapGenerator():
     def __init__(self, point_number, output_size):
         self.output_size = output_size
         self.point_number = point_number
-        self.sigma = min(self.output_size) / 64
-        # self.sigma = 1
+        # self.sigma = min(self.output_size) / 64
+        self.sigma = 3
         self.gaussian = self.compute_gaussian()
 
     def compute_gaussian(self, sigma_multiplier : float=3.0):
@@ -148,25 +148,19 @@ if __name__ == '__main__':
 
     import cv2 as cv
     for img, target in dataset_train:
-        img = (img.numpy() * 255).astype(np.uint8)
+        img = T.to_opencv(T.revert_image_net_mean(img))
 
         t_img = np.zeros((512, 512), np.uint8)
         for i in range(target.shape[0]):
             t_img = cv.addWeighted(t_img, 1.0, (target[i].detach().numpy() * 255).astype(np.uint8), 1.0, 0.0)
 
-        # TODO: this should revert the image net normalization
-        res = np.zeros((*img.shape[1:], img.shape[0]), np.uint8)
-        res[:, :, 0] = img[2]
-        res[:, :, 1] = img[1]
-        res[:, :, 2] = img[0]
-
         for i in range(target.shape[0]):
             heatmap = np.where(target[i] > 0, np.ones(t_img.shape, dtype=np.uint8), np.zeros(t_img.shape, dtype=np.uint8))
             num_labels, _, _, centroids = cv.connectedComponentsWithStats(heatmap)
             if num_labels > 1:
-                cv.circle(res, tuple(np.array(centroids[1]).round().astype(np.int)), 1, (0, 0, 255), thickness=-1)
+                cv.circle(img, tuple(np.array(centroids[1]).round().astype(np.int)), 1, (0, 0, 255), thickness=-1)
 
-        cv.imshow('Clamp Image', res)
+        cv.imshow('Clamp Image', img)
         cv.imshow('Combined Heatmaps', t_img)
         if cv.waitKey(0) == ord('q'):
             break
