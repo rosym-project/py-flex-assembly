@@ -42,7 +42,7 @@ def create_parser():
     parser.add_argument('--starting_epoch', type=int, default=0,
                         help='the epoch at which to start training (should be defined when training is continued)')
     # logging
-    parser.add_argument('--logfile', type=str, default='traing.log',
+    parser.add_argument('--logfile', type=str, default='train.log',
                         help='the file to which the training progress is logged')
     return parser
 
