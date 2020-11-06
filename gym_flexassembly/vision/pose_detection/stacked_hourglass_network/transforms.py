@@ -144,8 +144,7 @@ def revert_image_net_mean(img):
 
 def to_opencv(img):
     if len(img.shape) != 3 and img.shape[0] != 3:
-        raise ValueError(f'Expected RGB image in order (channels, height, width) but got {img.shape}')
-
+        return (img.detach().numpy() * 255).astype(np.uint8)
     _img = torchvision.transforms.functional.to_pil_image(img)
     return np.array(_img)[:, :, ::-1].copy()
 
