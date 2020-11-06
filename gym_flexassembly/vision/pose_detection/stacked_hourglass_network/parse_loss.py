@@ -5,8 +5,11 @@ import numpy as np
 
 from train import Phase
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='parse and plot the loss of a logfile produces in training',
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('log_file', type=str, default='train.log')
+parser.add_argument('--skip_to_epoch', type=int,
+                    help='ignore all epochs before this - typically used to ignore the loss before trainings starts since it is quite high')
 args = parser.parse_args()
 
 with open(args.log_file, mode='r') as f:
@@ -20,6 +23,9 @@ for l in lines:
     epoch, phase, loss = l.split('-')
 
     epoch = int(epoch.strip().split(' ')[1].split('/')[0])
+    if args.skip_to_epoch and epoch < args.skip_to_epoch:
+        continue
+
     phase = phase.strip().lower()
     loss = float(loss.strip().split(' ')[-1])
 
