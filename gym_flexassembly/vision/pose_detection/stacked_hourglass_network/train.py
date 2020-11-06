@@ -78,9 +78,9 @@ optimizer = torch.optim.SGD([{'params': detector.encoder.parameters(), 'lr': 1e-
 def run_epoch(detector, dataloader, train):
     if not train:
         with torch.no_grad():
-            _run_epoch(detector, dataloader, train)
+            return _run_epoch(detector, dataloader, train)
     else:
-        _run_epoch(detector, dataloader, train)
+        return _run_epoch(detector, dataloader, train)
 
 def _run_epoch(detector, dataloader, train):
     logger.trace(f'Run epoch train={train}')
