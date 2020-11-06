@@ -65,12 +65,12 @@ class HeatmapDataset(torch.utils.data.Dataset):
     annotation from the corresponding json file.
     """
 
-    def __init__(self, image_dir, point_file, transforms, std=1):
-        self.image_dir = image_dir
-        self.images = [f for f in os.listdir(image_dir) if f.endswith('.png')]
+    def __init__(self, data_dir, transforms):
+        self.image_dir = data_dir
+        self.images = [f for f in os.listdir(self.image_dir) if f.endswith('.png')]
         self.images.sort()
 
-        with open(point_file, 'r') as f:
+        with open(os.path.join(data_dir, 'data.json'), 'r') as f:
             self.point_data = json.loads(f.read())
 
         self.point_number = 0
@@ -133,18 +133,16 @@ def get_transform(train, noise_std=3.37, flip_prob=0.5, discrete_rot=True, crop_
     return T.Compose(transforms)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('data_train', type=str)
-    parser.add_argument('data_val', type=str)
-    parser.add_argument('-w', '--weights', type=str,
-                        help='load initial weights from a file')
+    parser = argparse.ArgumentParser(description='visualize the data loading and pre-processing',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('data_dir', type=str,
+                        help='the directory from which the dataset is loaded')
+    parser.add_argument('--train', action='store_true',
+                        help='load training transformations')
     args = parser.parse_args()
 
     # creation of a data loader from a dataset
-    dataset_train = HeatmapDataset(args.data_train, os.path.join(args.data_train, 'data.json'), get_transform(train=True))
-    data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=16, shuffle=True)
-    dataset_val = HeatmapDataset(args.data_val, os.path.join(args.data_val, 'data.json'), get_transform(train=False))
-    data_loader_val = torch.utils.data.DataLoader(dataset_val, batch_size=16, shuffle=True)
+    dataset = HeatmapDataset(args.data_dir, get_transform(train=args.train))
 
     import cv2 as cv
     for img, target in dataset_train:
