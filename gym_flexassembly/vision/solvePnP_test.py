@@ -1,20 +1,18 @@
 import argparse
-import json
 import math
 import random
 import os
 import sys
-import time
 
 import cv2 as cv
 import numpy as np
+import scipy.spatial.transform.Rotation as R
 import pybullet as p
 import pybullet_data
 import tqdm
 
 from gym_flexassembly import data as flexassembly_data
 from gym_flexassembly.envs.flex_assembly_env import FlexAssemblyEnv
-
 
 def generate_image(model_path, model_pose, camera_settings):
     # place a clamp
@@ -74,52 +72,6 @@ def get_random_camera_settings(target_pos, min_dist=0.2, max_dist=0.4, range_upp
 table_offset_x = 0.1
 table_offset_y = 1.2
 def generate_random_model_pose():
-    # orientation
-    # always rotate around z
-    # normal orn: [0, 0, x]
-    # normal height: 0.71
-
-    # low prob orn: [math.pi / 2, 0, x] or [3 * math.pi, 0, x]
-    # height: 0.73
-
-    # lying
-    # orn [0, math.pi / 2, x] or [0, 3 * math.pi, x]
-    # height: 0.705
-    # base_orientation = random.randint(0, 2)
-    # if base_orientation == 0:
-        # flat on the ground
-        # if random.randint(0, 1) == 1:
-            # roll = 0
-            # z = 0.71
-        # else:
-            # roll = math.pi
-            # z = 0.73
-        # pitch = 0
-        # z = 0.71
-    # elif base_orientation == 1:
-        # long side on the ground
-        # if random.randint(0, 1) == 0:
-            # roll = math.pi / 2
-            # z = 0.72
-        # else:
-            # roll = 3 * math.pi / 2
-        # pitch = 0
-        # z = 0.72
-    # else:
-        # short side on the ground
-        # roll = 0
-        # if random.randint(0, 1) == 0:
-            # pitch = math.pi / 2
-        # else:
-            # pitch = 3 * math.pi / 2
-        # z = 0.73
-
-    # roll = 0
-    # if random.randint(0, 1) == 1:
-        # roll = math.pi
-    # pitch = 0
-    # z = 0.71
-
     if random.randint(0, 1) == 0:
         roll = math.pi / 2
         z = 0.72
@@ -143,44 +95,22 @@ def generate_random_model_pose():
     return {'pos': position, 'orn': rotation}
 
 
-
 def main(args):
-    parser = argparse.ArgumentParser('Generate images and annotations for pose detection of clamps',
+    parser = argparse.ArgumentParser('A script that tests the accuracy of the solvePnP function by using the exact marker locations as input.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-o', '--output_dir', type=str, default='./output/',
-                        help='the directory in which the resulting images and annotations are saved')
     parser.add_argument('-n', '--number', type=int, default=10,
-                        help='the number of images to be generated')
+                        help='the number of images to be evaluated')
     parser.add_argument('-c', '--clamp_dir', type=str, default='objects/marked_clamps/clamp_1',
                         help='the directory of the clamp of which data is generated relative to the flex assembly data dir')
-    parser.add_argument('-v', '--visualize', action="store_true",
-                        help='visualize the marker rendering and the detected markers (used for debug purposes)')
     args = parser.parse_args(args[1:])
     print(args)
-
-    # create the output directory
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-
-    # load already existing data
-    data = {}
-    annotation_file = os.path.join(args.output_dir, 'data.json')
-    if os.path.isfile(annotation_file):
-        with open(annotation_file, mode='r') as f:
-            data = json.load(f)
-    else:
-        data = {}
-
-    starting_number = -1
-    for i in data:
-        starting_number = max(starting_number, int(i.split('.')[0]))
-    starting_number += 1
 
     # load the csv file containing the marker points and the paths
     clamp_dir = os.path.join(flexassembly_data.getDataPath(), args.clamp_dir)
     marker_file = os.path.join(clamp_dir, 'marker.csv')
     paths = np.loadtxt(marker_file, delimiter=',', skiprows=1, usecols=[0], dtype=str)
     paths = [os.path.join(clamp_dir, p) for p in paths]
+    marker_data = np.loadtxt(marker_file, delimiter=',', skiprows=2, usecols=[2, 3, 4])
 
     # set up the simulation environment
     env = FlexAssemblyEnv(stepping=False, gui=False)
@@ -194,53 +124,21 @@ def main(args):
     error_msgs = ""
 
     # loop over the number of target images
-    for j in tqdm.trange(starting_number, starting_number + args.number):
-        img_name = '{:05d}'.format(j) + '.png'
-        data[img_name] = []
+    for j in tqdm.trange(0, args.number):
+        found_markers = []
 
         model_pose = generate_random_model_pose()
         camera_settings = get_random_camera_settings(model_pose['pos'])
-        # print('Take image with settings:\n', camera_settings)
-        # print('  pos:    ', [f'{val:.2f}' for val in camera_settings['pos']])
-        # print('  target: ', [f'{val:.2f}' for val in camera_settings['target_pos']])
-        # print('  up:     ', [f'{val:.2f}' for val in camera_settings['up']])
 
         # generate the image of the unmarked clamp and export it
         unmarked = generate_image(paths[0], model_pose, camera_settings)
         unmarked = cv.cvtColor(unmarked, cv.COLOR_RGB2BGR)
-        cv.imwrite(os.path.join(args.output_dir, img_name), unmarked)
 
-        # copy of the unmarked image for used to create a debug visualization
-        marker_vis = np.copy(unmarked)
-        #cv.imshow('Unmarked', unmarked)
-        #if cv.waitKey(0) == ord('q'):
-            #break
-
-        marker_count = 0
+        marker_error = False
         # loop over all markers
         for i, path in enumerate(paths[1:]):
             # generate the image of the current marker
             marker = generate_image(path, model_pose, camera_settings)
-
-            """
-            alternative mask generation
-            currently fails because of small errors in the marker textures
-            preferrable version for future clamps that don't include those errors
-
-            # generate mask
-            marker = cv.cvtColor(marker, cv.COLOR_RGB2BGR)
-            diff = np.abs(marker - unmarked)
-            mask = np.where(np.any(np.where(diff == 0, False, True), axis=2), 1, 0).astype(np.uint8)
-            cv.imshow("mask", mask)
-            cv.waitKey(0)
-            """
-
-            if args.visualize:
-                # copy the difference between the unmarked and the marked image (i.e. the marker) to the visualization
-                marker_img = cv.cvtColor(marker, cv.COLOR_RGB2BGR)
-                diff = np.abs(marker_img - unmarked)
-                mask = np.any(np.where(diff == 0, False, True), axis=2)
-                marker_vis[mask] = marker_img[mask]
 
             # generate the mask
             marker = cv.cvtColor(marker, cv.COLOR_RGB2HSV)
@@ -287,42 +185,56 @@ def main(args):
                     error_msgs += 'model pose: ' + str(model_pose) + '\n'
                     error_msgs += 'camera settings: ' + str(camera_settings) + '\n'
 
-                    #cv.imshow("marker", cv.cvtColor(marker, cv.COLOR_HSV2BGR))
-                    #cv.waitKey(0)
-
                     # break the marker loop and decrease j to generate a new clamp pose for the current iteration
                     j -= 1
+                    marker_error = True
                     break
             elif num_labels == 1:
                 # only the background label was found
                 continue
 
-            marker_count += 1
-            data[img_name].append({
-                'id': i,
-                'x': str(centroids[1].round().astype(int)[0]),
-                'y': str(centroids[1].round().astype(int)[1])
-            })
+            found_markers.append([i, centroids[1][0], centroids[1][1]])
 
-            if args.visualize:
-                # draw a circle around the detected marker
-                cv.circle(marker_vis, tuple(centroids[1].round().astype(int)), 5, [0, 255, 0], 1)
+        if marker_error:
+            continue
 
-        print("\ndetected", str(marker_count), "markers")
+        found_markers = np.array(found_markers)
 
-        if args.visualize:
-            cv.imshow("detected markers", marker_vis)
-            cv.waitKey(0)
-            cv.destroyAllWindows()
+        # generate a new image if less than 4 markers are visible
+        if found_markers.shape[0] < 4:
+            j -= 1
+            continue
 
-    with open(os.path.join(args.output_dir, 'data.json'), 'w') as outfile:
-        json.dump(data, outfile, indent=2)
+        # execute solvePnP
+        object_points = []
+        image_points = []
 
-    if len(error_msgs) > 0:
-        print("==============================================")
-        print(" Errors that occured during marker generation")
-        print("==============================================")
-        print(error_msgs)
+        for marker in found_markers:
+            object_points.append(marker_data[int(marker[0])])
+            image_points.append(marker[1:])
+
+        object_points = np.array(object_points)
+        image_points = np.array(image_points)
+
+        # Todo: verify camera_matrix and distortion coefficients
+        camera_matrix = np.zeros((3, 3))
+        camera_matrix[0, 0] = 1 / math.tan(fov / 2)
+        camera_matrix[1, 1] = 1 / math.tan(fov / 2)
+        camera_matrix[2, 2] = 1
+        camera_matrix[0, 2] = width / 2
+        camera_matrix[1, 2] = height / 2
+
+        dist_coeffs = np.zeros(5)
+
+        _, rvec, tvec =  cv.solvePnP(object_points, image_points, camera_matrix, dist_coeffs)
+
+        # transform the pose from camera coordinates to global coordinates
+        rot = R.from_rotvec(rvec).as_matrix()
+
+
+        # sum up the error
+
+    # compute the average error
 
 if __name__ == '__main__':
     main(sys.argv)

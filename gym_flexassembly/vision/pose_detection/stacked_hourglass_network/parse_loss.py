@@ -1,5 +1,8 @@
 import argparse
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 parser = argparse.ArgumentParser()
 parser.add_argument('log_file', type=str, default='train.log')
 args = parser.parse_args()
@@ -23,3 +26,15 @@ for l in lines:
 
     data[phase]['epoch'].append(epoch)
     data[phase]['loss'].append(epoch)
+
+for phase in data:
+    xs = np.array(data[phase]['epoch'])
+    ys = np.array(data[phase]['loss'])
+
+    print(f'Phase[{phase}] min loss {np.min(ys):.3f} at epoch {xs[np.argmin(ys)]}')
+
+    plt.plot(xs, ys, label=phase)
+
+plt.title('Loss')
+plt.legend()
+plt.show()
