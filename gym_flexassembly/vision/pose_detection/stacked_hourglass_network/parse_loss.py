@@ -3,6 +3,8 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 
+from train import Phase
+
 parser = argparse.ArgumentParser()
 parser.add_argument('log_file', type=str, default='train.log')
 args = parser.parse_args()
@@ -10,7 +12,7 @@ args = parser.parse_args()
 with open(args.log_file, mode='r') as f:
     lines = [line.strip() for line in f.readlines()]
 
-lines = list(filter(lambda line: 'INFO' in line, lines))
+lines = list(filter(lambda line: 'INFO' in line or Phase.TRAIN.name in line or Phase.VALIDATION.name in line, lines))
 lines = list(map(lambda line: '-'.join(line.split('-')[3:]), lines))
 
 data = {}
@@ -25,7 +27,7 @@ for l in lines:
         data[phase] = {'epoch': [], 'loss': []}
 
     data[phase]['epoch'].append(epoch)
-    data[phase]['loss'].append(epoch)
+    data[phase]['loss'].append(loss)
 
 for phase in data:
     xs = np.array(data[phase]['epoch'])
