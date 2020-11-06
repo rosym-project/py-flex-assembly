@@ -76,12 +76,19 @@ optimizer = torch.optim.SGD([{'params': detector.encoder.parameters(), 'lr': 1e-
 # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 100, 0.1)
 
 def run_epoch(detector, dataloader, train):
+    if not train:
+        with torch.no_grad():
+            _run_epoch(detector, dataloader, train)
+    else:
+        _run_epoch(detector, dataloader, train)
+
+def _run_epoch(detector, dataloader, train):
     logger.trace(f'Run epoch train={train}')
     detector = detector.train() if train else detector.eval()
 
     epoch_loss = 0
     for i, (inputs, annotations) in enumerate(dataloader):
-        print(f'Epoch iteration: {i} / {len(dataloaders[phase])}', end='\r')
+        print(f'Epoch iteration: {i} / {len(dataloader)}', end='\r')
         if train:
             optimizer.zero_grad()
 
@@ -117,8 +124,7 @@ for i in range(args.starting_epoch + 1, args.epochs + 1):
     log_loss(i, Phase.TRAIN, loss)
 
     if i % args.validation_epoch == 0:
-        with torch.no_grad():
-            loss = run_epoch(detector, dataloaders[Phase.VALIDATION], False)
+        loss = run_epoch(detector, dataloaders[Phase.VALIDATION], False)
         log_loss(i, Phase.VALIDATION, loss)
 
     if i % args.snapshot_epoch == 0:
