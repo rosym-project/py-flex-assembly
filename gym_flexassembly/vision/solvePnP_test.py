@@ -6,7 +6,8 @@ import sys
 
 import cv2 as cv
 import numpy as np
-import scipy.spatial.transform.Rotation as R
+import scipy as sp
+from scipy.spatial.transform import Rotation as R
 import pybullet as p
 import pybullet_data
 import tqdm
@@ -217,24 +218,65 @@ def main(args):
         image_points = np.array(image_points)
 
         # Todo: verify camera_matrix and distortion coefficients
+        projection = np.array(camera_settings['projection_matrix']).reshape(4, 4).transpose()
+        camera_matrix = np.abs(factor(projection[[0,1,3]]))
+        print(camera_matrix)
+
+        """
         camera_matrix = np.zeros((3, 3))
-        camera_matrix[0, 0] = 1 / math.tan(fov / 2)
-        camera_matrix[1, 1] = 1 / math.tan(fov / 2)
+        camera_matrix[0, 0] = 1 / (2 * math.tan(fov / 2))
+        camera_matrix[1, 1] = 1 / (2 * math.tan(fov / 2))
         camera_matrix[2, 2] = 1
         camera_matrix[0, 2] = width / 2
         camera_matrix[1, 2] = height / 2
+        """
 
         dist_coeffs = np.zeros(5)
 
         _, rvec, tvec =  cv.solvePnP(object_points, image_points, camera_matrix, dist_coeffs)
 
         # transform the pose from camera coordinates to global coordinates
-        rot = R.from_rotvec(rvec).as_matrix()
+        glob = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        camera_y = np.array(camera_settings['target_pos']) - np.array(camera_settings['pos'])
+        camera = np.array([np.cross(camera_settings['up'], camera_y), camera_y, camera_settings['up']])
 
+        transform = np.linalg.inv(camera).dot(glob)
+
+        print()
+        print(tvec.flatten())
+        tvec = transform.dot(tvec.flatten())
+        rot = R.from_rotvec(rvec.flatten()).as_matrix()
+        rot = transform.dot(rot)
+        rot = R.from_matrix(rot).as_quat()
+
+        print()
+        print(tvec)
+        print(model_pose['pos'])
+        print(rot)
+        print(model_pose['orn'])
+        exit()
 
         # sum up the error
 
     # compute the average error
+
+def factor(P):
+  """  Factorize the camera matrix into K,R,t as P = K[R|t]. """
+  """ source: https://www.oreilly.com/library/view/programming-computer-vision/9781449341916/ch04.html#ch04equ02 """
+
+  # factor first 3*3 part
+  K,R = sp.linalg.rq(P[:,:3])
+
+  # make diagonal of K positive
+  T = np.diag(np.sign(np.diag(K)))
+  if sp.linalg.det(T) < 0:
+    T[1,1] *= -1
+
+  K = np.dot(K,T)
+  R = np.dot(T,R) # T is its own inverse
+  t = np.dot(sp.linalg.inv(K), P[:,3])
+
+  return K
 
 if __name__ == '__main__':
     main(sys.argv)
