@@ -219,13 +219,25 @@ def main(args):
 
         # Todo: verify camera_matrix and distortion coefficients
         projection = np.array(camera_settings['projection_matrix']).reshape(4, 4).transpose()
-        camera_matrix = np.abs(factor(projection[[0,1,3]]))
-        print(camera_matrix)
+        view = np.array(camera_settings['view_matrix']).reshape(4, 4).transpose()
+        projection = projection.dot(view)
+        #camera_matrix = np.abs(factor(projection[[0,1,3]])[0])
+        camera_matrix = factor(projection[[0,1,3]])[0]
+
+        """ debug: test if extracted camera position is correct
+        K, r, t = factor(projection[[0,1,3]])
+        print("\nK:")
+        print(K)
+        print("\nPos orig:")
+        print(camera_settings['pos'])
+        print("\nPos factor:")
+        print(-r.transpose().dot(t))
+        """
 
         """
         camera_matrix = np.zeros((3, 3))
-        camera_matrix[0, 0] = 1 / (2 * math.tan(fov / 2))
-        camera_matrix[1, 1] = 1 / (2 * math.tan(fov / 2))
+        camera_matrix[0, 0] = 1 / math.tan(fov / 2)
+        camera_matrix[1, 1] = 1 / math.tan(fov / 2)
         camera_matrix[2, 2] = 1
         camera_matrix[0, 2] = width / 2
         camera_matrix[1, 2] = height / 2
@@ -233,7 +245,7 @@ def main(args):
 
         dist_coeffs = np.zeros(5)
 
-        _, rvec, tvec =  cv.solvePnP(object_points, image_points, camera_matrix, dist_coeffs)
+        _, rvec, tvec =  cv.solvePnP(object_points, image_points, camera_matrix, dist_coeffs, flags=cv.SOLVEPNP_ITERATIVE)
 
         # transform the pose from camera coordinates to global coordinates
         glob = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -276,7 +288,7 @@ def factor(P):
   R = np.dot(T,R) # T is its own inverse
   t = np.dot(sp.linalg.inv(K), P[:,3])
 
-  return K
+  return K, R, t
 
 if __name__ == '__main__':
     main(sys.argv)
