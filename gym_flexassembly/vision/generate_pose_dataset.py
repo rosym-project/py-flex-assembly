@@ -16,6 +16,15 @@ from gym_flexassembly.envs.flex_assembly_env import FlexAssemblyEnv
 
 
 def generate_image(model_path, model_pose, camera_settings):
+    # take a picture of the background
+    w, h, background, depth_buffer, segmentation = p.getCameraImage(
+                              camera_settings['width'],
+                              camera_settings['height'],
+                              camera_settings['view_matrix'],
+                              camera_settings['projection_matrix'],
+                              shadow=True,
+                              renderer=p.ER_BULLET_HARDWARE_OPENGL)
+
     # place a clamp
     clamp_id = p.loadSDF(model_path)[0]
     p.resetBasePositionAndOrientation(clamp_id, model_pose['pos'], model_pose['orn'])
@@ -32,7 +41,7 @@ def generate_image(model_path, model_pose, camera_settings):
     # remove model
     p.removeBody(clamp_id)
 
-    return rgba[:, :, :3]
+    return background[:, :, :3], rgba[:, :, :3]
 
 
 width = 1280
@@ -152,6 +161,12 @@ def main(args):
                         help='the number of images to be generated')
     parser.add_argument('-c', '--clamp_dir', type=str, default='objects/marked_clamps/clamp_1',
                         help='the directory of the clamp of which data is generated relative to the flex assembly data dir')
+    parser.add_argument('--crop_image', action="store_true",
+                        help='crop the image centered on the clamp')
+    parser.add_argument('--aspect_ratio', type=float, default=1280/720,
+                        help='the aspect ratio of the cropped image')
+    parser.add_argument('--border_ratio', type=float, default=0.2,
+                        help='the percentage of the image size that is added as a border around the crop')
     args = parser.parse_args(args[1:])
     print(args)
 
@@ -197,8 +212,44 @@ def main(args):
         data[j, 2:5] = model_pose['pos']
         data[j, 5:8] = p.getEulerFromQuaternion(model_pose['orn'])
 
-        # generate the image of the clamp and export it
-        clamp_img = generate_image(paths[0], model_pose, camera_settings)
+        # generate the image of the clamp and the background
+        background, clamp_img = generate_image(paths[0], model_pose, camera_settings)
+
+        """
+        if args.crop_image:
+            # extract the clamp area
+            diff = background - clamp_img
+            clamp_mask = np.where(np.any(np.where(diff == 0, False, True), axis=2), 1, 0).astype(np.uint8)
+            num_labels, _, stats, centroids = cv.connectedComponentsWithStats(clamp_mask, connectivity=8)
+
+            if num_labels != 2:
+                # the clamp is outside of the image or multiple clamps are visible
+                # don't save the image and rerun the iteration
+                j -= 1
+                continue
+
+                width = stats[1, cv.CC_STAT_WIDTH]
+                height = stats[1, cv.CC_STAT_HEIGHT]
+                top = stats[1, cv.CC_STAT_TOP]
+                left = stats[1, cv.CC_STAT_LEFT]
+                bottom = top + height
+                right = left + width
+
+            if width / height < args.aspect_ratio:
+                # add border in y direction
+                top = min(0, top - round(height * args.border_ratio * 0.5))
+                #bottom = max(clamp_img.shape[1], bottom + round(height * args.border_ratio * 0.5))
+                #height = bottom - top
+                height = round(height * (args.border_ratio + 1))
+                width = round(args.aspect_ratio * height)
+            else:
+                # add border in x direction
+                left = min(0, left - round(width * args.border_ratio * 0.5))
+                right = max(clamp_img.shape[0], right + round(width * args.border_ratio * 0.5))
+        """
+
+
+
         clamp_img = cv.cvtColor(clamp_img, cv.COLOR_RGB2BGR)
         cv.imwrite(os.path.join(args.output_dir, img_name), clamp_img)
 
