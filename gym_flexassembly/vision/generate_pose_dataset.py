@@ -215,7 +215,6 @@ def main(args):
         # generate the image of the clamp and the background
         background, clamp_img = generate_image(paths[0], model_pose, camera_settings)
 
-        """
         if args.crop_image:
             # extract the clamp area
             diff = background - clamp_img
@@ -225,36 +224,45 @@ def main(args):
             if num_labels != 2:
                 # the clamp is outside of the image or multiple clamps are visible
                 # don't save the image and rerun the iteration
+                print(str(num_labels - 1), "clamps detected. Rerunning iteration")
                 j -= 1
                 continue
 
-                width = stats[1, cv.CC_STAT_WIDTH]
-                height = stats[1, cv.CC_STAT_HEIGHT]
-                top = stats[1, cv.CC_STAT_TOP]
-                left = stats[1, cv.CC_STAT_LEFT]
-                bottom = top + height
-                right = left + width
+            width = stats[1, cv.CC_STAT_WIDTH]
+            height = stats[1, cv.CC_STAT_HEIGHT]
+            top = stats[1, cv.CC_STAT_TOP]
+            left = stats[1, cv.CC_STAT_LEFT]
+            bottom = top + height
+            right = left + width
 
+            # the following calculations don't take edge cases into account,
+            # since we know that the clamp is in the middle of the image
             if width / height < args.aspect_ratio:
                 # add border in y direction
-                top = min(0, top - round(height * args.border_ratio * 0.5))
-                #bottom = max(clamp_img.shape[1], bottom + round(height * args.border_ratio * 0.5))
-                #height = bottom - top
+                top = top - round(height * args.border_ratio * 0.5)
                 height = round(height * (args.border_ratio + 1))
+                # adapt the width according to the aspect ratio
                 width = round(args.aspect_ratio * height)
+                left = round(centroids[1, 0] - width / 2)
             else:
                 # add border in x direction
-                left = min(0, left - round(width * args.border_ratio * 0.5))
-                right = max(clamp_img.shape[0], right + round(width * args.border_ratio * 0.5))
-        """
+                left = left - round(width * args.border_ratio * 0.5)
+                width = round(width * (args.border_ratio + 1))
+                # adapt the height according to the aspect ratio
+                height = round(width / args.aspect_ratio)
+                top = round(centroids[1, 1] - height / 2)
 
+            # execute the crop
+            clamp_img = clamp_img[top : top + height, left : left + width]
 
-
+        # export teh image
         clamp_img = cv.cvtColor(clamp_img, cv.COLOR_RGB2BGR)
         cv.imwrite(os.path.join(args.output_dir, img_name), clamp_img)
 
+    # append the new data to the annotation file
     with open(os.path.join(args.output_dir, 'data.csv'), 'a') as outfile:
         if len(header) != 0:
+            # add a header if the file was empty before
             np.savetxt(outfile, np.array(header).reshape((1, 8)), delimiter=",", fmt='%s')
         np.savetxt(outfile, data.astype(str), delimiter=",", fmt='%s')
 
