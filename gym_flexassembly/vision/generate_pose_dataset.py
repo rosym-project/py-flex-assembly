@@ -7,6 +7,7 @@ import time
 
 import cv2 as cv
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 import pybullet as p
 import pybullet_data
 import tqdm
@@ -209,8 +210,17 @@ def main(args):
         model_pose = generate_random_model_pose()
         camera_settings = get_random_camera_settings(model_pose['pos'])
 
-        data[j, 2:5] = model_pose['pos']
-        data[j, 5:8] = p.getEulerFromQuaternion(model_pose['orn'])
+        # transform the pose from global coordinates to camera coordinates
+        camera_y = np.array(camera_settings['target_pos']) - np.array(camera_settings['pos'])
+        camera = np.array([np.cross(camera_y, camera_settings['up']), camera_y, camera_settings['up']])
+
+        t = model_pose['pos']
+        t = camera.dot(t)
+        rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
+        rot = camera.dot(rot)
+
+        data[j, 2:5] = t
+        data[j, 5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
 
         # generate the image of the clamp and the background
         background, clamp_img = generate_image(paths[0], model_pose, camera_settings)
