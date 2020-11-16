@@ -47,7 +47,8 @@ class FlexAssemblyEnv(EnvInterface):
                stepping=True,
                gui=True,
                direct=False,
-               use_real_interface=True):
+               use_real_interface=True,
+               static=False):
         super().__init__(gui, direct, use_real_interface=use_real_interface, hz=1000.0, stepping=stepping)
 
         self._urdfRoot_pybullet = pybullet_data.getDataPath()
@@ -146,8 +147,9 @@ class FlexAssemblyEnv(EnvInterface):
         # Store name with as unique identified + "_0" and the id
         self._robot_map[str(self._p.getBodyInfo(self.kuka7_1.getUUid())[1].decode()) + "_0"] = self.kuka7_1.getUUid()
 
-        # Load gripper
-        self.kuka7_1_egp = Prismatic2FingerGripperPlugin(self.kuka7_1.getUUid(), "gripper1", "SchunkEGP40_Finger1_joint", "SchunkEGP40_Finger2_joint")
+        # # Load gripper
+        self.kuka7_1_egp = None
+        self.kuka7_1_egp = Prismatic2FingerGripperPlugin(self.kuka7_1.getUUid(), "gripper1", "SchunkEGP40_Finger1_joint", "SchunkEGP40_Finger2_joint", use_real_interface=self._use_real_interface)
 
     def loadCameras(self):
         if not self._use_real_interface:
@@ -158,7 +160,8 @@ class FlexAssemblyEnv(EnvInterface):
             self.add_camera(settings=self.cam_global_settings, name=k, model_id=v)
 
     def step_internal(self):
-        self.kuka7_1_egp.update()
+        if self.kuka7_1_egp:
+            self.kuka7_1_egp.update()
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)
@@ -171,8 +174,8 @@ class FlexAssemblyEnv(EnvInterface):
         self._p.stepSimulation()
 
     def observation_internal(self):
-        self._observation = self._kuka.getObservation()
-        gripperState = self._p.getLinkState(self._kuka.kukaUid, self._kuka.kukaGripperIndex)
+        self._observation = self.kuka7_1.getObservation()
+        gripperState = self._p.getLinkState(self.kuka7_1.kukaUid, self.kuka7_1.kukaGripperIndex)
         gripperPos = gripperState[0]
         gripperOrn = gripperState[1]
         blockPos, blockOrn = self._p.getBasePositionAndOrientation(self.blockUid)
@@ -210,7 +213,7 @@ class FlexAssemblyEnv(EnvInterface):
         if mode != "rgb_array":
             return np.array([])
 
-        base_pos, orn = self._p.getBasePositionAndOrientation(self._kuka.kukaUid)
+        base_pos, orn = self._p.getBasePositionAndOrientation(self.kuka7_1.kukaUid)
         view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=base_pos,
                                                                 distance=self._cam_dist,
                                                                 yaw=self._cam_yaw,
