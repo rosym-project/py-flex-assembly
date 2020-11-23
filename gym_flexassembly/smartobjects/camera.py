@@ -120,14 +120,10 @@ class Camera:
             else:
                 carpos, carorn = self._p.getBasePositionAndOrientation(self._model_id)
             
-            
-
             # get a new camera image
-            
-
 
             # invCarPos, invCarOrn = self._p.invertTransform(carpos, carorn)
-            ballPosInCar2, ballOrnInCar2 = self._p.multiplyTransforms(carpos, carorn, [0,0,-0.1], [0,0,0,1])
+            ballPosInCar2, ballOrnInCar2 = self._p.multiplyTransforms(carpos, carorn, [0,0,0.1], [0,0,0,1])
 
             # targetInWTrans, targetInWOrn = self._p.multiplyTransforms(invCarPos, invCarOrn, ballPosInCar2, ballOrnInCar2)
 
@@ -146,26 +142,25 @@ class Camera:
             # else:
             #     self.dl2 = self._p.addUserDebugLine(carpos, targetInWTrans, [0,0,1], lineWidth=5)
 
-            # print("Pos " + str(carpos))
-            # print("Orn " + str(carorn))
+            # carmat = self._p.getMatrixFromQuaternion(ballOrnInCar2)
+            # up = [carmat[2], carmat[5], carmat[8]]
 
-            carmat = self._p.getMatrixFromQuaternion(linkWorldOrientation)
-            up = [carmat[2], carmat[5], carmat[8]]
+            t1, t2 = self._p.multiplyTransforms([0,0,0], ballOrnInCar2, [0,0,0], self._p.getQuaternionFromEuler([0,-1.5708,0]))
+            carrpy2 = self._p.getEulerFromQuaternion(t2)
+            # model_transformation_orn = np.array([3.14159, 0, 1.5708])
 
-            # self._view_matrix = self._p.computeViewMatrix(carpos,
-            #                                             ballPosInCar2,
-            #                                             up)
+            self._view_matrix = self._p.computeViewMatrix(carpos,
+                                                        ballPosInCar2,
+                                                        carrpy2)
 
-            # print("Tos " + str(np.array(carpos) - np.array(self._settings['target_dist'])))
-
-            carrpy = self._p.getEulerFromQuaternion(carorn)
-            self._view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
-                                                    cameraTargetPosition=ballPosInCar2,
-                                                    distance=0.001,
-                                                    yaw=carrpy[2],
-                                                    pitch=carrpy[1],
-                                                    roll=carrpy[0],
-                                                    upAxisIndex=1)
+            # carrpy = self._p.getEulerFromQuaternion(carorn)
+            # self._view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
+            #                                         cameraTargetPosition=ballPosInCar2,
+            #                                         distance=-0.001,
+            #                                         yaw=carrpy[2],
+            #                                         pitch=carrpy[1],
+            #                                         roll=carrpy[0],
+            #                                         upAxisIndex=1)
 
             # self._view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
             #                                         cameraTargetPosition=np.array(carpos) - np.array(self._settings['target_dist']),
@@ -174,8 +169,6 @@ class Camera:
             #                                         pitch=0,
             #                                         roll=0,
             #                                         upAxisIndex=1)
-
-            # print("Tos " + str(np.array(carpos) - np.array(self._settings['target_dist'])))
 
             # self._settings['up']
             self._projection_matrix = self._p.computeProjectionMatrixFOV(self._settings['fov'],
@@ -195,66 +188,6 @@ class Camera:
             self._lock.release()
 
             self._new_data_available = True
-
-    # def getExtendedObservation(self):
-    #     carpos, carorn = self._p.getBasePositionAndOrientation(self._racecar.racecarUniqueId)
-    #     carmat = self._p.getMatrixFromQuaternion(carorn)
-    #     ballpos, ballorn = self._p.getBasePositionAndOrientation(self._ballUniqueId)
-    #     invCarPos, invCarOrn = self._p.invertTransform(carpos, carorn)
-    #     ballPosInCar, ballOrnInCar = self._p.multiplyTransforms(invCarPos, invCarOrn, ballpos, ballorn)
-    #     dist0 = 0.3
-    #     dist1 = 1.
-    #     eyePos = [
-    #         carpos[0] + dist0 * carmat[0], carpos[1] + dist0 * carmat[3],
-    #         carpos[2] + dist0 * carmat[6] + 0.3
-    #     ]
-    #     targetPos = [
-    #         carpos[0] + dist1 * carmat[0], carpos[1] + dist1 * carmat[3],
-    #         carpos[2] + dist1 * carmat[6] + 0.3
-    #     ]
-    #     up = [carmat[2], carmat[5], carmat[8]]
-    #     viewMat = self._p.computeViewMatrix(eyePos, targetPos, up)
-    #     #viewMat = self._p.computeViewMatrixFromYawPitchRoll(carpos,1,0,0,0,2)
-    #     #print("projectionMatrix:")
-    #     #print(self._p.getDebugVisualizerCamera()[3])
-    #     projMatrix = [
-    #         0.7499999403953552, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0,
-    #         0.0, 0.0, -0.02000020071864128, 0.0
-    #     ]
-    #     img_arr = self._p.getCameraImage(width=self._width,
-    #                                     height=self._height,
-    #                                     viewMatrix=viewMat,
-    #                                     projectionMatrix=projMatrix)
-    #     rgb = img_arr[2]
-    #     np_img_arr = np.reshape(rgb, (self._height, self._width, 4))
-    #     self._observation = np_img_arr
-    #     return self._observation
-
-    # def render(self, mode="rgb_array", close=False):
-    #     if mode != "rgb_array":
-    #     return np.array([])
-    #     base_pos = self.minitaur.GetBasePosition()
-    #     view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
-    #         cameraTargetPosition=base_pos,
-    #         distance=self._cam_dist,
-    #         yaw=self._cam_yaw,
-    #         pitch=self._cam_pitch,
-    #         roll=0,
-    #         upAxisIndex=2)
-    #     proj_matrix = self._pybullet_client.computeProjectionMatrixFOV(fov=60,
-    #                                                                 aspect=float(RENDER_WIDTH) /
-    #                                                                 RENDER_HEIGHT,
-    #                                                                 nearVal=0.1,
-    #                                                                 farVal=100.0)
-    #     (_, _, px, _, _) = self._pybullet_client.getCameraImage(
-    #         width=RENDER_WIDTH,
-    #         height=RENDER_HEIGHT,
-    #         renderer=self._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
-    #         viewMatrix=view_matrix,
-    #         projectionMatrix=proj_matrix)
-    #     rgb_array = np.array(px)
-    #     rgb_array = rgb_array[:, :, :3]
-    #     return rgb_array
 
     def getModelId(self):
         return self._model_id
