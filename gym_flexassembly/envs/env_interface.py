@@ -203,11 +203,11 @@ class EnvInterface(gym.Env):
                 print("\t> robot",k,"with id",v)
             print("\n")
 
-            # Upload the loaded camera to parameter server
-            rospy.set_param("camera_map", self.getCameraMap())
-            for k,v in rospy.get_param("camera_map").items():
-                print("\t> camera",k,"with id",v)
-            print("\n")
+            # # Upload the loaded camera to parameter server
+            # rospy.set_param("camera_map", self.getCameraMap())
+            # for k,v in rospy.get_param("camera_map").items():
+            #     print("\t> camera",k,"with id",v)
+            # print("\n")
 
             self.setupRosCommunication()
 
@@ -326,10 +326,10 @@ class EnvInterface(gym.Env):
         self._cameras[name].terminate()
         del self._cameras[name]
     
-    def add_camera(self, settings, name, model_id):
+    def add_camera(self, settings, name, model_id, link_id=None):
         if name in self._cameras:
             raise ValueError('Camera[%s] already exists!' % name)
-        self._cameras[name] = camera.Camera(self._p, settings, name, model_id, use_real_interface=self._use_real_interface)
+        self._cameras[name] = camera.Camera(self._p, settings, name, model_id, link_id, use_real_interface=self._use_real_interface)
 
     def getCameraMap(self):
         return self._camera_map

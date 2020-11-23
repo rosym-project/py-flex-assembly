@@ -1,5 +1,6 @@
 3d_other/
 kortex-gen3-7/
+*.blend1
 
 # VS Code
 .vscode/

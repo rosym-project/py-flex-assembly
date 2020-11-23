@@ -70,16 +70,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_0.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_0.obj"/>
       </geometry>
-      <material name="Grey"/>
+      <!-- <material name="Grey"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_0.stl"/>
       </geometry>
-      <material name="Grey"/>
+      <!-- <material name="Grey"/> -->
     </collision>
     <self_collision_checking>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -107,16 +107,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_1.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_1.obj"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_1.stl"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </collision>
   </link>
   <!-- joint between link_1 and link_2 -->
@@ -138,16 +138,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_2.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_2.obj"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_2.stl"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </collision>
   </link>
   <!-- joint between link_2 and link_3 -->
@@ -169,16 +169,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_3.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_3.obj"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_3.stl"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </collision>
   </link>
   <!-- joint between link_3 and link_4 -->
@@ -200,16 +200,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_4.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_4.obj"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_4.stl"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </collision>
   </link>
   <!-- joint between link_4 and link_5 -->
@@ -231,16 +231,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_5.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_5.obj"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_5.stl"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </collision>
   </link>
   <!-- joint between link_5 and link_6 -->
@@ -262,16 +262,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_6.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_6.obj"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_6.stl"/>
       </geometry>
-      <material name="Orange"/>
+      <!-- <material name="Orange"/> -->
     </collision>
   </link>
   <!-- joint between link_6 and link_7 -->
@@ -293,16 +293,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_7.stl"/>
+        <mesh filename="model://epfl-iiwa14/meshes/iiwa14/visual/link_7.obj"/>
       </geometry>
-      <material name="Grey"/>
+      <!-- <material name="Grey"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/iiwa14/collision/link_7.stl"/>
       </geometry>
-      <material name="Grey"/>
+      <!-- <material name="Grey"/> -->
     </collision>
   </link>
 
@@ -315,14 +315,29 @@
   <joint name="iiwa7_joint_ft_sensor" type="fixed">
     <parent link="iiwa_link_7"/>
     <child link="ft_sensor"/>
-    <!-- <origin xyz="0 0 0.059" rpy="3.14159265359 0 -1.57079632679" /> -->
+    <!-- TODO -->
     <origin xyz="0 0 0.059" rpy="0 0 0" />
   </joint>
 
-  <joint name="iiwa7_joint_ee" type="fixed">
+  <joint name="iiwa7_joint_camera_mount" type="fixed">
     <parent link="ft_sensor"/>
+    <child link="camera_mount"/>
+    <!-- TODO -->
+    <origin xyz="0 0 0.015" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="iiwa7_joint_camera_mount_realsense" type="fixed">
+    <parent link="camera_mount"/>
+    <child link="realsense_camera"/>
+    <!-- TODO -->
+    <origin xyz="-0.081 0 0.0259" rpy="3.14159 0 1.5708"/>
+  </joint>
+
+  <joint name="iiwa7_joint_ee" type="fixed">
+    <parent link="camera_mount"/>
     <child link="iiwa7_link_ee"/>
-    <origin xyz="0 0 0.01" rpy="0 0 0"/>
+    <!-- TODO -->
+    <origin xyz="0 0 0.001" rpy="0 0 0"/>
   </joint>
 
   <!-- Load Gazebo lib and set the robot namespace -->
@@ -483,6 +498,52 @@
       <origin xyz="9.396e-4  0.017  -7.545e-4" rpy="0 0 0" />
       <mass value="0.215" />
       <!-- mass: 0.255 ? from https://github.com/ubi-agni/ati_sensor_description/blob/master/robots/sensor_types.yaml#L6 -->
+      <inertia ixx="1.055e-4" ixy="-7.262e-7" ixz="6.186e-6" iyy="1.7e-4" iyz="6.529e-7" izz="1.076e-4" />
+    </inertial>
+  </link>
+
+  <!-- Camera Mount -->
+  <link name="camera_mount">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://epfl-iiwa14/meshes/camera/camera_mount.obj"/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://epfl-iiwa14/meshes/camera/camera_mount.obj"/>
+      </geometry>
+    </collision>
+    <inertial>
+    <!-- TODO -->
+      <origin xyz="9.396e-4  0.017  -7.545e-4" rpy="0 0 0" />
+      <mass value="0.215" />
+      <inertia ixx="1.055e-4" ixy="-7.262e-7" ixz="6.186e-6" iyy="1.7e-4" iyz="6.529e-7" izz="1.076e-4" />
+    </inertial>
+  </link>
+
+  <!-- RealSense Camera -->
+  <link name="realsense_camera">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://epfl-iiwa14/meshes/camera/RealSense_D435.obj"/>
+      </geometry>
+      <material name="Black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://epfl-iiwa14/meshes/camera/RealSense_D435.obj"/>
+      </geometry>
+    </collision>
+    <inertial>
+    <!-- TODO -->
+      <origin xyz="9.396e-4  0.017  -7.545e-4" rpy="0 0 0" />
+      <mass value="0.215" />
       <inertia ixx="1.055e-4" ixy="-7.262e-7" ixz="6.186e-6" iyy="1.7e-4" iyz="6.529e-7" izz="1.076e-4" />
     </inertial>
   </link>
