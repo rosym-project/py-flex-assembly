@@ -161,7 +161,7 @@ class Camera:
             carrpy = self._p.getEulerFromQuaternion(carorn)
             self._view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
                                                     cameraTargetPosition=ballPosInCar2,
-                                                    distance=-0.001,
+                                                    distance=0.001,
                                                     yaw=carrpy[2],
                                                     pitch=carrpy[1],
                                                     roll=carrpy[0],

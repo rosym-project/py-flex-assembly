@@ -330,14 +330,13 @@
     <parent link="camera_mount"/>
     <child link="realsense_camera"/>
     <!-- TODO -->
-    <origin xyz="-0.081 0 0.0259" rpy="3.14159 0 1.5708"/>
+    <origin xyz="-0.081 0 0.0259" rpy="0 0 0"/>
   </joint>
 
   <joint name="iiwa_joint_ee" type="fixed">
     <parent link="realsense_camera"/>
     <child link="iiwa_link_ee"/>
     <!-- TODO -->
-    <!-- <origin xyz="0 0 0.115" rpy="0 0 0"/> -->
     <origin xyz="0.081 0 -0.0249" rpy="0 0 0"/>
   </joint>
 
@@ -529,14 +528,14 @@
   <!-- RealSense Camera -->
   <link name="realsense_camera">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="3.14159 0 1.5708" />
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/camera/RealSense_D435.obj"/>
       </geometry>
       <material name="Black"/>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="3.14159 0 1.5708" />
       <geometry>
         <mesh filename="model://epfl-iiwa14/meshes/camera/RealSense_D435.obj"/>
       </geometry>
