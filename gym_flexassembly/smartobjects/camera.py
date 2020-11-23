@@ -146,8 +146,8 @@ class Camera:
             # else:
             #     self.dl2 = self._p.addUserDebugLine(carpos, targetInWTrans, [0,0,1], lineWidth=5)
 
-            print("Pos " + str(carpos))
-            print("Orn " + str(carorn))
+            # print("Pos " + str(carpos))
+            # print("Orn " + str(carorn))
 
             carmat = self._p.getMatrixFromQuaternion(linkWorldOrientation)
             up = [carmat[2], carmat[5], carmat[8]]
@@ -175,7 +175,7 @@ class Camera:
             #                                         roll=0,
             #                                         upAxisIndex=1)
 
-            print("Tos " + str(np.array(carpos) - np.array(self._settings['target_dist'])))
+            # print("Tos " + str(np.array(carpos) - np.array(self._settings['target_dist'])))
 
             # self._settings['up']
             self._projection_matrix = self._p.computeProjectionMatrixFOV(self._settings['fov'],
