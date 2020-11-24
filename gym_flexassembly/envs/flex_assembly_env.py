@@ -167,9 +167,8 @@ class FlexAssemblyEnv(EnvInterface):
         tmp_name = "eefcam_0"
         self._camera_map[tmp_name] = {'model_id':self.kuka14_1, 'link_id':10}
 
-        # # Load gripper
-        self.kuka7_1_egp = None
-        # self.kuka7_1_egp = Prismatic2FingerGripperPlugin(self.kuka14_1, "gripper1", "SchunkEGP40_Finger1_joint", "SchunkEGP40_Finger2_joint", use_real_interface=self._use_real_interface)
+        # Load gripper
+        self.kuka7_1_egp = Prismatic2FingerGripperPlugin(self.kuka14_1, "gripper1", "SchunkEGP40_Finger1_joint", "SchunkEGP40_Finger2_joint", use_real_interface=self._use_real_interface)
 
     def loadCameras(self):
         if not self._use_real_interface:
@@ -231,32 +230,32 @@ class FlexAssemblyEnv(EnvInterface):
 
     def render(self, mode="rgb_array", close=False):
         return np.array([]) # TODO
-        if mode != "rgb_array":
-            return np.array([])
+        # if mode != "rgb_array":
+        #     return np.array([])
 
-        base_pos, orn = self._p.getBasePositionAndOrientation(self.kuka14_1.kukaUid)
-        view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=base_pos,
-                                                                distance=self._cam_dist,
-                                                                yaw=self._cam_yaw,
-                                                                pitch=self._cam_pitch,
-                                                                roll=0,
-                                                                upAxisIndex=2)
-        proj_matrix = self._p.computeProjectionMatrixFOV(fov=60,
-                                                        aspect=float(self.RENDER_WIDTH) / self.RENDER_HEIGHT,
-                                                        nearVal=0.1,
-                                                        farVal=100.0)
-        (_, _, px, _, _) = self._p.getCameraImage(width=self.RENDER_WIDTH,
-                                                height=self.RENDER_HEIGHT,
-                                                viewMatrix=view_matrix,
-                                                projectionMatrix=proj_matrix,
-                                                renderer=self._p.ER_BULLET_HARDWARE_OPENGL)
-        #renderer=self._p.ER_TINY_RENDERER)
+        # base_pos, orn = self._p.getBasePositionAndOrientation(self.kuka14_1.kukaUid)
+        # view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=base_pos,
+        #                                                         distance=self._cam_dist,
+        #                                                         yaw=self._cam_yaw,
+        #                                                         pitch=self._cam_pitch,
+        #                                                         roll=0,
+        #                                                         upAxisIndex=2)
+        # proj_matrix = self._p.computeProjectionMatrixFOV(fov=60,
+        #                                                 aspect=float(self.RENDER_WIDTH) / self.RENDER_HEIGHT,
+        #                                                 nearVal=0.1,
+        #                                                 farVal=100.0)
+        # (_, _, px, _, _) = self._p.getCameraImage(width=self.RENDER_WIDTH,
+        #                                         height=self.RENDER_HEIGHT,
+        #                                         viewMatrix=view_matrix,
+        #                                         projectionMatrix=proj_matrix,
+        #                                         renderer=self._p.ER_BULLET_HARDWARE_OPENGL)
+        # #renderer=self._p.ER_TINY_RENDERER)
 
-        rgb_array = np.array(px, dtype=np.uint8)
-        rgb_array = np.reshape(rgb_array, (self.RENDER_HEIGHT, self.RENDER_WIDTH, 4))
+        # rgb_array = np.array(px, dtype=np.uint8)
+        # rgb_array = np.reshape(rgb_array, (self.RENDER_HEIGHT, self.RENDER_WIDTH, 4))
 
-        rgb_array = rgb_array[:, :, :3]
-        return rgb_array
+        # rgb_array = rgb_array[:, :, :3]
+        # return rgb_array
 
     def _termination(self):
         return False
