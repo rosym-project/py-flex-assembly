@@ -145,7 +145,7 @@ if __name__ == '__main__':
     dataset = HeatmapDataset(args.data_dir, get_transform(train=args.train))
 
     import cv2 as cv
-    for img, target in dataset_train:
+    for img, target in dataset:
         img = T.to_opencv(T.revert_image_net_mean(img))
 
         t_img = np.zeros((512, 512), np.uint8)
