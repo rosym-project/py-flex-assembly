@@ -15,6 +15,46 @@ import tqdm
 from gym_flexassembly import data as flexassembly_data
 from gym_flexassembly.envs.flex_assembly_env import FlexAssemblyEnv
 
+def drawAxis(img, model_pose, rotation_matrix, translation_vec):
+    """
+    Draw the axis of the model pose on an image as seen through a
+    camera with the provided rotation matrix and translation_vector.
+    """
+    # guess camera matrix and distortion coefficients
+    focal_length = img.shape[1]
+    center = (img.shape[1] / 2, img.shape[0] / 2)
+    camera_matrix = np.array([[focal_length, 0, center[0]],
+                              [0, focal_length, center[1]],
+                              [0, 0, 1]], dtype='double')
+    dist_coeffs = np.zeros((4, 1))  # Assuming no lens distortion
+
+    # compute rodrigues vector from rotation matrix    
+    rotation_vec, _ = cv.Rodrigues(rotation_matrix)
+
+    # construct axis for model pose
+    origin = np.array(model_pose['pos'])
+    _rotation_matrix = p.getMatrixFromQuaternion(model_pose['orn'])
+    _rotation_matrix = np.array(_rotation_matrix).reshape(3, 3)
+    x = origin + _rotation_matrix.dot(np.array([0.1, 0, 0]))
+    y = origin + _rotation_matrix.dot(np.array([0, 0.1, 0]))
+    z = origin + _rotation_matrix.dot(np.array([0, 0, 0.1]))
+    axis = np.array([origin, x, y, z])
+
+    # project axis
+    imgpts, _ = cv.projectPoints(axis, rotation_vec, translation_vec, camera_matrix, dist_coeffs)
+
+    # extract projected points as 2d int tuples
+    _origin = tuple(imgpts[0].astype(np.int32).ravel())
+    _x = tuple(imgpts[1].astype(np.int32).ravel())
+    _y = tuple(imgpts[2].astype(np.int32).ravel())
+    _z = tuple(imgpts[3].astype(np.int32).ravel())
+
+    # draw lines for axis
+    img = cv.line(img, _origin, _x, (255, 0, 0), 3)
+    img = cv.line(img, _origin, _y, (0, 255, 0), 3)
+    img = cv.line(img, _origin, _z, (0, 0, 255), 3)
+    return img
+
 
 def generate_image(model_path, model_pose, camera_settings):
     # take a picture of the background
@@ -211,19 +251,41 @@ def main(args):
         camera_settings = get_random_camera_settings(model_pose['pos'])
 
         # transform the pose from global coordinates to camera coordinates
+        ##### Approach Christopher #######################################################################
         camera_y = np.array(camera_settings['target_pos']) - np.array(camera_settings['pos'])
         camera = np.array([np.cross(camera_y, camera_settings['up']), camera_y, camera_settings['up']])
 
         t = model_pose['pos']
         t = camera.dot(t)
+
         rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
         rot = camera.dot(rot)
+        print('Christopher')
+        print(f'Translation\n{t}\nRotation\n{rot}')
 
         data[j, 2:5] = t
         data[j, 5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
 
+        ##### Approach Tamino ##########################################################################
+        view_matrix = np.array(camera_settings['view_matrix']).reshape((4, 4)).transpose()
+
+        t = view_matrix.dot(np.array([*model_pose['pos'], 1]))[:3]
+        rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
+        rot = view_matrix[:3, :3].dot(rot)
+        print('Tamino')
+        print(f'Translation\n{t}\nRotation\n{rot}')
+        #################################################################################################
+
         # generate the image of the clamp and the background
         background, clamp_img = generate_image(paths[0], model_pose, camera_settings)
+
+        # View debug drawing of axis
+        # res = cv.cvtColor(clamp_img, cv.COLOR_RGB2BGR)
+        # res = drawAxis(res, model_pose, view_matrix[:3, :3], view_matrix[:3, 3])
+
+        # cv.imshow('Axis Projection', res)
+        # cv.waitKey(0)
+        # exit()
 
         if args.crop_image:
             # extract the clamp area
