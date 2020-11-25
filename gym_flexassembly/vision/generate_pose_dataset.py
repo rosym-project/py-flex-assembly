@@ -1,4 +1,5 @@
 import argparse
+import csv
 import math
 import random
 import os
@@ -134,48 +135,48 @@ def generate_random_model_pose():
     # lying
     # orn [0, math.pi / 2, x] or [0, 3 * math.pi, x]
     # height: 0.705
-    # base_orientation = random.randint(0, 2)
-    # if base_orientation == 0:
+    base_orientation = random.randint(0, 2)
+    if base_orientation == 0:
         # flat on the ground
-        # if random.randint(0, 1) == 1:
-            # roll = 0
-            # z = 0.71
-        # else:
-            # roll = math.pi
-            # z = 0.73
-        # pitch = 0
-        # z = 0.71
-    # elif base_orientation == 1:
+        if random.randint(0, 1) == 1:
+            roll = 0
+            z = 0.71
+        else:
+            roll = math.pi
+            z = 0.73
+        pitch = 0
+        z = 0.71
+    elif base_orientation == 1:
         # long side on the ground
-        # if random.randint(0, 1) == 0:
-            # roll = math.pi / 2
-            # z = 0.72
-        # else:
-            # roll = 3 * math.pi / 2
-        # pitch = 0
-        # z = 0.72
-    # else:
-        # short side on the ground
-        # roll = 0
-        # if random.randint(0, 1) == 0:
-            # pitch = math.pi / 2
-        # else:
-            # pitch = 3 * math.pi / 2
-        # z = 0.73
-
-    # roll = 0
-    # if random.randint(0, 1) == 1:
-        # roll = math.pi
-    # pitch = 0
-    # z = 0.71
-
-    if random.randint(0, 1) == 0:
-        roll = math.pi / 2
+        if random.randint(0, 1) == 0:
+            roll = math.pi / 2
+            z = 0.72
+        else:
+            roll = 3 * math.pi / 2
+        pitch = 0
         z = 0.72
     else:
-        roll = 3 * math.pi / 2
+        # short side on the ground
+        roll = 0
+        if random.randint(0, 1) == 0:
+            pitch = math.pi / 2
+        else:
+            pitch = 3 * math.pi / 2
+        z = 0.73
+
+    roll = 0
+    if random.randint(0, 1) == 1:
+        roll = math.pi
     pitch = 0
-    z = 0.72
+    z = 0.71
+
+    # if random.randint(0, 1) == 0:
+        # roll = math.pi / 2
+        # z = 0.72
+    # else:
+        # roll = 3 * math.pi / 2
+    # pitch = 0
+    # z = 0.72
 
     yaw = random.uniform(0, 2 * math.pi)
     rotation = p.getQuaternionFromEuler([roll, pitch, yaw])
@@ -215,17 +216,16 @@ def main(args):
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    # load already existing data
-    data = np.empty((args.number, 8), dtype=object)
-    header = []
-    starting_number = 0
     annotation_file = os.path.join(args.output_dir, 'data.csv')
+    starting_number = 0
     if os.path.isfile(annotation_file):
         with open(annotation_file, mode='r') as f:
-            data_existing = np.loadtxt(f, dtype=str, delimiter=",", skiprows=1)
-            starting_number = np.max(data_existing[:, 0].astype(np.int)) + 1
+            starting_number = max(0, len(f.readlines()) - 1)
+            print('Extracted starting number..', starting_number)
     else:
         header = ["id", "image_name", "x", "y", "z", "roll", "pitch", "yaw"]
+        with open(annotation_file, mode='w') as f:
+            csv.writer(f, delimiter=',').writerow(header)
 
     # load the csv file containing the marker points and the paths
     clamp_dir = os.path.join(flexassembly_data.getDataPath(), args.clamp_dir)
@@ -242,10 +242,11 @@ def main(args):
         p.removeBody(coordinate_id)
 
     # loop over the number of target images
-    for j in tqdm.trange(0, args.number):
+    for j in tqdm.trange(starting_number, args.number + starting_number):
+        data = np.empty(8, dtype=object)
         img_name = '{:05d}'.format(j + starting_number) + '.png'
-        data[j, 0] = j + starting_number
-        data[j, 1] = img_name
+        data[0] = j
+        data[1] = img_name
 
         model_pose = generate_random_model_pose()
         camera_settings = get_random_camera_settings(model_pose['pos'])
@@ -260,11 +261,11 @@ def main(args):
 
         rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
         rot = camera.dot(rot)
-        print('Christopher')
-        print(f'Translation\n{t}\nRotation\n{rot}')
+        # print('Christopher')
+        # print(f'Translation\n{t}\nRotation\n{rot}')
 
-        data[j, 2:5] = t
-        data[j, 5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
+        # data[j, 2:5] = t
+        # data[j, 5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
 
         ##### Approach Tamino ##########################################################################
         view_matrix = np.array(camera_settings['view_matrix']).reshape((4, 4)).transpose()
@@ -272,8 +273,10 @@ def main(args):
         t = view_matrix.dot(np.array([*model_pose['pos'], 1]))[:3]
         rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
         rot = view_matrix[:3, :3].dot(rot)
-        print('Tamino')
-        print(f'Translation\n{t}\nRotation\n{rot}')
+        data[2:5] = t
+        data[5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
+        # print('Tamino')
+        # print(f'Translation\n{t}\nRotation\n{rot}')
         #################################################################################################
 
         # generate the image of the clamp and the background
@@ -296,7 +299,7 @@ def main(args):
             if num_labels != 2:
                 # the clamp is outside of the image or multiple clamps are visible
                 # don't save the image and rerun the iteration
-                print(str(num_labels - 1), "clamps detected. Rerunning iteration")
+                print('\033[93m' + str(num_labels - 1), "clamps detected. Rerunning iteration" + '\033[0m')
                 j -= 1
                 continue
 
@@ -327,16 +330,17 @@ def main(args):
             # execute the crop
             clamp_img = clamp_img[top : top + height, left : left + width]
 
-        # export teh image
+        if clamp_img is None:
+            print(f'Could not extract ROI of image! {camera_settings}, {model_pose}')
+            j -= 1
+            continue
+
+        with open(annotation_file, mode='a') as f:
+            csv.writer(f, delimiter=',').writerow(list(data))
+
+        # export the image
         clamp_img = cv.cvtColor(clamp_img, cv.COLOR_RGB2BGR)
         cv.imwrite(os.path.join(args.output_dir, img_name), clamp_img)
-
-    # append the new data to the annotation file
-    with open(os.path.join(args.output_dir, 'data.csv'), 'a') as outfile:
-        if len(header) != 0:
-            # add a header if the file was empty before
-            np.savetxt(outfile, np.array(header).reshape((1, 8)), delimiter=",", fmt='%s')
-        np.savetxt(outfile, data.astype(str), delimiter=",", fmt='%s')
 
 if __name__ == '__main__':
     main(sys.argv)
