@@ -244,7 +244,7 @@ def main(args):
     # loop over the number of target images
     for j in tqdm.trange(starting_number, args.number + starting_number):
         data = np.empty(8, dtype=object)
-        img_name = '{:05d}'.format(j + starting_number) + '.png'
+        img_name = '{:05d}'.format(j) + '.png'
         data[0] = j
         data[1] = img_name
 
