@@ -242,7 +242,8 @@ def main(args):
         p.removeBody(coordinate_id)
 
     # loop over the number of target images
-    for j in tqdm.trange(starting_number, args.number + starting_number):
+    j = starting_number
+    while (j < args.number + starting_number):
         data = np.empty(8, dtype=object)
         img_name = '{:05d}'.format(j) + '.png'
         data[0] = j
@@ -300,7 +301,6 @@ def main(args):
                 # the clamp is outside of the image or multiple clamps are visible
                 # don't save the image and rerun the iteration
                 print('\033[93m' + str(num_labels - 1), "clamps detected. Rerunning iteration" + '\033[0m')
-                j -= 1
                 continue
 
             width = stats[1, cv.CC_STAT_WIDTH]
@@ -331,8 +331,7 @@ def main(args):
             clamp_img = clamp_img[top : top + height, left : left + width]
 
         if clamp_img is None:
-            print(f'Could not extract ROI of image! {camera_settings}, {model_pose}')
-            j -= 1
+            print(f'Could not extract ROI of image! {camera_settings}, {model_pose}. Rerun iteration.')
             continue
 
         with open(annotation_file, mode='a') as f:
@@ -341,6 +340,8 @@ def main(args):
         # export the image
         clamp_img = cv.cvtColor(clamp_img, cv.COLOR_RGB2BGR)
         cv.imwrite(os.path.join(args.output_dir, img_name), clamp_img)
+
+        j += 1
 
 if __name__ == '__main__':
     main(sys.argv)
