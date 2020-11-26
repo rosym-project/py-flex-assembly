@@ -1,0 +1,26 @@
+RobotName: "kuka"
+
+GazeboXBotPlugin:
+  gains:
+    iiwa_joint_1:   {p: 1000, d: 30}
+    iiwa_joint_2:   {p: 1000, d: 30}
+    iiwa_joint_3:   {p: 1000, d: 30}
+    iiwa_joint_4:   {p: 1000, d: 30}
+    iiwa_joint_5:   {p: 1000, d: 30}
+    iiwa_joint_6:   {p: 1000, d: 30}
+    iiwa_joint_7:   {p: 1000, d: 30}
+    SchunkEGP40_Finger1_joint: {p: 1000, d: 30}    
+    SchunkEGP40_Finger2_joint: {p: 1000, d: 30}
+
+HALInterface:
+  lib_file: "libXBotKukaiiwa"
+  lib_name: "KUKAIIWA"
+
+ModelInterface:
+  model_type: "RBDL"
+  is_model_floating_base: "false"
+
+XBotInterface:
+  urdf_path: "/home/poo/Work/RoSyM-project/ADVR_shared/iiwa14/urdf/iiwa14-camera.urdf"
+  srdf_path: "/home/poo/Work/RoSyM-project/ADVR_shared/iiwa14/srdf/iiwa14-camera.srdf"
+  joint_map_path: "/home/poo/Work/RoSyM-project/ADVR_shared/iiwa14/joint_map/kuka_joint_map-epfl.yaml"
