@@ -2,7 +2,7 @@ import argparse
 
 import torch
 
-from rotation_model import RotationDetector, TranslationDetector
+from models import RotationDetector, TranslationDetector
 from datasets import RotationDataset, TranslationDataset
 
 
@@ -10,7 +10,7 @@ def print_loss(loss, iteration, epochs, train=True):
     t = 'TRAIN' if train else 'VAL' 
     print(f'Epoch {iteration:{len(str(epochs))}d} / {epochs} : Loss={loss:.6f} : {t}')
 
-def run_epoch(detector, data_loader, loss_function, optim, train=True):
+def run_epoch(detector, data_loader, loss_function, optim, device, train=True):
     detector = detector.train() if train else detector.eval()
 
     i = 0
@@ -18,6 +18,9 @@ def run_epoch(detector, data_loader, loss_function, optim, train=True):
     for inputs, annotations in data_loader:
         print(f'Iteration {i}/{len(data_loader)}', end='\r')
         i += 1
+
+        inputs = inputs.to(device)
+        annotations = annotations.to(device)
 
         if train:
             optim.zero_grad()
@@ -63,10 +66,10 @@ optim = torch.optim.SGD(detector.parameters(), lr=args.lr, momentum=args.momentu
 loss_function = torch.nn.MSELoss()
 
 for i in range(1, args.epochs + 1):
-    epoch_loss_train = run_epoch(detector, data_loader_train, loss_function, optim, train=True) 
+    epoch_loss_train = run_epoch(detector, data_loader_train, loss_function, optim, device, train=True) 
     print_loss(epoch_loss_train, i, args.epochs, True)
 
-    epoch_loss_train = run_epoch(detector, data_loader_val, loss_function, optim, train=False) 
+    epoch_loss_train = run_epoch(detector, data_loader_val, loss_function, optim, device, train=False) 
     print_loss(epoch_loss_train, i, args.epochs, False)
 
 detector_type = 'translation' if args.translation else 'rotation'
