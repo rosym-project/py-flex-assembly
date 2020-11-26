@@ -89,15 +89,15 @@ class FlexAssemblyEnv(EnvInterface):
 
         # Table
         table_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/table_2", "table_2.urdf"), useFixedBase=True, flags = self._p.URDF_USE_INERTIA_FROM_FILE)
-        table_offset_world_x = 0.1
-        table_offset_world_y = 1.2
+        table_offset_world_x = 0.35
+        table_offset_world_y = 1.05
         table_offset_world_z = 0
         self._p.resetBasePositionAndOrientation(table_id, [table_offset_world_x, table_offset_world_y, table_offset_world_z], [0,0,0,1])
         self.object_ids['table'] = table_id
 
         # Load Rail
         rail_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/flexassembly", "rail.urdf"), useFixedBase=True)
-        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.70, table_offset_world_y-0.7, table_offset_world_z+0.7], [0, 0, 0.7071068, 0.7071068])
+        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.70, table_offset_world_y-0.5, table_offset_world_z+0.7], [0, 0, 0.7071068, 0.7071068])
         self.object_ids['rail'] = rail_id
 
         # Workpiece clamp 1
