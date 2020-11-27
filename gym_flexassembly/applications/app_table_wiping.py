@@ -37,12 +37,16 @@ class TableWiping(object):
         print("Init coord node")
 
         # receive current eef pose
-        rospy.Subscriber("/cur_ee_pose", Float32MultiArray, self.listener_cur_ee_pose)
+        # rospy.Subscriber("/cur_ee_pose", Float32MultiArray, self.listener_cur_ee_pose)
+        rospy.Subscriber("/cur_ee_pose", Pose, self.listener_cur_ee_pose)
         self.var_cur_ee_pose = Pose()
         self.lock = threading.Lock()
 
         # write trajectory command
         self.pub_traj = rospy.Publisher("/traj", Pose, queue_size=1,latch=True)
+
+        # write trajectory command pass through without interpolation
+        self.pub_traj_pt = rospy.Publisher("/traj_pt", Pose, queue_size=1,latch=True)
 
         # # spin() simply keeps python from exiting until this node is stopped
         # rospy.spin()
@@ -71,10 +75,13 @@ class TableWiping(object):
         # Wait until reached
 
         start_time = time.time_ns() / (10 ** 9) # convert to floating-point seconds
-        while (time.time_ns() / (10 ** 9) - start_time) < 5.0:
+        while (time.time_ns() / (10 ** 9) - start_time) < 20.0:
             with self.lock:
                 cur_ee_pose_tmp = self.var_cur_ee_pose
-            if math.fabs(cur_ee_pose_tmp.position.x - goal.position.x) < 0.003 and math.fabs(cur_ee_pose_tmp.position.y - goal.position.y) < 0.003 and math.fabs(cur_ee_pose_tmp.position.z - goal.position.z) < 0.003:
+#             print (math.fabs(
+# np.linalg.norm(np.array([cur_ee_pose_tmp.position.x,cur_ee_pose_tmp.position.y,cur_ee_pose_tmp.position.z])-np.array([goal.position.x,goal.position.y,goal.position.z]))))
+            if math.fabs(
+np.linalg.norm(np.array([cur_ee_pose_tmp.position.x,cur_ee_pose_tmp.position.y,cur_ee_pose_tmp.position.z])-np.array([goal.position.x,goal.position.y,goal.position.z]))) < 0.01:
                 # reached
                 break
             self.rate.sleep()
@@ -87,10 +94,13 @@ class TableWiping(object):
 
         # Wait until reached
         start_time = time.time_ns() / (10 ** 9) # convert to floating-point seconds
-        while (time.time_ns() / (10 ** 9) - start_time) < 5.0:
+        while (time.time_ns() / (10 ** 9) - start_time) < 20.0:
             with self.lock:
                 cur_ee_pose_tmp = self.var_cur_ee_pose
-            if math.fabs(cur_ee_pose_tmp.position.x - goal.position.x) < 0.003 and math.fabs(cur_ee_pose_tmp.position.y - goal.position.y) < 0.003 and math.fabs(cur_ee_pose_tmp.position.z - goal.position.z) < 0.003:
+#             print (math.fabs(
+# np.linalg.norm(np.array([cur_ee_pose_tmp.position.x,cur_ee_pose_tmp.position.y,cur_ee_pose_tmp.position.z])-np.array([goal.position.x,goal.position.y,goal.position.z]))))
+            if math.fabs(
+np.linalg.norm(np.array([cur_ee_pose_tmp.position.x,cur_ee_pose_tmp.position.y,cur_ee_pose_tmp.position.z])-np.array([goal.position.x,goal.position.y,goal.position.z]))) < 0.01:
                 # reached
                 break
             self.rate.sleep()
@@ -120,7 +130,7 @@ class TableWiping(object):
             goal.position.y = circ[1]
             goal.position.z = circ[2]
 
-            self.pub_traj.publish(goal)
+            self.pub_traj_pt.publish(goal)
 
             print(goal)
 
@@ -138,10 +148,13 @@ class TableWiping(object):
 
     def listener_cur_ee_pose(self, payload):
         with self.lock:
-            data = np.array(payload.data).reshape((4, 4))
-            self.var_cur_ee_pose.position.x = data[3,0]
-            self.var_cur_ee_pose.position.y = data[3,1]
-            self.var_cur_ee_pose.position.z = data[3,2]
+            # data = np.array(payload.data).reshape((4, 4))
+            # self.var_cur_ee_pose.position.x = data[3,0]
+            # self.var_cur_ee_pose.position.y = data[3,1]
+            # self.var_cur_ee_pose.position.z = data[3,2]
+
+            self.var_cur_ee_pose = payload
+            # print(self.var_cur_ee_pose.position)
             
             # TODO etc...
             # self.var_cur_ee_pose.orientation.x = data[3]
