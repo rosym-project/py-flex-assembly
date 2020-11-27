@@ -38,7 +38,7 @@ class TableWiping(object):
 
         # receive current eef pose
         # rospy.Subscriber("/cur_ee_pose", Float32MultiArray, self.listener_cur_ee_pose)
-        rospy.Subscriber("/cur_ee_pose", Pose, self.listener_cur_ee_pose)
+        rospy.Subscriber("/cart_imped_high/cartesian_pose", Pose, self.listener_cur_ee_pose)
         self.var_cur_ee_pose = Pose()
         self.lock = threading.Lock()
 
