@@ -53,13 +53,13 @@ args = parser.parse_args()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print('Use device', device)
 
-detector = TranslationDataset(True) if args.translation else RotationDetector(True)
+detector = TranslationDetector(True) if args.translation else RotationDetector(True)
 detector = detector.to(device)
 
 #TODO
-dataset_train = TranslationDataset(arsg.dataset_train) if args.translation else RotationDataset(args.dataset_train)
+dataset_train = TranslationDataset(args.dataset_train) if args.translation else RotationDataset(args.dataset_train)
 data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True)
-dataset_val = TranslationDataset(arsg.dataset_val) if args.translation else RotationDataset(args.dataset_val)
+dataset_val = TranslationDataset(args.dataset_val) if args.translation else RotationDataset(args.dataset_val)
 data_loader_val = torch.utils.data.DataLoader(dataset_val, batch_size=args.batch_size, shuffle=True)
 
 optim = torch.optim.SGD(detector.parameters(), lr=args.lr, momentum=args.momentum)
