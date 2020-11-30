@@ -29,7 +29,7 @@ def drawAxis(img, model_pose, rotation_matrix, translation_vec):
                               [0, 0, 1]], dtype='double')
     dist_coeffs = np.zeros((4, 1))  # Assuming no lens distortion
 
-    # compute rodrigues vector from rotation matrix    
+    # compute rodrigues vector from rotation matrix
     rotation_vec, _ = cv.Rodrigues(rotation_matrix)
 
     # construct axis for model pose
@@ -253,22 +253,6 @@ def main(args):
         camera_settings = get_random_camera_settings(model_pose['pos'])
 
         # transform the pose from global coordinates to camera coordinates
-        ##### Approach Christopher #######################################################################
-        camera_y = np.array(camera_settings['target_pos']) - np.array(camera_settings['pos'])
-        camera = np.array([np.cross(camera_y, camera_settings['up']), camera_y, camera_settings['up']])
-
-        t = model_pose['pos']
-        t = camera.dot(t)
-
-        rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
-        rot = camera.dot(rot)
-        # print('Christopher')
-        # print(f'Translation\n{t}\nRotation\n{rot}')
-
-        # data[j, 2:5] = t
-        # data[j, 5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
-
-        ##### Approach Tamino ##########################################################################
         view_matrix = np.array(camera_settings['view_matrix']).reshape((4, 4)).transpose()
 
         t = view_matrix.dot(np.array([*model_pose['pos'], 1]))[:3]
@@ -276,9 +260,6 @@ def main(args):
         rot = view_matrix[:3, :3].dot(rot)
         data[2:5] = t
         data[5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
-        # print('Tamino')
-        # print(f'Translation\n{t}\nRotation\n{rot}')
-        #################################################################################################
 
         # generate the image of the clamp and the background
         background, clamp_img = generate_image(paths[0], model_pose, camera_settings)
