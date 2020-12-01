@@ -6,7 +6,7 @@ from models import RotationDetector, TranslationDetector
 from datasets import RotationDataset, TranslationDataset
 
 
-def print_loss(loss, iteration, epochs, train=True):
+def print_loss(loss, iteration, epochs, logger, train=True):
     t = 'TRAIN' if train else 'VAL' 
     print(f'Epoch {iteration:{len(str(epochs))}d} / {epochs} : Loss={loss:.6f} : {t}')
 
@@ -47,11 +47,15 @@ parser.add_argument('--lr', type=float, default=1e-4)
 parser.add_argument('--momentum', type=float, default=0.95)
 parser.add_argument('--epochs', type=int, default=30)
 parser.add_argument('--output_file', type=str, default='detector.pth')
+parser.add_argument('--logfile', type=str, default='train.log',
+                    help='the file to which the training progress is logged')
 args = parser.parse_args()
 
+logger.add(args.logfile, level='DEBUG')
+logger.info(f'Args: {args}')
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-print('Use device', device)
+logger.debug('Use device', device)
 
 detector = TranslationDetector(True) if args.translation else RotationDetector(True)
 detector = detector.to(device)
@@ -67,10 +71,10 @@ loss_function = torch.nn.MSELoss()
 
 for i in range(1, args.epochs + 1):
     epoch_loss_train = run_epoch(detector, data_loader_train, loss_function, optim, device, train=True) 
-    print_loss(epoch_loss_train, i, args.epochs, True)
+    print_loss(epoch_loss_train, i, args.epochs, logger, True)
 
     epoch_loss_train = run_epoch(detector, data_loader_val, loss_function, optim, device, train=False) 
-    print_loss(epoch_loss_train, i, args.epochs, False)
+    print_loss(epoch_loss_train, i, args.epochs, logger, False)
 
 detector_type = 'translation' if args.translation else 'rotation'
 torch.save(detector.state_dict(), f'{detector_type}_{args.output_file}')
