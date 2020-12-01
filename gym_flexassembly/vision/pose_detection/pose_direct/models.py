@@ -1,32 +1,32 @@
 import torch
 import torchvision
 
-class VGG16ToNBackend(torch.nn.Module):
+class VGG16NBackend(torch.nn.Module):
 
-    def __init__(self, n, before_pool=True, pretrained=True):
+    def __init__(self, n=3, before_pool=True, pretrained=True, channel_reduction=8):
         #TODO: this is only viable for n = 3 with channel reduction
         # else there are just to many connections for the fully connected part
-        super(VGG16ToNBackend, self).__init__()
+        super(VGG16NBackend, self).__init__()
 
-        self.backend_feature_number = 4096
+        self.feature_number = 4096
 
         vgg16 = torchvision.models.vgg16(pretrained=pretrained)
-        vgg16_children = list(vgg16.children())
-        convolutions_children = list(vgg16_children[0].children())
+        convolution_layers = list(list(vgg16.children())[0].children())
 
-        nth_pooling_idx = self.find_nth_pooling_layer(n, convolutions_children, before_pool)
-        self.backend_bot = torch.nn.Sequential(
-                *convolutions_children[:nth_pooling_idx],
-                # reduce channeld count
-                torch.nn.Conv2d(256, 32, 3, padding=1),
-                torch.nn.ReLU()
-                )
+        idx = self.find_nth_pooling_layer(n, convolution_layers, before_pool)
+        out_channels = convolution_layers[idx - (0 if before_pool else 1) - 2].out_channels
+
+        self.convolution_backend = torch.nn.Sequential(
+                *convolution_layers[:idx],
+                # reduce channel count
+                torch.nn.Conv2d(out_channels, int(out_channels / channel_reduction), 3, padding=1),
+                torch.nn.ReLU(inplace=True))
 
         input_shape = (3, 224, 224)
-        output_shape = self.backend_bot(torch.empty((1, *input_shape))).squeeze(0).shape
-        self.linear_input_size = output_shape[0] * output_shape[1] * output_shape[2]
+        output_shape = self.convolution_backend(torch.empty((1, *input_shape))).squeeze(0).shape
+        self.linear_in_size = output_shape[0] * output_shape[1] * output_shape[2]
 
-        self.backend_top = torch.nn.Linear(in_features=self.linear_input_size, out_features=self.backend_feature_number)
+        self.linear_backend = torch.nn.Linear(in_features=self.linear_in_size, out_features=self.feature_number)
 
     def find_nth_pooling_layer(self, n, layers, before_pool):
         pooling_layer_count = 0
@@ -42,9 +42,9 @@ class VGG16ToNBackend(torch.nn.Module):
         return idx if before_pool else idx + 1
 
     def forward(self, data):
-        x = self.backend_bot(data)
-        x = x.view(x.shape[0], self.linear_input_size)
-        return self.backend_top(x)
+        x = self.convolution_backend(data)
+        x = x.view(x.shape[0], self.linear_in_size)
+        return self.linear_backend(x)
 
 
 class VGG16Backend(torch.nn.Module):
@@ -55,65 +55,65 @@ class VGG16Backend(torch.nn.Module):
         vgg16 = torchvision.models.vgg16(pretrained=pretrained)
         vgg16_children = list(vgg16.children())
 
-        self.backend_bot = torch.nn.Sequential(*vgg16_children[:-1])
+        self.convolution_backend = torch.nn.Sequential(*vgg16_children[:-1])
 
-        self.backend_top = vgg16_children[-1]
-        self.backend_top = torch.nn.Sequential(*(list(self.backend_top.children())[:-1]))
+        self.linear_backend = vgg16_children[-1]
+        self.linear_backend = torch.nn.Sequential(*(list(self.linear_backend.children())[:-1]))
         
-        self.backend_parameters = self.parameters()
-        self.backend_feature_number = 4096
+        self.parameters = self.parameters()
+        self.feature_number = 4096
 
     def forward(self, data):
-        x = self.backend_bot(data)
+        x = self.convolution_backend(data)
         x = x.view(x.shape[0], 25088) # 25088 = 512 * 7 * 7
-        return self.backend_top(x)
+        return self.linear_backend(x)
 
 
-class Resnet18Base(torch.nn.Module):
+class Resnet18Backend(torch.nn.Module):
 
     def __init__(self, pretrained=True):
-        super(Resnet18Base, self).__init__()
+        super(Resnet18Backend, self).__init__()
 
         resnet18 = torchvision.models.resnet18(pretrained=pretrained)
-        # remove the classification layer
-        self.backend = torch.nn.Sequential(*(list(resnet18.children())[:-1]))
-        # save number of features output by backend
-        self.backend_feature_number = resnet18.fc.in_features
-        
-        self.backend_parameters = self.parameters()
+        self.layers = torch.nn.Sequential(*(list(resnet18.children())[:-1]))
+        self.feature_number = resnet18.fc.in_features
+        self.parameters = self.parameters()
 
     def forward(self, data):
-        return self.backend(data).squeeze(dim=3).squeeze(dim=2)
+        return self.layers(data).squeeze(dim=3).squeeze(dim=2)
 
 
-class RotationDetector(VGG16Backend):
+class RotationDetector(torch.nn.Module):
     """
     A neural network to detect the rotation of a clamp
     """
 
-    def __init__(self, init_backend=True):
-        super(RotationDetector, self).__init__(pretrained=init_backend)
+    def __init__(self, backend):
+        super(RotationDetector, self).__init__()
 
-        self.rotation = torch.nn.Linear(self.backend_feature_number, 3)
+        self.backend = backend
+
+        self.rotation = torch.nn.Linear(self.backend.feature_number, 3)
         self.rotation_parameters = self.rotation.parameters()
 
     def forward(self, data):
-        features = super().forward(data)
+        features = self.backend(data)
         return self.rotation(features)
 
 
-class TranslationDetector(VGG16ToNBackend):
+class TranslationDetector(torch.nn.Module):
     """
-    A neural network to detect the rotation of a clamp
+    A neural network to detect the translation of a clamp
     """
 
-    def __init__(self, init_backend=True):
-        super(TranslationDetector, self).__init__(3, init_backend)
+    def __init__(self, backend):
+        super(TranslationDetector, self).__init__()
 
-        self.translation = torch.nn.Linear(self.backend_feature_number, 3)
+        self.backend = backend
+
+        self.translation = torch.nn.Linear(self.backend.feature_number, 3)
         self.translation_parameters = self.translation.parameters()
 
     def forward(self, data):
-        features = super().forward(data)
+        features = self.backend(data)
         return self.translation(features)
-
