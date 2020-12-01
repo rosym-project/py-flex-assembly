@@ -117,3 +117,6 @@ class TranslationDetector(torch.nn.Module):
     def forward(self, data):
         features = self.backend(data)
         return self.translation(features)
+
+
+backends = [Resnet18Backend, VGG16Backend, VGG16NBackend]

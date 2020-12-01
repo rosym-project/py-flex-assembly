@@ -1,7 +1,10 @@
 import argparse
+import importlib
 
+from loguru import logger
 import torch
 
+import models
 from models import RotationDetector, TranslationDetector
 from datasets import RotationDataset, TranslationDataset
 
@@ -49,6 +52,7 @@ parser.add_argument('--epochs', type=int, default=30)
 parser.add_argument('--output_file', type=str, default='detector.pth')
 parser.add_argument('--logfile', type=str, default='train.log',
                     help='the file to which the training progress is logged')
+parser.add_argument('--backend', type=str, default=models.backends[1].__name__)
 args = parser.parse_args()
 
 logger.add(args.logfile, level='DEBUG')
@@ -57,10 +61,10 @@ logger.info(f'Args: {args}')
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 logger.debug('Use device', device)
 
-detector = TranslationDetector(True) if args.translation else RotationDetector(True)
+backend = getattr(models, args.backend)()
+detector = TranslationDetector(backend) if args.translation else RotationDetector(backend)
 detector = detector.to(device)
 
-#TODO
 dataset_train = TranslationDataset(args.dataset_train) if args.translation else RotationDataset(args.dataset_train)
 data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True)
 dataset_val = TranslationDataset(args.dataset_val) if args.translation else RotationDataset(args.dataset_val)
