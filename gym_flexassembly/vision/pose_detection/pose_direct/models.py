@@ -18,7 +18,7 @@ class VGG16ToNBackend(torch.nn.Module):
         self.backend_bot = torch.nn.Sequential(
                 *convolutions_children[:nth_pooling_idx],
                 # reduce channeld count
-                torch.nn.Conv2d(256, 64, 3, padding=1),
+                torch.nn.Conv2d(256, 32, 3, padding=1),
                 torch.nn.ReLU()
                 )
 
@@ -86,13 +86,13 @@ class Resnet18Base(torch.nn.Module):
         return self.backend(data).squeeze(dim=3).squeeze(dim=2)
 
 
-class RotationDetector(VGG16ToNBackend):
+class RotationDetector(VGG16Backend):
     """
     A neural network to detect the rotation of a clamp
     """
 
     def __init__(self, init_backend=True):
-        super(RotationDetector, self).__init__(3, pretrained=init_backend)
+        super(RotationDetector, self).__init__(pretrained=init_backend)
 
         self.rotation = torch.nn.Linear(self.backend_feature_number, 3)
         self.rotation_parameters = self.rotation.parameters()
