@@ -10,8 +10,8 @@ from datasets import RotationDataset, TranslationDataset
 
 
 def print_loss(loss, iteration, epochs, logger, train=True):
-    t = 'TRAIN' if train else 'VAL' 
-    print(f'Epoch {iteration:{len(str(epochs))}d} / {epochs} : Loss={loss:.6f} : {t}')
+    phase = 'TRAIN' if train else 'VAL' 
+    logger.info(f'Epoch={iteration}/{epochs}, Loss={loss:.6f}, Phase={phase}')
 
 def run_epoch(detector, data_loader, loss_function, optim, device, train=True):
     detector = detector.train() if train else detector.eval()
@@ -59,7 +59,7 @@ logger.add(args.logfile, level='DEBUG')
 logger.info(f'Args: {args}')
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-logger.debug('Use device', device)
+logger.debug(f'Use device {device}')
 
 backend = getattr(models, args.backend)()
 detector = TranslationDetector(backend) if args.translation else RotationDetector(backend)
