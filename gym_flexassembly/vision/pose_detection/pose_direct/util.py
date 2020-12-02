@@ -4,8 +4,12 @@ import cv2 as cv
 import numpy as np
 import PIL
 import torch
+import torchvision
 
-import models
+import gym_flexassembly.vision.pose_detection.pose_direct.models as models
+
+IMAGE_NET_MEAN = [0.485, 0.456, 0.406]
+IMAGE_NET_STD  = [0.229, 0.224, 0.225]
 
 def expand_to_range(left, right, new_size, lower, upper):
     """
@@ -58,10 +62,10 @@ def crop_image(img, lower_hsv=DEFAULT_LOWER_HSV, upper_hsv=DEFAULT_UPPER_HSV):
     else:
         top, bottom = expand_to_range(top, bottom, width, 0, img.shape[0])
 
-    return img[top:bottom, left:right], mask
+    return img[top:bottom, left:right]
 
 
-class Crop_Clamp:
+class CropClamp:
 
     def __init__(self, lower_hsv=DEFAULT_LOWER_HSV, upper_hsv=DEFAULT_UPPER_HSV):
         self.lower_hsv = lower_hsv
@@ -72,8 +76,7 @@ class Crop_Clamp:
 
 
 def opencv_to_PIL(img):
-    return PIL.Image.fromarray(cv.cvtColor(img, cv.BGR2RGB))
-
+    return PIL.Image.fromarray(cv.cvtColor(img, cv.COLOR_BGR2RGB))
 
 class OpenCVToPil:
 
@@ -84,8 +87,8 @@ class OpenCVToPil:
 def get_rotation_transform(train=False):
     #TODO: add noise in case of training_mode
     return torchvision.transforms.Compose([
+        CropClamp(),
         OpenCVToPil(),
-        Crop_Clamp(),
         torchvision.transforms.Resize((224, 224)),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(IMAGE_NET_MEAN, IMAGE_NET_STD)
@@ -94,6 +97,20 @@ def get_rotation_transform(train=False):
 
 def pre_process_rotation(img):
     return get_rotation_transform()(img).unsqueeze(dim=0)
+
+
+def get_translation_transform(train=False):
+    #TODO: add noise in case of training_mode
+    return torchvision.transforms.Compose([
+        OpenCVToPil(),
+        torchvision.transforms.Resize((224, 224)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize(IMAGE_NET_MEAN, IMAGE_NET_STD)
+    ])
+
+
+def pre_process_translation(img):
+    return get_translation_transform()(img).unsqueeze(dim=0)
 
 
 def load_model_parser(model_type='rotation', description='', parser=None):
@@ -125,39 +142,4 @@ def load_model(args, device, model_type='rotation'):
 
     model = model.to(device)
     return model
-
-if __name__ == '__main__':
-    parser = load_model_parser()
-    args = parser.parse_args()
-    print(args)
-
-    model = load_model(args, torch.device('cpu'))
-    # import os
-
-    # in_dir = 'pose_datasets/large'
-    # out_dir = 'pose_datasets/large_cropped'
-    # image_files = [f for f in os.listdir(in_dir) if f.endswith('.png')] 
-    # image_files.sort()
-
-    # for image_file in image_files:
-        # img = cv.imread(os.path.join(in_dir, image_file), cv.IMREAD_COLOR)
-
-        # img, mask = crop_image(img)
-
-        # print('Write: ' + os.path.join(out_dir, image_file))
-        # cv.imwrite(os.path.join(out_dir, image_file), img)
-
-        # # cv.imshow('Image', img)
-        # # cv.imshow('Mask', mask)
-        # # if cv.waitKey(0) == ord('q'):
-            # # break
-        # # try:
-            # # img = crop_image(img)
-
-            # # cv.imshow('Image', img)
-            # # cv.waitKey(0)
-        # # except ValueError as e:
-            # # print(e)
-            # # cv.imshow('Fail', img)
-            # # cv.waitKey(0)
 
