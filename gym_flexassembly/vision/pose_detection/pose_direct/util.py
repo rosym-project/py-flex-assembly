@@ -96,7 +96,7 @@ def pre_process_rotation(img):
     return get_rotation_transform()(img).unsqueeze(dim=0)
 
 
-def load_model_parser(description='', parser=None):
+def load_model_parser(model_type='rotation', description='', parser=None):
     if parser is None:
         _parser = argparse.ArgumentParser(description=description,
                                           formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -105,19 +105,23 @@ def load_model_parser(description='', parser=None):
 
     
     backend_names = list(map(lambda backend_cls: backend_cls.__name__, models.backends))
-    _parser.add_argument('-b', '--backend', type=str, default=models.backends[-1].__name__,
+    _parser.add_argument(f'--{model_type}_backend', type=str, default=models.backends[-1].__name__,
             help=f'set the backend used by the model. Backends: {backend_names}')
-    _parser.add_argument('-w', '--weights', type=str, default=None,
+    _parser.add_argument(f'--{model_type}_weights', type=str, default=None,
              help='set a weights file to restore the model weights. If None the backend is still loaded with pretrained weights')
+
     return _parser
 
 
-def load_model(args, device):
-    backend = getattr(models, args.backend)(pretrained=(args.weights == None))
-    model = models.RotationDetector(backend)
+def load_model(args, device, model_type='rotation'):
+    backend_cls_name = getattr(args, f'{model_type}_backend')
+    weights = getattr(args, f'{model_type}_weights')
 
-    if args.weights is not None:
-        model.load_state_dict(torch.load(args.weights, map_location=device), strict=True)
+    backend = getattr(models, backend_cls_name)(pretrained=(weights == None))
+    model = models.RotationDetector(backend) if model_type == 'rotation' else models.TranslationDetector(backend)
+
+    if weights is not None:
+        model.load_state_dict(torch.load(weights, map_location=device), strict=True)
 
     model = model.to(device)
     return model
