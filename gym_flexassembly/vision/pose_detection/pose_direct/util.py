@@ -120,19 +120,29 @@ def load_model_parser(model_type='rotation', description='', parser=None):
     else:
         _parser = parser
 
+    backend_arg = '--backend' if model_type == '' else f'--{model_type}_backend'
+    weights_arg = '--weights' if model_type == '' else f'--{model_type}_weights'
     
     backend_names = list(map(lambda backend_cls: backend_cls.__name__, models.backends))
-    _parser.add_argument(f'--{model_type}_backend', type=str, default=models.backends[-1].__name__,
+    _parser.add_argument(backend_arg, type=str, default=models.backends[-1].__name__,
             help=f'set the backend used by the model. Backends: {backend_names}')
-    _parser.add_argument(f'--{model_type}_weights', type=str, default=None,
+    _parser.add_argument(weights_arg, type=str, default=None,
              help='set a weights file to restore the model weights. If None the backend is still loaded with pretrained weights')
 
     return _parser
 
 
 def load_model(args, device, model_type='rotation'):
-    backend_cls_name = getattr(args, f'{model_type}_backend')
-    weights = getattr(args, f'{model_type}_weights')
+    try:
+        backend_cls_name = getattr(args, f'{model_type}_backend')
+    except AttributeError:
+        backend_cls_name = getattr(args, 'backend')
+
+    try:
+        weights = getattr(args, f'{model_type}_weights')
+    except AttributeError:
+        weights = getattr(args, 'weights')
+
 
     backend = getattr(models, backend_cls_name)(pretrained=(weights == None))
     model = models.RotationDetector(backend) if model_type == 'rotation' else models.TranslationDetector(backend)
