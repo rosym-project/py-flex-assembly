@@ -26,6 +26,7 @@ class TranslationDataset(torch.utils.data.Dataset):
 
         self.transforms = torchvision.transforms.Compose([
             #TODO: maybe add color jitter?
+            torchvision.transforms.CenterCrop(512),
             torchvision.transforms.Resize((224, 224)),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize(IMAGE_NET_MEAN, IMAGE_NET_STD)
