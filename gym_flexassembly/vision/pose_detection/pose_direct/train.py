@@ -4,14 +4,14 @@ import importlib
 from loguru import logger
 import torch
 
-import models
-from models import RotationDetector, TranslationDetector
-from datasets import RotationDataset, TranslationDataset
+import gym_flexassembly.vision.pose_detection.pose_direct.datasets as datasets
+import gym_flexassembly.vision.pose_detection.pose_direct.util as util
 
 
 def print_loss(loss, iteration, epochs, logger, train=True):
     phase = 'TRAIN' if train else 'VAL' 
     logger.info(f'Epoch={iteration}/{epochs}, Loss={loss:.6f}, Phase={phase}')
+
 
 def run_epoch(detector, data_loader, loss_function, optim, device, train=True):
     detector = detector.train() if train else detector.eval()
@@ -41,18 +41,25 @@ def run_epoch(detector, data_loader, loss_function, optim, device, train=True):
     return epoch_loss / len(data_loader)
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('dataset_train')
-parser.add_argument('dataset_val')
-parser.add_argument('--translation', action='store_true')
-parser.add_argument('--batch_size', type=int, default=16)
-parser.add_argument('--lr', type=float, default=1e-4)
-parser.add_argument('--momentum', type=float, default=0.95)
-parser.add_argument('--epochs', type=int, default=30)
-parser.add_argument('--output_file', type=str, default='detector.pth')
+parser = util.load_model_parser(model_type='', description='train a pose direct model')
+parser.add_argument('--data_train', required=True, type=str,
+                    help='location of the training data set')
+parser.add_argument('--data_val', required=True, type=str,
+                    help='location of the validation data set')
+parser.add_argument('--translation', action='store_true',
+                    help='if a translation or totation model should be trained')
+parser.add_argument('--batch_size', type=int, default=16,
+                    help='the batch size')
+parser.add_argument('--lr', type=float, default=1e-4,
+                    help='the learning rate')
+parser.add_argument('--momentum', type=float, default=0.95,
+                    help='the momentum')
+parser.add_argument('--epochs', type=int, default=30,
+                    help='the number of epochs to train')
+parser.add_argument('--output_file', type=str, default='detector',
+                    help='the name of the file into which the trained weights are saved')
 parser.add_argument('--logfile', type=str, default='train.log',
                     help='the file to which the training progress is logged')
-parser.add_argument('--backend', type=str, default=models.backends[1].__name__)
 args = parser.parse_args()
 
 logger.add(args.logfile, level='DEBUG')
@@ -61,13 +68,12 @@ logger.info(f'Args: {args}')
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 logger.debug(f'Use device {device}')
 
-backend = getattr(models, args.backend)()
-detector = TranslationDetector(backend) if args.translation else RotationDetector(backend)
-detector = detector.to(device)
+model_type = 'translation' if args.translation else 'rotation'
+detector = util.load_model(args, device, model_type)
 
-dataset_train = TranslationDataset(args.dataset_train) if args.translation else RotationDataset(args.dataset_train)
+dataset_train = datasets.TranslationDataset(args.data_train) if args.translation else datasets.RotationDataset(args.data_train)
 data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True)
-dataset_val = TranslationDataset(args.dataset_val) if args.translation else RotationDataset(args.dataset_val)
+dataset_val = datasets.TranslationDataset(args.data_val) if args.translation else datasets.RotationDataset(args.data_val)
 data_loader_val = torch.utils.data.DataLoader(dataset_val, batch_size=args.batch_size, shuffle=True)
 
 optim = torch.optim.SGD(detector.parameters(), lr=args.lr, momentum=args.momentum)
