@@ -81,4 +81,4 @@ for i in range(1, args.epochs + 1):
     print_loss(epoch_loss_train, i, args.epochs, logger, False)
 
 detector_type = 'translation' if args.translation else 'rotation'
-torch.save(detector.state_dict(), f'{detector_type}_{args.output_file}')
+torch.save(detector.state_dict(), f'{detector_type}_{args.output_file}.pth')
