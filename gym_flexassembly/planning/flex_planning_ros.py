@@ -66,13 +66,13 @@ from klampt.model import trajectory
 class FlexPlanningROS(object):
     def __init__(self, name="flex_planning_ros"):
         # Load the scenario
-        self.environment = FlexAssemblyEnv(stepping=False, gui=False, direct=True, use_real_interface=False, static=True) # For debuging visualization turn gui=True on.
+        self.environment = FlexAssemblyEnv(stepping=False, gui=True, direct=True, use_real_interface=False, static=True) # For debuging visualization turn gui=True on.
         p.setRealTimeSimulation(0)
-        p.setTimeStep(0.001)
+        p.setTimeStep(0.01)
 
         # Init ROS node
         rospy.init_node(name, anonymous=False)
-        self.rate = rospy.Rate(1000) # 1000hz
+        self.rate = rospy.Rate(500) # 1000hz
 
         # Upload robots to parameter server
         self.robotMap = rospy.get_param("robot_map")
@@ -102,7 +102,7 @@ class FlexPlanningROS(object):
         print("\nRunning... (Ctrl-c to exit)\n")
 
         while not rospy.is_shutdown():
-            p.stepSimulation()
+            # p.stepSimulation()
             self.rate.sleep()
         print("Shutting down...")
 
@@ -126,11 +126,15 @@ class FlexPlanningROS(object):
             except rospy.ServiceException as e:
                 print("Service call env/get_robot_joints_state for robot_id " + str(robot_id) + " failed: %s"%e)
 
+        p.stepSimulation()
+        # time.sleep(4)
+        # p.stepSimulation()
+
         print("Planning to ", [req.goal.position.x, req.goal.position.y, req.goal.position.z])
         path, goalposjoint = self.planner.calculatePath([req.goal.position.x, req.goal.position.y, req.goal.position.z], [req.goal.orientation.x,req.goal.orientation.y,req.goal.orientation.z,req.goal.orientation.w])
         if not path:
             print("No path returned!", file=sys.stderr)
-            # return None
+            return None
 
         # print("\n\nPATH:",path)
 
@@ -144,13 +148,13 @@ class FlexPlanningROS(object):
         for j in self.planner.getInvolvedRobotJointNames():
             jt.joint_names.append(str(j))
 
-        ############ TEST ONE SHOT!
-        jt_tmp = JointTrajectoryPoint(positions=goalposjoint, velocities=[0]*num_involved_joints)
-        self.pub_traj.publish(jt_tmp)
-        jt.points.append(jt_tmp)
-        print(jt_tmp)
-        return jt
-        #########
+        # ############ TEST ONE SHOT!
+        # jt_tmp = JointTrajectoryPoint(positions=goalposjoint, velocities=[0]*num_involved_joints)
+        # self.pub_traj.publish(jt_tmp)
+        # jt.points.append(jt_tmp)
+        # print(jt_tmp)
+        # return jt
+        # #########
 
         milestones=[]
         for entry in path:
@@ -160,11 +164,11 @@ class FlexPlanningROS(object):
 
         # milestones.append(list(goalposjoint))
         
-        dt = 0.01  #approximately a 100Hz control loop
+        dt = 0.001  #approximately a 100Hz control loop
 
         # lastCommand = np.array([0]*num_involved_joints) # TODO change to current
         lastCommand = np.array(robot_joints_state.state.position[0:7])
-        maxVelRad = 0.3 # adjust
+        maxVelRad = 0.2 # adjust
         for x in range(len(milestones)):
             # Do indirect limiting of velocity
             while True:
@@ -176,17 +180,17 @@ class FlexPlanningROS(object):
                     scaling = (jointDistPerPeriodStep/jointDistance)
                 lastCommand = lastCommand + scaling * errorT
 
-                if np.linalg.norm(np.array(milestones[x]) - lastCommand) <= 0.001: # todo adjust this
-                    lastCommand = np.array(milestones[x])
+                if np.linalg.norm(np.array(milestones[x]) - lastCommand) <= 0.0001: # todo adjust this
+                    # lastCommand = np.array(milestones[x])
                     
                     jt_tmp = JointTrajectoryPoint(positions=lastCommand, velocities=[0]*num_involved_joints)
                     self.pub_traj.publish(jt_tmp)
 
                     jt.points.append(jt_tmp)
 
-                    print("last: " + str(jt_tmp))
+                    # print("last: " + str(jt_tmp))
 
-                    time.sleep(dt)
+                    # time.sleep(dt)
 
                     break
                 else:
@@ -195,9 +199,10 @@ class FlexPlanningROS(object):
 
                     jt.points.append(jt_tmp)
 
-                    print(jt_tmp)
+                    # print(jt_tmp)
 
-                    time.sleep(dt)
+                    # time.sleep(dt)
+        lastCommand = np.array([0]*num_involved_joints) # TODO change to current
 
 
         # for entry in milestones:

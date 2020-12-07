@@ -142,6 +142,12 @@ class EnvInterface(gym.Env):
         '''
         pass
 
+    def upload_urdf(self, urdf, slot):
+        ''' Call this one time to enter the main loop.
+        '''
+        if self._use_real_interface and not rospy.is_shutdown():
+            rospy.set_param(slot, urdf)
+
     def env_loop(self):
         ''' Call this one time to enter the main loop.
         '''
