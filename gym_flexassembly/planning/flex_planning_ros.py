@@ -66,7 +66,7 @@ from klampt.model import trajectory
 class FlexPlanningROS(object):
     def __init__(self, name="flex_planning_ros"):
         # Load the scenario
-        self.environment = FlexAssemblyEnv(stepping=False, gui=True, direct=True, use_real_interface=False, static=True) # For debuging visualization turn gui=True on.
+        self.environment = FlexAssemblyEnv(stepping=False, gui=False, direct=True, use_real_interface=False, static=True) # For debuging visualization turn gui=True on.
         p.setRealTimeSimulation(0)
         p.setTimeStep(0.01)
 
