@@ -9,7 +9,7 @@ import gym_flexassembly.vision.pose_detection.pose_direct.util as util
 
 
 def print_loss(loss, iteration, epochs, logger, train=True):
-    phase = 'TRAIN' if train else 'VAL' 
+    phase = 'TRAIN' if train else 'VAL'
     logger.info(f'Epoch={iteration}/{epochs}, Loss={loss:.6f}, Phase={phase}')
 
 
@@ -30,7 +30,8 @@ def run_epoch(detector, data_loader, loss_function, optim, device, train=True):
 
         inputs = inputs.to(device)
         outputs = detector(inputs)
-        loss = loss_function(outputs, annotations)
+        loss = loss_function(outputs, annotations) # needed for torch.nn.Module
+        #loss = loss_function.apply(outputs, annotations) # needed for torch.autograd.Function
 
         epoch_loss += loss.detach()
 
@@ -78,12 +79,14 @@ data_loader_val = torch.utils.data.DataLoader(dataset_val, batch_size=args.batch
 
 optim = torch.optim.SGD(detector.parameters(), lr=args.lr, momentum=args.momentum)
 loss_function = torch.nn.MSELoss()
+#loss_function = util.QuatLossModule()
+#loss_function = util.QuatLossFunction()
 
 for i in range(1, args.epochs + 1):
-    epoch_loss_train = run_epoch(detector, data_loader_train, loss_function, optim, device, train=True) 
+    epoch_loss_train = run_epoch(detector, data_loader_train, loss_function, optim, device, train=True)
     print_loss(epoch_loss_train, i, args.epochs, logger, True)
 
-    epoch_loss_train = run_epoch(detector, data_loader_val, loss_function, optim, device, train=False) 
+    epoch_loss_train = run_epoch(detector, data_loader_val, loss_function, optim, device, train=False)
     print_loss(epoch_loss_train, i, args.epochs, logger, False)
 
 detector_type = 'translation' if args.translation else 'rotation'

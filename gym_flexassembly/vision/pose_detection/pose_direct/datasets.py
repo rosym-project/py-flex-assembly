@@ -19,7 +19,7 @@ class TranslationDataset(torch.utils.data.Dataset):
         self.data = []
         with open(self.data_csv, 'r') as f:
             dict_reader = csv.DictReader(f)
-            
+
             for row in dict_reader:
                 sub_dict = dict((key, row[key] if key == 'image_name' else float(row[key])) for key in ['image_name', 'x', 'y', 'z'])
                 self.data.append(sub_dict)
@@ -42,9 +42,9 @@ class TranslationDataset(torch.utils.data.Dataset):
         image = PIL.Image.open(os.path.join(self.dataset_dir, item['image_name'])).convert('RGB')
         image = self.transforms(image)
 
-        rotation = torch.tensor((item['x'], item['y'], item['z']))
+        translation = torch.tensor((item['x'], item['y'], item['z']))
 
-        return image, rotation
+        return image, translation
 
 
 class RotationDataset(torch.utils.data.Dataset):
@@ -56,7 +56,7 @@ class RotationDataset(torch.utils.data.Dataset):
         self.data = []
         with open(self.data_csv, 'r') as f:
             dict_reader = csv.DictReader(f)
-            
+
             for row in dict_reader:
                 sub_dict = dict((key, row[key] if key == 'image_name' else float(row[key])) for key in ['image_name', 'roll', 'pitch', 'yaw'])
                 self.data.append(sub_dict)

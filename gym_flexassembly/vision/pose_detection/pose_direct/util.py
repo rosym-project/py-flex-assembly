@@ -122,7 +122,7 @@ def load_model_parser(model_type='rotation', description='', parser=None):
 
     backend_arg = '--backend' if model_type == '' else f'--{model_type}_backend'
     weights_arg = '--weights' if model_type == '' else f'--{model_type}_weights'
-    
+
     backend_names = list(map(lambda backend_cls: backend_cls.__name__, models.backends))
     _parser.add_argument(backend_arg, type=str, default=models.backends[-1].__name__,
             help=f'set the backend used by the model. Backends: {backend_names}')
@@ -153,3 +153,60 @@ def load_model(args, device, model_type='rotation'):
     model = model.to(device)
     return model
 
+class QuatLossModule(torch.nn.Module):
+    def forward(self, input, target):
+        # Todo: remove normalization after implementing unit quaternions
+        s = 1 / torch.norm(input, dim=1)
+        i = input * s[:, None]
+        s = 1 / torch.norm(target, dim=1)
+        t = target * s[:, None]
+
+        batch_size = input.shape[0]
+        vec_length = input[0].shape[0]
+        # Todo: replace i and t by input and target after implementing unit quaternion prediction
+        dots = torch.bmm(i.view(batch_size, 1, vec_length), t.view(batch_size, vec_length, 1))
+
+        res = torch.sum(torch.acos(torch.abs(dots)))
+        return res
+
+class QuatLossFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input, target):
+        # Todo: remove normalization after implementing unit quaternions
+        s = 1 / torch.norm(input, dim=1)
+        input *= s[:, None]
+        s = 1 / torch.norm(target, dim=1)
+        target *= s[:, None]
+
+        ctx.save_for_backward(input, target)
+        batch_size = input.shape[0]
+        vec_length = input[0].shape[0]
+
+        dots = torch.bmm(input.view(batch_size, 1, vec_length), target.view(batch_size, vec_length, 1))
+
+        res = torch.sum(torch.acos(torch.abs(dots)))
+        return res
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input, target = ctx.saved_tensors
+
+        batch_size = input.shape[0]
+        vec_length = input[0].shape[0]
+
+        dots = torch.bmm(input.view(batch_size, 1, vec_length), target.view(batch_size, vec_length, 1))
+        dots = dots.flatten()
+
+        sgn = torch.sign(dots)
+        # since abs() isn't differentiable at x=0, those values need to be replaced manually
+        sgn[sgn == 0] = 1
+
+        abs = torch.abs(dots)
+        # the values in abs have a range of [0, 1] since the quaternions have unit length
+        # since 1/sqrt(1-x^2) is undefined for x=1, the range needs to be changed to [0, 1[
+        # Todo: determine epsilon
+        abs = torch.minimum(abs, torch.full(abs.shape, 1 - 1e-6))
+
+        s = sgn * -1 / torch.sqrt(1 - abs ** 2)
+        grad = target * s[:, None]
+        return grad, None
