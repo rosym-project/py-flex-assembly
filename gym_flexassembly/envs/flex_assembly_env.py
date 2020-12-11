@@ -97,7 +97,7 @@ class FlexAssemblyEnv(EnvInterface):
 
         # Load Rail
         rail_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/flexassembly", "rail.urdf"), useFixedBase=True)
-        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.85, table_offset_world_y-0.8, table_offset_world_z+0.73], [0, 0, 0, 1])
+        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.85, 0.435, table_offset_world_z+0.73], [0, 0, 0, 1])
         self.object_ids['rail'] = rail_id
 
         # Workpiece clamp 1

@@ -68,9 +68,9 @@ class GraspTest(object):
         try:
             add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
             goal = Pose()
-            goal.position.x = 0.195
+            goal.position.x = 0.4
             goal.position.y = 0.2
-            goal.position.z = 0.9
+            goal.position.z = 0.8
 
             goal.orientation.x = 0
             goal.orientation.y = 1
@@ -87,9 +87,9 @@ class GraspTest(object):
         try:
             add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
             goal = Pose()
-            goal.position.x = 0.195
+            goal.position.x = 0.4
             goal.position.y = 0.2
-            goal.position.z = 0.86
+            goal.position.z = 0.72
 
             goal.orientation.x = 0
             goal.orientation.y = 1
@@ -116,9 +116,9 @@ class GraspTest(object):
         try:
             add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
             goal = Pose()
-            goal.position.x = 0.195
+            goal.position.x = 0.4
             goal.position.y = 0.2
-            goal.position.z = 1.1
+            goal.position.z = 0.8
 
             goal.orientation.x = 0
             goal.orientation.y = 1
@@ -134,8 +134,8 @@ class GraspTest(object):
             add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
             goal = Pose()
             goal.position.x = 0.0
-            goal.position.y = 0.2
-            goal.position.z = 1.1
+            goal.position.y = 0.4
+            goal.position.z = 0.8
 
             goal.orientation.x = 0
             goal.orientation.y = 1
@@ -145,16 +145,16 @@ class GraspTest(object):
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
         time.sleep(10)
-        print("Release")
-        rospy.wait_for_service('/gripper1/open_gripper')
-        try:
-            open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
-            open_g()
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
+        # print("Release")
+        # rospy.wait_for_service('/gripper1/open_gripper')
+        # try:
+        #     open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
+        #     open_g()
+        # except rospy.ServiceException as e:
+        #     print("Service call failed: %s"%e)
         
-        rate.sleep()
-        time.sleep(2)
+        # rate.sleep()
+        # time.sleep(2)
         ####################################
         print("Rotate")
         rospy.wait_for_service('flex_planning_ros/plan')
@@ -162,8 +162,8 @@ class GraspTest(object):
             add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
             goal = Pose()
             goal.position.x = 0.0
-            goal.position.y = 0.2
-            goal.position.z = 1.1
+            goal.position.y = 0.4
+            goal.position.z = 0.8
 
             goal.orientation.x = 0
             goal.orientation.y = -0.924
@@ -179,8 +179,8 @@ class GraspTest(object):
             add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
             goal = Pose()
             goal.position.x = 0.0
-            goal.position.y = 0.2
-            goal.position.z = 0.9
+            goal.position.y = 0.4
+            goal.position.z = 0.75
 
             goal.orientation.x = 0
             goal.orientation.y = -0.924
