@@ -599,7 +599,7 @@
         <color rgba="0 0 0.8 1"/>
       </material>
     </visual>
-    <collision>
+    <!-- <collision>
       <origin rpy="0 0 0" xyz="0 0.0005 0.006075" />
       <geometry>
         <box size="0.006 0.016 0.01215" />
@@ -609,6 +609,12 @@
       <origin rpy="0 0 0" xyz="0 0.0005 0.006075" />
       <geometry>
         <mesh filename="model://schunk-egp-40/meshes/visual/obj/schunk_coact_finger_1.obj" scale="1 1 1" />
+      </geometry>
+    </collision> -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0.004 0 0.0253" />
+      <geometry>
+        <box size="0.0195 0.03 0.04985" />
       </geometry>
     </collision>
   </link>
@@ -638,7 +644,8 @@
         <color rgba="0 0 0.8 1"/>
       </material>
     </visual>
-    <collision>
+
+    <!-- <collision>
       <origin rpy="0 0 0" xyz="0 0.0005 0.006075" />
       <geometry>
         <box size="0.006 0.016 0.01215" />
@@ -648,6 +655,12 @@
       <origin rpy="0 0 0" xyz="0 0.0005 0.006075" />
       <geometry>
         <mesh filename="model://schunk-egp-40/meshes/visual/obj/schunk_coact_finger_1.obj" scale="1 1 1" />
+      </geometry>
+    </collision> -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0.004 0 0.0253" />
+      <geometry>
+        <box size="0.0195 0.03 0.04985" />
       </geometry>
     </collision>
   </link>
