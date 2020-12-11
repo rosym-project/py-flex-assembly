@@ -174,6 +174,10 @@ class FlexAssemblyEnv(EnvInterface):
         # Load gripper
         self.kuka7_1_egp = Prismatic2FingerGripperPlugin(self.kuka14_1, "gripper1", "SchunkEGP40_Finger1_joint", "SchunkEGP40_Finger2_joint", use_real_interface=self._use_real_interface)
 
+        self._p.addUserDebugLine([-0.1, 0+0.31, 0+0.75], [0.1, 0+0.31, 0+0.75], [1, 0, 0])
+        self._p.addUserDebugLine([0, -0.1+0.31, 0+0.75], [0, 0.1+0.31, 0+0.75], [0, 1, 0])
+        self._p.addUserDebugLine([0, 0+0.31, -0.1+0.75], [0, 0+0.31, 0.1+0.75], [0, 0, 1])
+
     def loadCameras(self):
         if not self._use_real_interface:
             return
