@@ -93,7 +93,7 @@ aspect = width / height
 near = 0.16
 far = 10
 projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near, far)
-def get_random_camera_settings(target_pos, min_dist=0.2, max_dist=0.4, range_upper=0.3, range_lower=0.1):
+def get_random_camera_settings(target_pos, min_dist=0.2, max_dist=0.25, range_upper=0.05, range_lower=0.01):
     pos_x = target_pos[0] + random.uniform(-range_upper, range_upper)
     pos_y = target_pos[1] + random.uniform(-range_upper, range_upper)
     pos_z = target_pos[2] + random.uniform(min_dist, max_dist)
@@ -135,48 +135,38 @@ def generate_random_model_pose():
     # lying
     # orn [0, math.pi / 2, x] or [0, 3 * math.pi, x]
     # height: 0.705
-    base_orientation = random.randint(0, 2)
-    if base_orientation == 0:
-        # flat on the ground
-        if random.randint(0, 1) == 1:
-            roll = 0
-            z = 0.71
-        else:
-            roll = math.pi
-            z = 0.73
-        pitch = 0
-        z = 0.71
-    elif base_orientation == 1:
-        # long side on the ground
-        if random.randint(0, 1) == 0:
-            roll = math.pi / 2
-            z = 0.72
-        else:
-            roll = 3 * math.pi / 2
-        pitch = 0
-        z = 0.72
-    else:
-        # short side on the ground
-        roll = 0
-        if random.randint(0, 1) == 0:
-            pitch = math.pi / 2
-        else:
-            pitch = 3 * math.pi / 2
-        z = 0.73
-
-    roll = 0
-    if random.randint(0, 1) == 1:
-        roll = math.pi
-    pitch = 0
-    z = 0.71
-
-    # if random.randint(0, 1) == 0:
-        # roll = math.pi / 2
+    # base_orientation = random.randint(0, 2)
+    # if base_orientation == 0:
+        # # flat on the ground
+        # if random.randint(0, 1) == 1:
+            # roll = 0
+            # z = 0.71
+        # else:
+            # roll = math.pi
+            # z = 0.73
+        # pitch = 0
+        # z = 0.71
+    # elif base_orientation == 1:
+        # # long side on the ground
+        # if random.randint(0, 1) == 0:
+            # roll = math.pi / 2
+            # z = 0.72
+        # else:
+            # roll = 3 * math.pi / 2
+        # pitch = 0
         # z = 0.72
     # else:
-        # roll = 3 * math.pi / 2
-    # pitch = 0
-    # z = 0.72
+        # # short side on the ground
+        # roll = 0
+        # if random.randint(0, 1) == 0:
+            # pitch = math.pi / 2
+        # else:
+            # pitch = 3 * math.pi / 2
+        # z = 0.73
+
+    roll = 3 * math.pi / 2
+    pitch = 0
+    z = 0.72
 
     yaw = random.uniform(0, 2 * math.pi)
     rotation = p.getQuaternionFromEuler([roll, pitch, yaw])
