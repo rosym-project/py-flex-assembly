@@ -103,6 +103,7 @@ def get_translation_transform(train=False):
     #TODO: add noise in case of training_mode
     return torchvision.transforms.Compose([
         OpenCVToPil(),
+        torchvision.transforms.CenterCrop(512),
         torchvision.transforms.Resize((224, 224)),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(IMAGE_NET_MEAN, IMAGE_NET_STD)
