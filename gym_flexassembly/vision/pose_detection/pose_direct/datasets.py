@@ -58,7 +58,8 @@ class RotationDataset(torch.utils.data.Dataset):
             dict_reader = csv.DictReader(f)
 
             for row in dict_reader:
-                sub_dict = dict((key, row[key] if key == 'image_name' else float(row[key])) for key in ['image_name', 'roll', 'pitch', 'yaw'])
+                #sub_dict = dict((key, row[key] if key == 'image_name' else float(row[key])) for key in ['image_name', 'roll', 'pitch', 'yaw'])
+                sub_dict = dict((key, row[key] if key == 'image_name' else float(row[key])) for key in ['image_name', 'qx', 'qy', 'qz', 'qw'])
                 self.data.append(sub_dict)
 
         self.transforms = torchvision.transforms.Compose([
@@ -78,7 +79,7 @@ class RotationDataset(torch.utils.data.Dataset):
         image = PIL.Image.open(os.path.join(self.dataset_dir, item['image_name'])).convert('RGB')
         image = self.transforms(image)
 
-        rotation = torch.tensor((item['roll'], item['pitch'], item['yaw']))
+        rotation = torch.tensor((item['qx'], item['qy'], item['qz'], item['qw']))
 
         return image, rotation
 
@@ -117,6 +118,6 @@ if __name__ == '__main__':
 
         cv.imshow('Original', cv.imread(os.path.join(args.dataset_dir, dataset.data[i]['image_name'])))
         cv.imshow('Transformed', to_opencv(img))
-        cv.imshow('Transformed withour Notmalization', to_opencv(revert_image_net_mean(img)))
+        cv.imshow('Transformed without Notmalization', to_opencv(revert_image_net_mean(img)))
         if cv.waitKey(0) == ord('q'):
             break

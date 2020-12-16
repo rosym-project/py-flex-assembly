@@ -213,7 +213,8 @@ def main(args):
             starting_number = max(0, len(f.readlines()) - 1)
             print('Extracted starting number..', starting_number)
     else:
-        header = ["id", "image_name", "x", "y", "z", "roll", "pitch", "yaw"]
+        #header = ["id", "image_name", "x", "y", "z", "roll", "pitch", "yaw"]
+        header = ["id", "image_name", "x", "y", "z", "qx", "qy", "qz", "qw"]
         with open(annotation_file, mode='w') as f:
             csv.writer(f, delimiter=',').writerow(header)
 
@@ -234,7 +235,7 @@ def main(args):
     # loop over the number of target images
     j = starting_number
     while (j < args.number + starting_number):
-        data = np.empty(8, dtype=object)
+        data = np.empty(9, dtype=object)
         img_name = '{:05d}'.format(j) + '.png'
         data[0] = j
         data[1] = img_name
@@ -249,7 +250,9 @@ def main(args):
         rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
         rot = view_matrix[:3, :3].dot(rot)
         data[2:5] = t
-        data[5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
+        #data[5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
+        #data[5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
+        data[5:9] = R.from_matrix(rot).as_quat()
 
         # generate the image of the clamp and the background
         background, clamp_img = generate_image(paths[0], model_pose, camera_settings)

@@ -93,7 +93,7 @@ class RotationDetector(torch.nn.Module):
 
         self.backend = backend
 
-        self.rotation = torch.nn.Linear(self.backend.feature_number, 3)
+        self.rotation = torch.nn.Linear(self.backend.feature_number, 4)
         self.rotation_parameters = self.rotation.parameters()
 
     def forward(self, data):

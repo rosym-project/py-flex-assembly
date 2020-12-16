@@ -155,17 +155,17 @@ def load_model(args, device, model_type='rotation'):
     return model
 
 class QuatLossModule(torch.nn.Module):
-    def forward(self, input, target):
+    def forward(self, inputs, targets):
         # Todo: remove normalization after implementing unit quaternions
-        s = 1 / torch.norm(input, dim=1)
-        i = input * s[:, None]
-        s = 1 / torch.norm(target, dim=1)
-        t = target * s[:, None]
+        s = 1 / torch.norm(inputs, dim=1)
+        i = inputs * s[:, None]
+        # s = 1 / torch.norm(target, dim=1)
+        # t = target * s[:, None]
 
-        batch_size = input.shape[0]
-        vec_length = input[0].shape[0]
-        # Todo: replace i and t by input and target after implementing unit quaternion prediction
-        dots = torch.bmm(i.view(batch_size, 1, vec_length), t.view(batch_size, vec_length, 1))
+        batch_size = inputs.shape[0]
+        #TODO: this should always be 4 for quaternions right?
+        # vec_length = inputs[0].shape[0]
+        dots = torch.bmm(i.view(batch_size, 1, 4), targets.view(batch_size, 4, 1))
 
         res = torch.sum(torch.acos(torch.abs(dots)))
         return res
@@ -211,3 +211,9 @@ class QuatLossFunction(torch.autograd.Function):
         s = sgn * -1 / torch.sqrt(1 - abs ** 2)
         grad = target * s[:, None]
         return grad, None
+
+if __name__ == '__main__':
+    backend = models.Resnet18Backend()
+    detector = models.RotationDetector(backend)
+
+    lossf = QuatLossModule()

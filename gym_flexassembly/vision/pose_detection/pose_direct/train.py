@@ -33,10 +33,11 @@ def run_epoch(detector, data_loader, loss_function, optim, device, train=True):
         loss = loss_function(outputs, annotations) # needed for torch.nn.Module
         #loss = loss_function.apply(outputs, annotations) # needed for torch.autograd.Function
 
-        epoch_loss += loss.detach()
+        epoch_loss += loss.detach() / data_loader.batch_size
 
         if train:
-            loss.backward()
+            regularization = 0.5 * torch.norm(outputs)
+            (regularization + loss).backward()
             optim.step()
 
     return epoch_loss / len(data_loader)
@@ -78,8 +79,8 @@ dataset_val = datasets.TranslationDataset(args.data_val) if args.translation els
 data_loader_val = torch.utils.data.DataLoader(dataset_val, batch_size=args.batch_size, shuffle=True)
 
 optim = torch.optim.SGD(detector.parameters(), lr=args.lr, momentum=args.momentum)
-loss_function = torch.nn.MSELoss()
-#loss_function = util.QuatLossModule()
+#loss_function = torch.nn.MSELoss()
+loss_function = util.QuatLossModule()
 #loss_function = util.QuatLossFunction()
 
 for i in range(1, args.epochs + 1):
