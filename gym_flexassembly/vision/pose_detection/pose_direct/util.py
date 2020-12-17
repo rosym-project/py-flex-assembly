@@ -75,8 +75,24 @@ class CropClamp:
         return crop_image(img, lower_hsv=self.lower_hsv, upper_hsv=self.upper_hsv)
 
 
+def revert_image_net_mean(img):
+    if len(img.shape) != 3 and img.shape[0] != 3:
+        raise ValueError(f'Expected RGB image in order (channels, height, width) but got {img.shape}')
+
+    result = torch.empty(img.shape, dtype=img.dtype)
+    for channel in range(img.shape[0]):
+        result[channel] = (img[channel] * IMAGE_NET_STD[channel]) + IMAGE_NET_MEAN[channel]
+    return result
+
 def opencv_to_PIL(img):
     return PIL.Image.fromarray(cv.cvtColor(img, cv.COLOR_BGR2RGB))
+
+
+def torch_to_opencv(img):
+    if len(img.shape) != 3 and img.shape[0] != 3:
+        return (img.detach().numpy() * 255).astype(np.uint8)
+    _img = torchvision.transforms.functional.to_pil_image(img)
+    return np.array(_img)[:, :, ::-1].copy()
 
 class OpenCVToPil:
 
@@ -143,7 +159,6 @@ def load_model(args, device, model_type='rotation'):
         weights = getattr(args, f'{model_type}_weights')
     except AttributeError:
         weights = getattr(args, 'weights')
-
 
     backend = getattr(models, backend_cls_name)(pretrained=(weights == None))
     model = models.RotationDetector(backend) if model_type == 'rotation' else models.TranslationDetector(backend)
