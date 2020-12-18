@@ -20,15 +20,15 @@ p.setGravity(0, 0, -9.81, physicsClientId=client)
 
 p.setAdditionalSearchPath(flexassembly_data.getDataPath())
 
-# planeId = p.loadURDF("objects/plane_solid.urdf")
+planeId = p.loadURDF("objects/plane_solid.urdf")
 
-# coman_robot = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/coman/urdf/coman.urdf", useFixedBase=False)
-# p.resetBasePositionAndOrientation(coman_robot, [0, 0, 0.6], [0,0,0,1])
+coman_robot = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/coman/urdf/coman.urdf", useFixedBase=False)
+p.resetBasePositionAndOrientation(coman_robot, [0, 0, 0.6], [0,0,0,1])
 
-rail = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/RailTest.urdf", useFixedBase=True)
+# rail = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/rail.urdf", useFixedBase=True)
 
-ball = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/ball.urdf", useFixedBase=False)
-p.resetBasePositionAndOrientation(ball, [0.05, 0.005, 0.04], [0,0,0,1])
+# ball = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/ball.urdf", useFixedBase=False)
+# p.resetBasePositionAndOrientation(ball, [0.05, 0.005, 0.04], [0,0,0,1])
 
 p.setTimeStep(0.001) # TODO DLW
 
