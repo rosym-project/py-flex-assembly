@@ -105,7 +105,8 @@ class FlexAssemblyEnv(EnvInterface):
         workpiece_1_offset_table_y = -0.85
         workpiece_1_offset_table_z = 0.723
         workpiece_1_offset_world = [table_offset_world_x + workpiece_1_offset_table_x, table_offset_world_y + workpiece_1_offset_table_y, table_offset_world_z + workpiece_1_offset_table_z]
-        workpiece_1 = SpringClamp(pos=workpiece_1_offset_world, orn=[0,-0.131,0.991,0])
+        workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
+        #  orn=[0,-0.131,0.991,0]
         print("clamp 1 pose: "+str(workpiece_1_offset_world))
         # Workpiece clamp 2
         workpiece_2_offset_table_x = -0.2
