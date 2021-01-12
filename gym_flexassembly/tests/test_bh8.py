@@ -26,7 +26,8 @@ p.setAdditionalSearchPath(flexassembly_data.getDataPath())
 planeId = p.loadURDF("objects/plane_solid.urdf")
 
 table = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/table_2/table_2.urdf", useFixedBase=True)
-p.resetBasePositionAndOrientation(table, [-0.4, -0.5, 0], [0,0,1,0])
+# p.resetBasePositionAndOrientation(table, [-0.69, -0.5, 0], [0,0,1,0])
+p.resetBasePositionAndOrientation(table, [0.83, 0.5, 0], [0,0,0,1])
 
 left_arm = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-bh8/model.urdf", useFixedBase=True)
 p.resetBasePositionAndOrientation(left_arm, [0, -0.7, 0.4], [0,0,0,1])
@@ -117,6 +118,33 @@ count = 0
 while 1:
     p.stepSimulation()
 
+    if count < 5000:
+      vX = p.readUserDebugParameter(x)
+      vZ = p.readUserDebugParameter(z)
+      vD = p.readUserDebugParameter(d)
+      vL8 = p.readUserDebugParameter(l8)
+      count = count + 1
+    elif count < 10000:
+      vX = 0.148
+      vZ = 0.893
+      vD = 0.108
+      vL8 = p.readUserDebugParameter(l8)
+      count = count + 1
+    elif count < 15000:
+      vL8 = 1.123
+      count = count + 1
+    elif count == 15000:
+      if vX > -0.1:
+        vX = vX - 0.0001
+      else:
+        count = 20000
+    elif count == 20000:
+      if vX < 0.3:
+        vX = vX + 0.0001
+      else:
+        count = 15000
+
+    
     # vL0 = p.readUserDebugParameter(l0)
     # p.setJointMotorControl2(left_arm,
     #                       1,
@@ -170,8 +198,8 @@ while 1:
                           p.POSITION_CONTROL,
                           targetPosition=vL7,
                           force=maxForce)
-                          
-    vL8 = p.readUserDebugParameter(l8)
+
+    
     # # if count >= 1000:
     # #   vL8 = 0.9
     # # else:
@@ -358,9 +386,11 @@ while 1:
     #joint damping coefficents
     jd = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
-    vX = p.readUserDebugParameter(x)
-    vZ = p.readUserDebugParameter(z)
-    vD = p.readUserDebugParameter(d)
+    # vX = p.readUserDebugParameter(x)
+    # vZ = p.readUserDebugParameter(z)
+    # vD = p.readUserDebugParameter(d)
+
+ 
 
     jointPoses = p.calculateInverseKinematics(left_arm, 11, [vX, -vD, vZ], [-1,1,0,0], ll, ul, jr, rp)
 
@@ -484,7 +514,7 @@ while 1:
     #                       targetPosition=vL8*0.33,
     #                       force=maxForce)
 
-    # count = count + 1
+    
 
 # rate = rospy.Rate(1000.0)
 
