@@ -10,10 +10,10 @@
     </inertial>
     <visual>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_palm_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/palm_fine.obj"/>
       </geometry>
     </visual>
     <!-- wrist -->
@@ -101,10 +101,10 @@
     </inertial>
     <visual>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_prox_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/prox_fine.obj"/>
       </geometry>
     </visual>
     <!-- base -->
@@ -139,10 +139,10 @@
     </inertial>
     <visual>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_med_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/med_fine.obj"/>
       </geometry>
     </visual>
     <!-- spine -->
@@ -186,10 +186,10 @@
     <visual>
       <origin rpy="0 0 -0.785398163397"/>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_dist_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/dist_fine.obj"/>
       </geometry>
     </visual>
     <collision>
@@ -236,10 +236,10 @@
     </inertial>
     <visual>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_prox_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/prox_fine.obj"/>
       </geometry>
     </visual>
     <!-- base -->
@@ -274,10 +274,10 @@
     </inertial>
     <visual>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_med_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/med_fine.obj"/>
       </geometry>
     </visual>
     <!-- spine -->
@@ -321,10 +321,10 @@
     <visual>
       <origin rpy="0 0 -0.785398163397"/>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_dist_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/dist_fine.obj"/>
       </geometry>
     </visual>
     <collision>
@@ -370,10 +370,10 @@
     </inertial>
     <visual>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_med_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/med_fine.obj"/>
       </geometry>
     </visual>
     <!-- spine -->
@@ -417,10 +417,10 @@
     <visual>
       <origin rpy="0 0 -0.785398163397"/>
       <material name="WAMGrey">
-        <color rgba="0.9 0.9 0.9 1"/>
+        <color rgba="1 1 1 1"/>
       </material>
       <geometry>
-        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/bhand_finger_dist_link_fine.stl"/>
+        <mesh filename="barrett-bh8/meshes/sw_meshes/bhand/dist_fine.obj"/>
       </geometry>
     </visual>
     <collision>
