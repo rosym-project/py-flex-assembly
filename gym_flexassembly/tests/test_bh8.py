@@ -115,8 +115,38 @@ for i in range(numJoints):
 
 count = 0
 
+cyaw = 252.19999999999985
+
+cpitch = -17.799999999999727
+
+cdist = 1.400000000000042
+
+cubePos, cubeOrn = p.getBasePositionAndOrientation(box)
+
 while 1:
     p.stepSimulation()
+
+    p.resetDebugVisualizerCamera(cameraDistance=cdist, cameraYaw=cyaw, cameraPitch=cpitch, cameraTargetPosition=cubePos)
+    # keys = p.getKeyboardEvents()
+    # #Keys to change camera
+    # if keys.get(100):  #D
+    #     cyaw+=0.1
+    #     print("cyaw = " + str(cyaw) + ", cpitch = " + str(cpitch) + ", cdist = " + str(cdist))
+    # if keys.get(97):   #A
+    #     cyaw-=0.1
+    #     print("cyaw = " + str(cyaw) + ", cpitch = " + str(cpitch) + ", cdist = " + str(cdist))
+    # if keys.get(99):   #C
+    #     cpitch+=0.1
+    #     print("cyaw = " + str(cyaw) + ", cpitch = " + str(cpitch) + ", cdist = " + str(cdist))
+    # if keys.get(102):  #F
+    #     cpitch-=0.1
+    #     print("cyaw = " + str(cyaw) + ", cpitch = " + str(cpitch) + ", cdist = " + str(cdist))
+    # if keys.get(122):  #Z
+    #     cdist+=.01
+    #     print("cyaw = " + str(cyaw) + ", cpitch = " + str(cpitch) + ", cdist = " + str(cdist))
+    # if keys.get(120):  #X
+    #     cdist-=.01
+    #     print("cyaw = " + str(cyaw) + ", cpitch = " + str(cpitch) + ", cdist = " + str(cdist))
 
     if count < 5000:
       vX = p.readUserDebugParameter(x)
