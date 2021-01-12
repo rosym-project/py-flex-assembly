@@ -34,12 +34,12 @@ table = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/g
 p.resetBasePositionAndOrientation(table, [0.83, 0.5, 0], [0,0,0,1])
 
 left_arm = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-bh8/model.urdf", useFixedBase=True)
-p.resetBasePositionAndOrientation(left_arm, [0, -0.7, 0.4], [0,0,0,1])
+p.resetBasePositionAndOrientation(left_arm, [0, -0.95, 0.4], [0,0,0,1])
 
 right_arm = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-bh8/model.urdf", useFixedBase=True)
-p.resetBasePositionAndOrientation(right_arm, [0, 0.7, 0.4], [0,0,0,1])
+p.resetBasePositionAndOrientation(right_arm, [0, 0.95, 0.4], [0,0,0,1])
 
-box = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/cube.urdf", useFixedBase=False)
+box = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/cube_long.urdf", useFixedBase=False)
 p.resetBasePositionAndOrientation(box, [0.15, 0, 0.803], [0,0,0,1])
 
 p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=box, parentLinkIndex=-1)
@@ -105,8 +105,8 @@ l3 = p.addUserDebugParameter("l3", -2.7, 2.7, -0.966)
 l4 = p.addUserDebugParameter("l4", -2.7, 2.7, -0.028)
 l5 = p.addUserDebugParameter("l5", -2.7, 2.7, 1.620)
 l6 = p.addUserDebugParameter("l6", -2.7, 2.7, -0.171)
-l7 = p.addUserDebugParameter("lS", 0, 3.14, 0)
-l8 = p.addUserDebugParameter("lG", 0, 2.7, 0)
+l7 = p.addUserDebugParameter("lS", 0, 3.14, 0.578)
+l8 = p.addUserDebugParameter("lG", 0, 2.7, 1.95)
 
 r0 = p.addUserDebugParameter("r0", -2.7, 2.7, -1.279)
 r1 = p.addUserDebugParameter("r1", -2.7, 2.7, 0.739)
@@ -115,12 +115,12 @@ r3 = p.addUserDebugParameter("r3", -2.7, 2.7, -0.625)
 r4 = p.addUserDebugParameter("r4", -2.7, 2.7, -0.085)
 r5 = p.addUserDebugParameter("r5", -2.7, 2.7, 1.819)
 r6 = p.addUserDebugParameter("r6", -2.7, 2.7, 0.341)
-r7 = p.addUserDebugParameter("rS", 0, 3.14, 0)
-r8 = p.addUserDebugParameter("rG", 0, 2.7, 0)
+r7 = p.addUserDebugParameter("rS", 0, 3.14, 0.578)
+r8 = p.addUserDebugParameter("rG", 0, 2.7, 1.95)
 
-x = p.addUserDebugParameter("X", -0.3, 0.3, 0)
-z = p.addUserDebugParameter("Z", 0.8, 1.1, 1.1)
-d = p.addUserDebugParameter("D", 0, 0.5, 0.2)
+x = p.addUserDebugParameter("X", -0.3, 0.3, 0.145)
+z = p.addUserDebugParameter("Z", 0.8, 1.3, 1.029)
+d = p.addUserDebugParameter("D", 0, 0.5, 0.279)
 
 motorNames = []
 motorIndices = []
@@ -152,10 +152,12 @@ cdist = 1.400000000000042
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(box)
 
-while 1:
-    p.stepSimulation()
+p.resetDebugVisualizerCamera(cameraDistance=cdist, cameraYaw=cyaw, cameraPitch=cpitch, cameraTargetPosition=cubePos)
 
-    p.resetDebugVisualizerCamera(cameraDistance=cdist, cameraYaw=cyaw, cameraPitch=cpitch, cameraTargetPosition=cubePos)
+while 1:
+    
+
+    # p.resetDebugVisualizerCamera(cameraDistance=cdist, cameraYaw=cyaw, cameraPitch=cpitch, cameraTargetPosition=cubePos)
     keys = p.getKeyboardEvents()
     # #Keys to change camera
     if keys.get(98):   #B
@@ -177,7 +179,7 @@ while 1:
         cdist-=.01
         print("cyaw = " + str(cyaw) + ", cpitch = " + str(cpitch) + ", cdist = " + str(cdist))
     if keys.get(100):  #D
-      
+      p.stepSimulation()
 
 
       if count < 2000:
@@ -187,26 +189,23 @@ while 1:
         vL8 = p.readUserDebugParameter(l8)
         count = count + 1
       elif count < 4000:
-        vX = 0.148
-        vZ = 0.893
-        vD = 0.108
+        vX = 0.145
+        vZ = 0.818
+        vD = 0.201
         vL8 = p.readUserDebugParameter(l8)
         count = count + 1
-      elif count < 6000:
-        vL8 = 1.123
-        count = count + 1
-      elif count == 6000:
+      elif count == 4000:
         # if vX > -0.07:
         if vX > -0.12:
           vX = vX - 0.0001
         else:
-          # count = 8000
+          # count = 6000
           pass
-      elif count == 8000:
+      elif count == 6000:
         if vX < 0.3:
           vX = vX + 0.0001
         else:
-          # count = 6000
+          # count = 4000
           pass
 
       
@@ -457,10 +456,10 @@ while 1:
 
   
 
-      jointPoses = p.calculateInverseKinematics(left_arm, 11, [vX, -vD, vZ], [-1,1,0,0], ll, ul, jr, rp)
+      jointPoses = p.calculateInverseKinematics(left_arm, 11, [vX, -vD, vZ], [-0.5,0.5,0.5,0.5], ll, ul, jr, rp)
 
       rpR = [-1.279,0.739,-0.142,-0.625,-0.085,1.819,0.341]
-      jointPosesR = p.calculateInverseKinematics(right_arm, 11, [vX, vD, vZ], [1,-1,0,0], ll, ul, jr, rpR)
+      jointPosesR = p.calculateInverseKinematics(right_arm, 11, [vX, vD, vZ], [0.5,-0.5,0.5,0.5], ll, ul, jr, rpR)
 
       p.setJointMotorControl2(left_arm,
                             1,

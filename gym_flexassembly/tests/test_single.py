@@ -33,8 +33,8 @@ table = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/g
 # p.resetBasePositionAndOrientation(table, [-0.69, -0.5, 0], [0,0,1,0])
 p.resetBasePositionAndOrientation(table, [0.83, 0.5, 0], [0,0,0,1])
 
-left_arm = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-bh8/model.urdf", useFixedBase=True)
-p.resetBasePositionAndOrientation(left_arm, [0, -0.7, 0.4], [0,0,0,1])
+# left_arm = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-bh8/model.urdf", useFixedBase=True)
+# p.resetBasePositionAndOrientation(left_arm, [0, -0.7, 0.4], [0,0,0,1])
 
 right_arm = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-bh8/model.urdf", useFixedBase=True)
 p.resetBasePositionAndOrientation(right_arm, [0, 0.7, 0.4], [0,0,0,1])
@@ -79,24 +79,24 @@ p.setTimeStep(0.001) # TODO DLW
 
 maxForce = 1000
 
-numJoints = p.getNumJoints(left_arm)
-for jointIndex in range(numJoints):
-  # Reset joints to the initial configuration
-  # p.resetJointState(left_arm, jointIndex, 0)
-  # p.setJointMotorControl2(left_arm,
-  #                         jointIndex,
-  #                         p.POSITION_CONTROL,
-  #                         targetPosition=0,
-  #                         force=maxForce)
-  # p.setJointMotorControl2(left_arm,
-  #                         jointIndex,
-  #                         p.VELOCITY_CONTROL,
-  #                         force=0.0)
-  # p.setJointMotorControl2(left_arm,
-  #                         jointIndex,
-  #                         p.TORQUE_CONTROL,
-  #                         force=0.0)
-  pass
+# numJoints = p.getNumJoints(left_arm)
+# for jointIndex in range(numJoints):
+#   # Reset joints to the initial configuration
+#   # p.resetJointState(left_arm, jointIndex, 0)
+#   # p.setJointMotorControl2(left_arm,
+#   #                         jointIndex,
+#   #                         p.POSITION_CONTROL,
+#   #                         targetPosition=0,
+#   #                         force=maxForce)
+#   # p.setJointMotorControl2(left_arm,
+#   #                         jointIndex,
+#   #                         p.VELOCITY_CONTROL,
+#   #                         force=0.0)
+#   # p.setJointMotorControl2(left_arm,
+#   #                         jointIndex,
+#   #                         p.TORQUE_CONTROL,
+#   #                         force=0.0)
+#   pass
 
 l0 = p.addUserDebugParameter("l0", -2.7, 2.7, 1.251)
 l1 = p.addUserDebugParameter("l1", -2.7, 2.7, 0.540)
@@ -122,19 +122,19 @@ x = p.addUserDebugParameter("X", -0.3, 0.3, 0)
 z = p.addUserDebugParameter("Z", 0.8, 1.1, 1.1)
 d = p.addUserDebugParameter("D", 0, 0.5, 0.2)
 
-motorNames = []
-motorIndices = []
-zeroForces = []
-for i in range(numJoints):
-    jointInfo = p.getJointInfo(left_arm, i)
-    qIndex = jointInfo[3]
-    if qIndex > -1:
-        print("motorname " + str(jointInfo[1]) + ", index " + str(i))
-        motorNames.append(str(jointInfo[1]))
-        motorIndices.append(i)
-        zeroForces.append(0.0)
-    else:
-        print("ignored joint " + str(jointInfo[1]) + ", index " + str(i))
+# motorNames = []
+# motorIndices = []
+# zeroForces = []
+# for i in range(numJoints):
+#     jointInfo = p.getJointInfo(left_arm, i)
+#     qIndex = jointInfo[3]
+#     if qIndex > -1:
+#         print("motorname " + str(jointInfo[1]) + ", index " + str(i))
+#         motorNames.append(str(jointInfo[1]))
+#         motorIndices.append(i)
+#         zeroForces.append(0.0)
+#     else:
+#         print("ignored joint " + str(jointInfo[1]) + ", index " + str(i))
 
 # for i in range(len(motorIndices)):
 #     p.resetJointState(left_arm, motorIndices[i], cur_q[i])
@@ -189,7 +189,7 @@ while 1:
       elif count < 4000:
         vX = 0.148
         vZ = 0.893
-        vD = 0.108
+        vD = 0
         vL8 = p.readUserDebugParameter(l8)
         count = count + 1
       elif count < 6000:
@@ -252,17 +252,17 @@ while 1:
       #                       p.POSITION_CONTROL,
       #                       targetPosition=vL6,
       #                       force=maxForce)
-      vL7 = p.readUserDebugParameter(l7)
-      p.setJointMotorControl2(left_arm,
-                            12,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL7,
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            16,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL7,
-                            force=maxForce)
+      # vL7 = p.readUserDebugParameter(l7)
+      # p.setJointMotorControl2(left_arm,
+      #                       12,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL7,
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       16,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL7,
+      #                       force=maxForce)
 
       
       # # if count >= 1000:
@@ -270,38 +270,38 @@ while 1:
       # # else:
       # #   p.resetBasePositionAndOrientation(box, [0.15, 0, 0.79], [0,0,0,1])
       # #   vL8 = 0.0
-      p.setJointMotorControl2(left_arm,
-                            13,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL8,
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            14,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL8*0.33,
-                            force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       13,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL8,
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       14,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL8*0.33,
+      #                       force=maxForce)
 
-      p.setJointMotorControl2(left_arm,
-                            17,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL8,
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            18,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL8*0.33,
-                            force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       17,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL8,
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       18,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL8*0.33,
+      #                       force=maxForce)
 
-      p.setJointMotorControl2(left_arm,
-                            20,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL8,
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            21,
-                            p.POSITION_CONTROL,
-                            targetPosition=vL8*0.33,
-                            force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       20,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL8,
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       21,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=vL8*0.33,
+      #                       force=maxForce)
 
       # # RIGHT
       # vR0 = p.readUserDebugParameter(r0)
@@ -397,18 +397,18 @@ while 1:
                             targetPosition=vR8*0.33,
                             force=maxForce)
 
-      numJoints = len(motorIndices)
+      # numJoints = len(motorIndices)
       # p.getNumJoints(arm.getUUid())
-      jointStates = p.getJointStates(left_arm, motorIndices)
-      q1 = []
-      qdot1 = []
-      zeroAccelerations = []
-      for i in range(numJoints):
-        # print('i ' + str(i))
-        # print('index ' + str(motorIndices[i]))
-        q1.append(jointStates[i][0])
-        qdot1.append(jointStates[i][1])
-        zeroAccelerations.append(0)
+      # jointStates = p.getJointStates(left_arm, motorIndices)
+      # q1 = []
+      # qdot1 = []
+      # zeroAccelerations = []
+      # for i in range(numJoints):
+      #   # print('i ' + str(i))
+      #   # print('index ' + str(motorIndices[i]))
+      #   q1.append(jointStates[i][0])
+      #   qdot1.append(jointStates[i][1])
+      #   zeroAccelerations.append(0)
       # q = np.array(q1)
       # qdot = np.array(qdot1)
       # # print("len qdot " + str(len(qdot)))
@@ -429,16 +429,16 @@ while 1:
 
       # timeStep = 0.1
 
-      M1 = p.calculateMassMatrix(left_arm, q1)
-      M2 = np.array(M1)
-      # print(M2)
-      # M = (M2 + Kd * timeStep)
-      # print("POS = " + str(q1))
-      # print("VEL = " + str(qdot1))
-      c1 = p.calculateInverseDynamics(left_arm, q1, qdot1, zeroAccelerations)
-      # print("GRA = " + str(c1))
-      # print(len(c1))
-      c = np.array(c1)
+      # M1 = p.calculateMassMatrix(left_arm, q1)
+      # M2 = np.array(M1)
+      # # print(M2)
+      # # M = (M2 + Kd * timeStep)
+      # # print("POS = " + str(q1))
+      # # print("VEL = " + str(qdot1))
+      # c1 = p.calculateInverseDynamics(left_arm, q1, qdot1, zeroAccelerations)
+      # # print("GRA = " + str(c1))
+      # # print(len(c1))
+      # c = np.array(c1)
 
       #lower limits for null space
       ll = [-.967, -2, -2.96, 0.19, -2.96, -2.09, -3.05]
@@ -457,46 +457,46 @@ while 1:
 
   
 
-      jointPoses = p.calculateInverseKinematics(left_arm, 11, [vX, -vD, vZ], [-1,1,0,0], ll, ul, jr, rp)
+      # jointPoses = p.calculateInverseKinematics(left_arm, 11, [vX, -vD, vZ], [-1,1,0,0], ll, ul, jr, rp)
 
       rpR = [-1.279,0.739,-0.142,-0.625,-0.085,1.819,0.341]
       jointPosesR = p.calculateInverseKinematics(right_arm, 11, [vX, vD, vZ], [1,-1,0,0], ll, ul, jr, rpR)
 
-      p.setJointMotorControl2(left_arm,
-                            1,
-                            p.POSITION_CONTROL,
-                            targetPosition=jointPoses[0],
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            2,
-                            p.POSITION_CONTROL,
-                            targetPosition=jointPoses[1],
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            3,
-                            p.POSITION_CONTROL,
-                            targetPosition=jointPoses[2],
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            4,
-                            p.POSITION_CONTROL,
-                            targetPosition=jointPoses[3],
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            5,
-                            p.POSITION_CONTROL,
-                            targetPosition=jointPoses[4],
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            6,
-                            p.POSITION_CONTROL,
-                            targetPosition=jointPoses[5],
-                            force=maxForce)
-      p.setJointMotorControl2(left_arm,
-                            7,
-                            p.POSITION_CONTROL,
-                            targetPosition=jointPoses[6],
-                            force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       1,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=jointPoses[0],
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       2,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=jointPoses[1],
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       3,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=jointPoses[2],
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       4,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=jointPoses[3],
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       5,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=jointPoses[4],
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       6,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=jointPoses[5],
+      #                       force=maxForce)
+      # p.setJointMotorControl2(left_arm,
+      #                       7,
+      #                       p.POSITION_CONTROL,
+      #                       targetPosition=jointPoses[6],
+      #                       force=maxForce)
 
 
       p.setJointMotorControl2(right_arm,
