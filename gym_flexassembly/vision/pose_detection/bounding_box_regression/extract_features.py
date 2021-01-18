@@ -30,6 +30,7 @@ def main(args):
         lower = np.array([0, 0, 20])
         upper = np.array([255, 10, 255])
         mask = cv.bitwise_not(cv.inRange(image, lower, upper))
+        image = cv.cvtColor(image, cv.COLOR_HSV2BGR)
 
         # detect a contour around the clamp
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
@@ -60,17 +61,43 @@ def main(args):
         # calculate an oriented bounding box
         bounding_box = cv.minAreaRect(contours[0])
 
+        # detect hole
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        #gray = cv.medianBlur(gray, 3)
+        #cv.imshow("gray", gray)
+        circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
+                               param1=2, param2=15,
+                               minRadius=5, maxRadius=15)
+
+        # gradient detection
+        laplacian = cv.Laplacian(image, cv.CV_64F)
+        sobelx = cv.Sobel(image, cv.CV_64F,1,0,ksize=5)
+        sobely = cv.Sobel(image, cv.CV_64F,0,1,ksize=5)
+        #cv.imshow("laplacian", laplacian)
+        #cv.imshow("sobelx", sobelx)
+        #cv.imshow("sobely", sobely)
+        #if cv.waitKey(0) == ord('q'):
+            #break
+
         # append results to feature vector
         features.append([i, f, bounding_box[0][0], bounding_box[0][1], bounding_box[1][0], bounding_box[1][1], bounding_box[2]])
 
         # visualization
         if args.visualize:
-            image = cv.cvtColor(image, cv.COLOR_HSV2BGR)
             # draw bounding box
             box = cv.boxPoints(bounding_box)
             box = np.intp(box)
             cv.drawContours(image, [box], 0, (0,255,0))
             cv.drawContours(mask, [box], 0, 125)
+
+            # draw circles
+            if circles is not None:
+                circles = np.uint16(np.around(circles))
+                for i in circles[0, :]:
+                    center = (i[0], i[1])
+                    # circle outline
+                    radius = i[2]
+                    #cv.circle(image, center, radius, (0, 0, 255), 1)
 
             cv.imshow("image", image)
             #cv.imshow("mask", mask)
