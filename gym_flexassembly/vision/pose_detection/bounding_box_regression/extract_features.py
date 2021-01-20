@@ -2,8 +2,8 @@ import argparse
 import math
 import sys
 
-import cv2 as cv
 import numpy as np
+import cv2 as cv
 import tqdm
 
 def main(args):
@@ -23,6 +23,10 @@ def main(args):
 
     for i, f in enumerate(tqdm.tqdm(data)):
         image = cv.imread(args.data_dir + "/" + f)
+
+        # ======================================================================
+        # bounding box features
+        # ======================================================================
 
         # create a mask containing the clamp
         # since the background is a simple gray it is easiest to detect the background and invert the resulting mask
@@ -61,19 +65,24 @@ def main(args):
         # calculate an oriented bounding box
         bounding_box = cv.minAreaRect(contours[0])
 
+
+        # ======================================================================
+        # additional features
+        # ======================================================================
+
         # detect hole
         gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        #gray = cv.medianBlur(gray, 3)
-        #cv.imshow("gray", gray)
+        #laplacian = cv.Laplacian(gray, cv.CV_8U)
+        #laplacian = np.where(laplacian > 0, 255, 0).astype(np.uint8)
         circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
-                               param1=2, param2=15,
+                               param1=25, param2=15,
                                minRadius=5, maxRadius=15)
 
         # gradient detection
-        laplacian = cv.Laplacian(image, cv.CV_64F)
-        sobelx = cv.Sobel(image, cv.CV_64F,1,0,ksize=5)
-        sobely = cv.Sobel(image, cv.CV_64F,0,1,ksize=5)
-        #cv.imshow("laplacian", laplacian)
+        laplacian = cv.Laplacian(gray, cv.CV_8U)
+        sobelx = cv.Sobel(gray, cv.CV_64F,1,0,ksize=3)
+        sobely = cv.Sobel(gray, cv.CV_64F,0,1,ksize=3)
+        #cv.imshow("laplacian", np.minimum(laplacian.astype(np.float64) * 255, 255))
         #cv.imshow("sobelx", sobelx)
         #cv.imshow("sobely", sobely)
         #if cv.waitKey(0) == ord('q'):
@@ -88,7 +97,7 @@ def main(args):
             box = cv.boxPoints(bounding_box)
             box = np.intp(box)
             cv.drawContours(image, [box], 0, (0,255,0))
-            cv.drawContours(mask, [box], 0, 125)
+            #cv.drawContours(mask, [box], 0, 125)
 
             # draw circles
             if circles is not None:
@@ -97,7 +106,7 @@ def main(args):
                     center = (i[0], i[1])
                     # circle outline
                     radius = i[2]
-                    #cv.circle(image, center, radius, (0, 0, 255), 1)
+                    cv.circle(image, center, radius, (0, 0, 255), 1)
 
             cv.imshow("image", image)
             #cv.imshow("mask", mask)
