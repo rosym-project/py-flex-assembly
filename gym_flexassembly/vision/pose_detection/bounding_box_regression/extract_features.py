@@ -19,7 +19,7 @@ def main(args):
     print(args)
 
     data = np.loadtxt(args.data_dir + "/data.csv", skiprows=1, usecols=1, delimiter=',', dtype=np.str)
-    features = [["id", "image_name", "bb_center_x", "bb_center_y", "bb_height", "bb_width", "bb_angle", "laplacian_side"]]
+    features = [["id", "image_name", "bb_center_x", "bb_center_y", "bb_height", "bb_width", "bb_angle[radians]", "laplacian_side"]]
 
     for i, f in enumerate(tqdm.tqdm(data)):
         image = cv.imread(args.data_dir + "/" + f)
@@ -64,7 +64,19 @@ def main(args):
 
         # calculate an oriented bounding box
         bounding_box = cv.minAreaRect(contours[0])
+        box = cv.boxPoints(bounding_box)
 
+        # extract the relevant data from the bounding box
+        width = max(bounding_box[1])
+        height = min(bounding_box[1])
+
+        side_vec = []
+        if np.linalg.norm(box[0] - box[1]) > np.linalg.norm(box[0] - box[3]):
+            side_vec = box[1] - box[0]
+        else:
+            side_vec = box[3] - box[0]
+        axis_vec = np.array([1, 0])
+        angle = math.acos(axis_vec.dot(side_vec) / np.linalg.norm(side_vec))
 
         # ======================================================================
         # additional feature: which half has more pixels with laplacian > 0
@@ -76,7 +88,6 @@ def main(args):
         laplacian = np.where(laplacian > 0, 1, 0)
 
         # create masks for the two halves of the clamp
-        box = cv.boxPoints(bounding_box)
         half_1 = []
         half_2 = []
         if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
@@ -109,12 +120,11 @@ def main(args):
         # ======================================================================
 
         # append feature vector to list
-        features.append([i, f, bounding_box[0][0], bounding_box[0][1], bounding_box[1][0], bounding_box[1][1], bounding_box[2], laplacian_side])
+        features.append([i, f, bounding_box[0][0], bounding_box[0][1], height, width, angle, laplacian_side])
 
         # visualization
         if args.visualize:
             # draw bounding box
-            box = cv.boxPoints(bounding_box)
             box = np.intp(box)
             cv.drawContours(image, [box], 0, (0,255,0))
 
