@@ -71,6 +71,7 @@ def main(args):
         # ======================================================================
 
         # detect hole
+        # doesn't work reliably
         gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         #laplacian = cv.Laplacian(gray, cv.CV_8U)
         #laplacian = np.where(laplacian > 0, 255, 0).astype(np.uint8)
@@ -79,16 +80,47 @@ def main(args):
                                minRadius=5, maxRadius=15)
 
         # gradient detection
-        laplacian = cv.Laplacian(gray, cv.CV_8U)
-        sobelx = cv.Sobel(gray, cv.CV_64F,1,0,ksize=3)
-        sobely = cv.Sobel(gray, cv.CV_64F,0,1,ksize=3)
+        laplacian = cv.Laplacian(gray, cv.CV_64F)
+        laplacian = np.where(laplacian > 0, 1, 0)
         #cv.imshow("laplacian", np.minimum(laplacian.astype(np.float64) * 255, 255))
-        #cv.imshow("sobelx", sobelx)
-        #cv.imshow("sobely", sobely)
         #if cv.waitKey(0) == ord('q'):
             #break
 
-        # append results to feature vector
+        # create masks for the two halves of the clamp
+        box = cv.boxPoints(bounding_box)
+        half_1 = []
+        half_2 = []
+        if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
+            half_1 = [box[0], box[1]]
+            half_2 = [box[3], box[2]]
+        else:
+            half_1 = [box[1], box[2]]
+            half_2 = [box[0], box[3]]
+
+        middle = [(half_1[0] + half_2[0]) / 2, (half_1[1] + half_2[1]) / 2]
+        middle.reverse()
+        half_1.extend(middle)
+        half_1 = np.round(np.array(half_1)).astype(np.int)
+        half_2.extend(middle)
+        half_2 = np.round(np.array(half_2)).astype(np.int)
+
+        mask_1 = np.zeros(image.shape[:2])
+        cv.fillPoly(mask_1, [half_1], color=1)
+        mask_2 = np.zeros(image.shape[:2])
+        cv.fillPoly(mask_2, [half_2], color=1)
+
+        score_1 = np.sum(np.where(mask_1 == 1, laplacian, 0))
+        score_2 = np.sum(np.where(mask_2 == 1, laplacian, 0))
+
+        if score_1 > score_2:
+            cv.polylines(image, [half_1], True, color=(0,0,255))
+        else:
+            cv.polylines(image, [half_2], True, color=(0,0,255))
+
+        #cv.polylines(image, [half_1], True, color=(255,0,0))
+        #cv.polylines(image, [half_2], True, color=(0,0,255))
+
+        # append feature vector to list
         features.append([i, f, bounding_box[0][0], bounding_box[0][1], bounding_box[1][0], bounding_box[1][1], bounding_box[2]])
 
         # visualization
@@ -96,10 +128,18 @@ def main(args):
             # draw bounding box
             box = cv.boxPoints(bounding_box)
             box = np.intp(box)
-            cv.drawContours(image, [box], 0, (0,255,0))
-            #cv.drawContours(mask, [box], 0, 125)
+            #cv.drawContours(image, [box], 0, (0,255,0))
+            cv.drawContours(mask, [box], 0, 125)
+
+            """
+            cv.putText(image, '0', tuple(box[0]), 0, 0.4, (0, 0, 0))
+            cv.putText(image, '1', tuple(box[1]), 0, 0.4, (0, 0, 0))
+            cv.putText(image, '2', tuple(box[2]), 0, 0.4, (0, 0, 0))
+            cv.putText(image, '3', tuple(box[3]), 0, 0.4, (0, 0, 0))
+            """
 
             # draw circles
+            """
             if circles is not None:
                 circles = np.uint16(np.around(circles))
                 for i in circles[0, :]:
@@ -107,6 +147,7 @@ def main(args):
                     # circle outline
                     radius = i[2]
                     cv.circle(image, center, radius, (0, 0, 255), 1)
+            """
 
             cv.imshow("image", image)
             #cv.imshow("mask", mask)
