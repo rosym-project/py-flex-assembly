@@ -51,7 +51,7 @@ def main(args):
                         print("multiple clamps detected")
                         exit()
                     # recompute the contour using only the current label
-                    countours, _ = cv.findContours(np.where(labels == j, 1, 0).astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+                    contours, _ = cv.findContours(np.where(labels == j, 1, 0).astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
                     clamp_found = True
 
             if not clamp_found:
@@ -77,6 +77,8 @@ def main(args):
             side_vec = box[3] - box[0]
         axis_vec = np.array([1, 0])
         angle = math.acos(axis_vec.dot(side_vec) / np.linalg.norm(side_vec))
+        if np.linalg.norm(side_vec) < 0.1:
+            print("warning: short side")
 
         # ======================================================================
         # additional feature: which half has more pixels with laplacian > 0
@@ -144,5 +146,7 @@ def main(args):
 
     cv.destroyAllWindows()
     np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
+
+
 if __name__ == '__main__':
     main(sys.argv)
