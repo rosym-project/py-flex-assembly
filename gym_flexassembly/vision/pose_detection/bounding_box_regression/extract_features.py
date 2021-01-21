@@ -71,6 +71,7 @@ def main(args):
         # ======================================================================
 
         # compute laplacian
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         laplacian = cv.Laplacian(gray, cv.CV_64F)
         laplacian = np.where(laplacian > 0, 1, 0)
 
