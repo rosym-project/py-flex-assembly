@@ -40,7 +40,7 @@ def run_epoch(detector, data_loader, loss_function, optim, device, train=True):
 
 
 parser = util.load_model_parser(model_type='', description='train a pose direct model')
-parser.add_argument('--data_train', required=True, type=str,
+parser.add_argument('--data', required=True, type=str,
                     help='location of the data set')
 parser.add_argument('--translation', action='store_true',
                     help='if a translation or totation model should be trained')
@@ -53,7 +53,7 @@ model_type = 'translation' if args.translation else 'rotation'
 detector = util.load_model(args, device, model_type)
 detector = detector.eval()
 
-dataset = datasets.TranslationDataset(args.data_train) if args.translation else datasets.RotationDataset(args.data_train)
+dataset = datasets.TranslationDataset(args.data) if args.translation else datasets.RotationDataset(args.data)
 
 loss_function = torch.nn.MSELoss() if args.translation else util.QuatLossModule()
 
@@ -76,6 +76,7 @@ for i, (image, targets) in enumerate(dataset):
         print(f'ERROR: outputs not equal {outputs} != {_outputs}')
         break
 
+    targets = targets.unsqueeze(dim=0)
     total_loss += loss_function(outputs, targets).detach().detach()
 total_loss = total_loss / len(dataset)
 print(f'Total loss: {total_loss:.6f}')
