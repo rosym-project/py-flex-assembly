@@ -37,6 +37,23 @@ def create_parser():
     return parser
 
 
+class RotationEstimator():
+
+    def __init__(self, args):
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+        self.model_rotation = pose_direct_util.load_model(args, self.device, model_type='rotation')
+        self.model_rotation = self.model_rotation.eval()
+
+    def estimate(self, img):
+        input_rotation = pose_direct_util.pre_process_rotation(img) 
+        return self.model_rotation(input_rotation).detach().squeeze(dim=0)
+
+    @classmethod
+    def add_args(cls, parser):
+        return pose_direct_util.load_model_parser(model_type='rotation', parser=parser)
+
+
 class PoseEstimator():
 
     def __init__(self, args):
