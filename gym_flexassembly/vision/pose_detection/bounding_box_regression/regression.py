@@ -34,8 +34,8 @@ def main(args):
     #data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[5, 6, 7], delimiter=',')
 
     # train the model
-    reg = make_pipeline(StandardScaler(), MultiOutputRegressor(SVR()))
-    #reg = make_pipeline(StandardScaler(), DecisionTreeRegressor())
+    # reg = make_pipeline(StandardScaler(), MultiOutputRegressor(SVR()))
+    reg = make_pipeline(StandardScaler(), DecisionTreeRegressor())
     reg.fit(data_train_x, data_train_y)
     #reg = load(args.model_path + "/model.joblib")
 
