@@ -40,6 +40,8 @@ from gym_flexassembly.smartobjects.spring_clamp import SpringClamp
 
 from gym_flexassembly.envs.env_interface import EnvInterface
 
+from gym_flexassembly.constraints import frame
+
 class FlexAssemblyEnv(EnvInterface):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50} # TODO do we need this?)
 
@@ -179,6 +181,42 @@ class FlexAssemblyEnv(EnvInterface):
         self._p.addUserDebugLine([0, -0.1+0.31, 0+0.75], [0, 0.1+0.31, 0+0.75], [0, 1, 0])
         self._p.addUserDebugLine([0, 0+0.31, -0.1+0.75], [0, 0+0.31, 0.1+0.75], [0, 0, 1])
 
+        link_ft = 9 # 8?
+        self._p.enableJointForceTorqueSensor(self.kuka14_1, link_ft, True)
+        
+        self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+        self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+        self._p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+        self.frame_text_node = self._p.addUserDebugText(str("Link FT"), [0, 0.15, 0.15],
+                        textColorRGB=[0, 0, 0],
+                        textSize=1.0,
+                        parentObjectUniqueId=self.kuka14_1,
+                        parentLinkIndex=link_ft)
+        self._p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+
+        # self.tmp_frame = frame.Frame(self._p, "test", fixed_base=True, ref_id=self.kuka14_1, ref_link_id=9, ref_name="", is_body_frame=True)
+        link_idd = 11
+        self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        self.frame_text_node = self._p.addUserDebugText(str("Link 11"), [0, 0.15, 0.15],
+                        textColorRGB=[0, 0, 0],
+                        textSize=1.0,
+                        parentObjectUniqueId=self.kuka14_1,
+                        parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+
+        eef_height = 0.1
+        self._p.addUserDebugLine([0, 0, eef_height], [0.1, 0, eef_height], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0, eef_height], [0, 0.1, eef_height], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0, eef_height], [0, 0, eef_height+0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        self.frame_text_node = self._p.addUserDebugText(str("EEF"), [0, 0.15, eef_height+0.15],
+                        textColorRGB=[0, 0, 0],
+                        textSize=1.0,
+                        parentObjectUniqueId=self.kuka14_1,
+                        parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0.05, eef_height+0.05], [0, 0.14, eef_height+0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+
     def loadCameras(self):
         if not self._use_real_interface:
             return
@@ -190,6 +228,11 @@ class FlexAssemblyEnv(EnvInterface):
     def step_internal(self):
         if self.kuka7_1_egp:
             self.kuka7_1_egp.update()
+        
+        # pos, orn = self.tmp_frame.getInternalPosOrn()
+        # self.tmp_frame.resetPositionAndOrientation(pos, orn)
+        
+        # _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)
