@@ -83,6 +83,9 @@ class FlexAssemblyEnv(EnvInterface):
         # print("pybullet_data.getDataPath() = " + str(pybullet_data.getDataPath()))
         # p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
+        # plate_id = self._p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/plate.urdf", useFixedBase=True)
+        # self._p.resetBasePositionAndOrientation(plate_id, [0,0,0.3], [0, 0, 0, 1])
+
         # Disable rendering
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 0)
 
@@ -125,6 +128,13 @@ class FlexAssemblyEnv(EnvInterface):
         workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
         self.object_ids['clamps'] = [workpiece._model_id for workpiece in [workpiece_1, workpiece_2, workpiece_3]]
 
+
+        # self.addVisFrame(workpiece_1_offset_world,'F1')
+
+        # self.addVisFrame([0.4012, 0.200289, 0.821851],'O1')
+
+        self.addVisFrame([0.4, 0.2, 0.8],'O1')
+
         # # Global camera
         # self.cam_global_settings['pos'] = [table_offset_world_x-0.29, table_offset_world_y-0.54, table_offset_world_z + 1.375]
         # self.cam_global_settings['orn'] = [0, 0, -0.7071068, 0.7071068]
@@ -142,9 +152,9 @@ class FlexAssemblyEnv(EnvInterface):
     def loadRobot(self):
         # Disable rendering
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 0)
-
+        # os.path.join(flexassembly_data.getDataPath(), "robots/epfl-iiwa14/iiwa14.urdf")
         # Load robot KUKA IIWA 14
-        self.kuka14_1 = p.loadURDF(os.path.join(flexassembly_data.getDataPath(), "robots/epfl-iiwa14/iiwa14.urdf"), useFixedBase=True)
+        self.kuka14_1 = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf", useFixedBase=True)
         if self._use_real_interface:
             f = open("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf","r") # TODO
             self.upload_urdf(f.read(), "robot_description")
@@ -177,45 +187,77 @@ class FlexAssemblyEnv(EnvInterface):
         # Load gripper
         self.kuka7_1_egp = Prismatic2FingerGripperPlugin(self.kuka14_1, "gripper1", "SchunkEGP40_Finger1_joint", "SchunkEGP40_Finger2_joint", use_real_interface=self._use_real_interface)
 
-        self._p.addUserDebugLine([-0.1, 0+0.31, 0+0.75], [0.1, 0+0.31, 0+0.75], [1, 0, 0])
-        self._p.addUserDebugLine([0, -0.1+0.31, 0+0.75], [0, 0.1+0.31, 0+0.75], [0, 1, 0])
-        self._p.addUserDebugLine([0, 0+0.31, -0.1+0.75], [0, 0+0.31, 0.1+0.75], [0, 0, 1])
+        # self._p.addUserDebugLine([-0.1, 0+0.31, 0+0.75], [0.1, 0+0.31, 0+0.75], [1, 0, 0])
+        # self._p.addUserDebugLine([0, -0.1+0.31, 0+0.75], [0, 0.1+0.31, 0+0.75], [0, 1, 0])
+        # self._p.addUserDebugLine([0, 0+0.31, -0.1+0.75], [0, 0+0.31, 0.1+0.75], [0, 0, 1])
+
+  
+
 
         link_ft = 9 # 8?
         self._p.enableJointForceTorqueSensor(self.kuka14_1, link_ft, True)
         
-        self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
-        self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
-        self._p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
-        self.frame_text_node = self._p.addUserDebugText(str("Link FT"), [0, 0.15, 0.15],
-                        textColorRGB=[0, 0, 0],
-                        textSize=1.0,
-                        parentObjectUniqueId=self.kuka14_1,
-                        parentLinkIndex=link_ft)
-        self._p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+        # self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+        # self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+        # self._p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
+        # self.frame_text_node = self._p.addUserDebugText(str("Link FT"), [0, 0.15, 0.15],
+        #                 textColorRGB=[0, 0, 0],
+        #                 textSize=1.0,
+        #                 parentObjectUniqueId=self.kuka14_1,
+        #                 parentLinkIndex=link_ft)
+        # self._p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
 
         # self.tmp_frame = frame.Frame(self._p, "test", fixed_base=True, ref_id=self.kuka14_1, ref_link_id=9, ref_name="", is_body_frame=True)
-        link_idd = 11
-        self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
-        self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
-        self._p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
-        self.frame_text_node = self._p.addUserDebugText(str("Link 11"), [0, 0.15, 0.15],
-                        textColorRGB=[0, 0, 0],
-                        textSize=1.0,
-                        parentObjectUniqueId=self.kuka14_1,
-                        parentLinkIndex=link_idd)
-        self._p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        # link_idd = 11
+        # self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        # self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        # self._p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        # self.frame_text_node = self._p.addUserDebugText(str("Link 11"), [0, 0.15, 0.15],
+        #                 textColorRGB=[0, 0, 0],
+        #                 textSize=1.0,
+        #                 parentObjectUniqueId=self.kuka14_1,
+        #                 parentLinkIndex=link_idd)
+        # self._p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
 
-        eef_height = 0.1
-        self._p.addUserDebugLine([0, 0, eef_height], [0.1, 0, eef_height], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
-        self._p.addUserDebugLine([0, 0, eef_height], [0, 0.1, eef_height], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
-        self._p.addUserDebugLine([0, 0, eef_height], [0, 0, eef_height+0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
-        self.frame_text_node = self._p.addUserDebugText(str("EEF"), [0, 0.15, eef_height+0.15],
+        # self.a1 = self._p.addUserDebugLine([0,0,0], [0,0,0], [1, 0, 0])
+        # self.a2 = self._p.addUserDebugLine([0,0,0], [0,0,0], [0, 1, 0])
+        # self.a3 = self._p.addUserDebugLine([0,0,0], [0,0,0], [0, 0, 1])
+
+        # self.addVisFrameAt(kuka14_1,link_idd,'F1')
+
+        # eef_height = 0.1
+        # self._p.addUserDebugLine([0, 0, eef_height], [0.1, 0, eef_height], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        # self._p.addUserDebugLine([0, 0, eef_height], [0, 0.1, eef_height], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        # self._p.addUserDebugLine([0, 0, eef_height], [0, 0, eef_height+0.1], [0, 0, 1], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        # self.frame_text_node = self._p.addUserDebugText(str("EEF"), [0, 0.15, eef_height+0.15],
+        #                 textColorRGB=[0, 0, 0],
+        #                 textSize=1.0,
+        #                 parentObjectUniqueId=self.kuka14_1,
+        #                 parentLinkIndex=link_idd)
+        # self._p.addUserDebugLine([0, 0.05, eef_height+0.05], [0, 0.14, eef_height+0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+
+
+    def addVisFrameAt(self,kuka14_1,link_idd,text):
+        self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=kuka14_1, parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=kuka14_1, parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=kuka14_1, parentLinkIndex=link_idd)
+        self.frame_text_node = self._p.addUserDebugText(str(text), [0, 0.15, 0.15],
                         textColorRGB=[0, 0, 0],
                         textSize=1.0,
-                        parentObjectUniqueId=self.kuka14_1,
+                        parentObjectUniqueId=kuka14_1,
                         parentLinkIndex=link_idd)
-        self._p.addUserDebugLine([0, 0.05, eef_height+0.05], [0, 0.14, eef_height+0.14], [0, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_idd)
+        self._p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=kuka14_1, parentLinkIndex=link_idd)
+
+
+    def addVisFrame(self,pos,text):
+        self._p.addUserDebugLine([pos[0], pos[1], pos[2]], [pos[0]+0.1, pos[1]+0, pos[2]+0], [1, 0, 0])
+        self._p.addUserDebugLine([pos[0], pos[1], pos[2]], [pos[0]+0, pos[1]+0.1, pos[2]+0], [0, 1, 0])
+        self._p.addUserDebugLine([pos[0], pos[1], pos[2]], [pos[0]+0, pos[1]+0, pos[2]+0.1], [0, 0, 1])
+        self.frame_text_node = self._p.addUserDebugText(str(text), [pos[0]+0, pos[1]+0.15, pos[2]+0.15],
+                        textColorRGB=[0, 0, 0],
+                        textSize=1.0)
+        self._p.addUserDebugLine([pos[0], pos[1]+0.05, pos[2]+0.05], [pos[0], pos[1]+0.14, pos[2]+0.14], [0, 0, 0])
+
 
     def loadCameras(self):
         if not self._use_real_interface:
@@ -233,6 +275,61 @@ class FlexAssemblyEnv(EnvInterface):
         # self.tmp_frame.resetPositionAndOrientation(pos, orn)
         
         # _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
+        
+        # ikSolver = 0
+        # jd=[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]
+        # jrest=[1.5,-0.1,0.0,-2.0,0.0,1.0,1.57,0.0,0.0]
+
+        # self.ll = [-2.96, -2.09, -2.96, -2.09, -2.96, -2.09, -3.05]
+        # #upper limits for null space
+        # self.ul = [2.96, 2.09, 2.96, 2.09, 2.96, 2.09, 3.05]
+        # #joint ranges for null space
+        # self.jr = [4.8, 4.0, 4.8, 4.0, 4.8, 4.0, 6.0]
+        # goalJntPos = self._p.calculateInverseKinematics(self.kuka14_1,11,[0.4,0.2,0.8],[0,1,0,0],jointDamping=jd,solver=ikSolver, maxNumIterations=1000, residualThreshold=0.001, restPoses=jrest, lowerLimits=self.ll, upperLimits=self.ul, jointRanges=self.jr)
+        # # print('goalJntPos = ' + str(goalJntPos))
+
+        # p.setJointMotorControl2(self.kuka14_1,
+        #                     1,
+        #                     p.POSITION_CONTROL,
+        #                     targetPosition=goalJntPos[0],
+        #                     force=500.0)
+        # p.setJointMotorControl2(self.kuka14_1,
+        #                         2,
+        #                         p.POSITION_CONTROL,
+        #                         targetPosition=goalJntPos[1],
+        #                         force=500.0)
+        # p.setJointMotorControl2(self.kuka14_1,
+        #                         3,
+        #                         p.POSITION_CONTROL,
+        #                         targetPosition=goalJntPos[2],
+        #                         force=500.0)
+        # p.setJointMotorControl2(self.kuka14_1,
+        #                         4,
+        #                         p.POSITION_CONTROL,
+        #                         targetPosition=goalJntPos[3],
+        #                         force=500.0)
+        # p.setJointMotorControl2(self.kuka14_1,
+        #                         5,
+        #                         p.POSITION_CONTROL,
+        #                         targetPosition=goalJntPos[4],
+        #                         force=500.0)
+        # p.setJointMotorControl2(self.kuka14_1,
+        #                         6,
+        #                         p.POSITION_CONTROL,
+        #                         targetPosition=goalJntPos[5],
+        #                         force=500.0)
+        # p.setJointMotorControl2(self.kuka14_1,
+        #                         7,
+        #                         p.POSITION_CONTROL,
+        #                         targetPosition=goalJntPos[6],
+        #                         force=500.0)
+        
+        # _,_,_,_,c,_ = self._p.getLinkState(self.kuka14_1,11)
+        # print('Link 11 (TCP) = ' + str(c))
+
+        # self.a1 = self._p.addUserDebugLine([a[0]+0, a[1]+0, a[2]+0], [a[0]+0.1, a[1]+0, a[2]+0], [1, 0, 0], replaceItemUniqueId=self.a1)
+        # self.a2 = self._p.addUserDebugLine([a[0]+0, a[1]+0, a[2]+0], [a[0]+0, a[1]+0.1, a[2]+0], [0, 1, 0], replaceItemUniqueId=self.a2)
+        # self.a3 = self._p.addUserDebugLine([a[0]+0, a[1]+0, a[2]+0], [a[0]+0, a[1]+0, a[2]+0.1], [0, 0, 1], replaceItemUniqueId=self.a3)
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)

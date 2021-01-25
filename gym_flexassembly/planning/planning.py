@@ -89,7 +89,7 @@ class FlexPlanning(object):
         count = 30
         goalJntPos = None
         while count > 0:
-            goalJntPos = p.calculateInverseKinematics(self._robot,11,goalPosition,goalOrientation,jointDamping=jd,solver=ikSolver, maxNumIterations=1000, residualThreshold=0.001, restPoses=jrest, lowerLimits=self.ll, upperLimits=self.ul, jointRanges=self.jr)
+            goalJntPos = p.calculateInverseKinematics(self._robot,11,goalPosition,goalOrientation,jointDamping=jd,solver=ikSolver, maxNumIterations=10000, residualThreshold=0.0001, restPoses=jrest, lowerLimits=self.ll, upperLimits=self.ul, jointRanges=self.jr)
             # set_joint_positions(self._robot, jt.get_movable_joints(self._robot), goalJntPos)
             for jj in range(len(jt.get_movable_joints(self._robot))):
                 p.resetJointState(self._robot, jt.get_movable_joints(self._robot)[jj], goalJntPos[jj])

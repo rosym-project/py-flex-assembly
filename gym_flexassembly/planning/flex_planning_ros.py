@@ -205,6 +205,15 @@ class FlexPlanningROS(object):
         lastCommand = np.array([0]*num_involved_joints) # TODO change to current
 
 
+        
+        jt_tmp = JointTrajectoryPoint(positions=goalposjoint, velocities=[0]*num_involved_joints)
+        self.pub_traj.publish(jt_tmp)
+        time.sleep(0.01)
+        self.pub_traj.publish(jt_tmp)
+        time.sleep(0.01)
+        self.pub_traj.publish(jt_tmp)
+        jt.points.append(jt_tmp)
+
         # for entry in milestones:
         #     jt_tmp = JointTrajectoryPoint(positions=list(entry), velocities=[0,0,0,0,0,0,0])
         #     self.pub_traj.publish(jt_tmp)

@@ -51,18 +51,18 @@ class GraspTest(object):
         # self.pub_traj = rospy.Publisher("/traj", Pose, queue_size=1,latch=True)
 
         # Create publisher for trajectory
-        pub_traj = rospy.Publisher('flex_planning_ros/traj_setpoints', JointTrajectoryPoint, queue_size=1,latch=True)
-        print(" > Initialized publisher on flex_planning_ros/traj_setpoints")
+        # pub_traj = rospy.Publisher('flex_planning_ros/traj_setpoints', JointTrajectoryPoint, queue_size=1,latch=True)
+        # print(" > Initialized publisher on flex_planning_ros/traj_setpoints")
 
-        # HOMING
-        jt_tmp = JointTrajectoryPoint(positions=[1.5,-0.1,0.0,-2.0,0.0,1.0,1.57], velocities=[0]*7)
-        pub_traj.publish(jt_tmp)
+        # # HOMING
+        # jt_tmp = JointTrajectoryPoint(positions=[1.5,-0.1,0.0,-2.0,0.0,1.0,1.57], velocities=[0]*7)
+        # pub_traj.publish(jt_tmp)
         rate = rospy.Rate(10) # 10hz
-        rate.sleep()
-        rate.sleep()
+        # rate.sleep()
+        # rate.sleep()
 
         # Move to first target
-        time.sleep(10)
+        # time.sleep(10)
         print("Next state")
         rospy.wait_for_service('flex_planning_ros/plan')
         try:
@@ -82,6 +82,8 @@ class GraspTest(object):
         
         rate.sleep()
         time.sleep(10)
+        return
+
         print("Prepare Grasp")
         rospy.wait_for_service('flex_planning_ros/plan')
         try:
