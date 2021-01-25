@@ -113,7 +113,8 @@ def main(args):
     print(args)
 
     data = np.loadtxt(args.data_dir + "/data.csv", skiprows=1, usecols=1, delimiter=',', dtype=np.str)
-    features = [["id", "image_name", "bb_center_x", "bb_center_y", "bb_height", "bb_width", "bb_angle[radians]", "laplacian_side"]]
+    features = [["id", "image_name", "bb_center_x", "bb_center_y", "bb_height", "bb_width",
+                "bb_angle[radians]", "laplacian_side", "laplacian_sum", "laplacian_abs_sum", "laplacian_count"]]
 
 
     for i, f in enumerate(tqdm.tqdm(data)):
@@ -127,9 +128,9 @@ def main(args):
             print(e)
             exit()
 
-        # # ======================================================================
-        # # bounding box features
-        # # ======================================================================
+        # ======================================================================
+        # bounding box features
+        # ======================================================================
 
         bounding_box = detect_bounding_box(image)
         box = cv.boxPoints(bounding_box)
@@ -149,17 +150,34 @@ def main(args):
             print("warning: short side")
 
         # ======================================================================
-        # additional feature: which half has more pixels with laplacian > 0
+        # additional features:
+        # - which half has more pixels with laplacian > 0
+        # - sum of laplacian
+        # - number of pixels where laplacian > 0
         # ======================================================================
 
         laplacian_side = detect_side(image, box)
+
+        # compute laplacian
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        laplacian = cv.Laplacian(gray, cv.CV_64F)
+
+        # apply bounding box
+        box_mask = np.zeros(laplacian.shape)
+        cv.fillPoly(box_mask, [np.round(np.array(box)).astype(np.int)], color=1)
+        laplacian = np.where(box_mask == 1, laplacian, 0)
+        laplacian_sum = np.sum(laplacian)
+        laplacian_abs_sum = np.sum(np.abs(laplacian))
+        laplacian = np.where(laplacian != 0, 1, 0)
+        laplacian_count = np.sum(laplacian)
 
         # ======================================================================
         # save feature + visualization
         # ======================================================================
 
         # append feature vector to list
-        features.append([i, f, bounding_box[0][0], bounding_box[0][1], height, width, angle, laplacian_side])
+        features.append([i, f, bounding_box[0][0], bounding_box[0][1], height, width, angle, laplacian_side,
+                        laplacian_sum, laplacian_abs_sum, laplacian_count])
 
         # visualization
         if args.visualize:
@@ -196,7 +214,7 @@ def main(args):
                 break
 
     cv.destroyAllWindows()
-    # np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
+    np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
 
 
 if __name__ == '__main__':
