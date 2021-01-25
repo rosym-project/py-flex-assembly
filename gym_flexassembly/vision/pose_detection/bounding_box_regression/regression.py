@@ -138,7 +138,7 @@ def main(args):
     print("MAE:", metrics.mean_absolute_error(data_val_y, prediction))
 
     if not args.model_path is None:
-        reg.save(args.model_path)
+        reg.safe(args.model_path)
 
 if __name__ == '__main__':
     main(sys.argv)
