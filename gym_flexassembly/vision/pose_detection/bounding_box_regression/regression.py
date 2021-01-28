@@ -42,7 +42,14 @@ class Regressor():
         if self.reg is None:
             print("error: unconfigured model")
             return
+
+        """
+        quaternions = self.reg.predict(x)
+        lenghts = np.linalg.norm(quaternions, axis=1, keepdims=True)
+        return quaternions / lenghts
+        """
         return self.reg.predict(x)
+        #"""
 
     def config(self, model_type, model_params):
         self.model_type = model_type
@@ -51,10 +58,11 @@ class Regressor():
         if model_type == Model.SVR:
             if not model_params is None:
                 self.reg = make_pipeline(StandardScaler(), MultiOutputRegressor(
-                    SVR(epsilon=0.0005, C=model_params["multioutputregressor__estimator__C"],
+                    SVR(epsilon=0.0005, max_iter=200000,
+                        C=model_params["multioutputregressor__estimator__C"],
                         gamma=model_params["multioutputregressor__estimator__gamma"])))
             else:
-                self.reg = make_pipeline(StandardScaler(), MultiOutputRegressor(SVR(epsilon=0.0005)))
+                self.reg = make_pipeline(StandardScaler(), MultiOutputRegressor(SVR(epsilon=0.0005, max_iter=200000)))
         elif model_type == Model.DECISION_TREE_REGRESSOR:
             if not model_params is None:
                 self.reg = make_pipeline(StandardScaler(),
@@ -88,8 +96,8 @@ class Regressor():
             return
 
         if self.model_type == Model.SVR:
-            parameters = {'multioutputregressor__estimator__C':[1, 5, 10],
-                        'multioutputregressor__estimator__gamma':[0.001, 0.01, 0.1]}
+            parameters = {'multioutputregressor__estimator__C':[0.1, 1, 5, 10],
+                        'multioutputregressor__estimator__gamma':[0.001, 0.01, 0.1, 1]}
         elif self.model_type == Model.DECISION_TREE_REGRESSOR:
             parameters = {'decisiontreeregressor__max_depth':[2, 5, 10, 15, 20, 25, None],
                         'decisiontreeregressor__min_samples_split':[2, 5, 10, 15, 20, 25]}
@@ -122,16 +130,22 @@ def main(args):
     print(args)
 
     # load the datasets
-    #"""
-    data_train_x = np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
-    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[2, 3, 4], delimiter=',')
-    data_val_x = np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
-    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[2, 3, 4], delimiter=',')
     """
-    data_train_x = np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], delimiter=',')
-    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[5, 6, 7], delimiter=',')
-    data_val_x = np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], delimiter=',')
-    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[5, 6, 7], delimiter=',')
+    # predict translation
+    data_train_x = np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
+    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
+    data_val_x = np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
+    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
+    """
+    # predict rotation
+    #feature_cols = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    feature_cols = [4, 6, 8, 10]
+    data_train_x = np.c_[np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=feature_cols, delimiter=','),
+                        np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[2, 3, 4, 5], delimiter=',')]
+    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[9, 10, 11, 12], delimiter=',')
+    data_val_x = np.c_[np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=feature_cols, delimiter=','),
+                    np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[2, 3, 4, 5], delimiter=',')]
+    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[9, 10, 11, 12], delimiter=',')
     #"""
 
     # setup and train the model
