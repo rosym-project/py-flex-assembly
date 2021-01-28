@@ -213,8 +213,8 @@ def main(args):
             starting_number = max(0, len(f.readlines()) - 1)
             print('Extracted starting number..', starting_number)
     else:
-        #header = ["id", "image_name", "x", "y", "z", "roll", "pitch", "yaw"]
-        header = ["id", "image_name", "x", "y", "z", "qx", "qy", "qz", "qw"]
+        #header = ["id", "image_name", "camera_qx", "camera_qy", "camera_qz", "camera_qw", "x", "y", "z", "roll", "pitch", "yaw"]
+        header = ["id", "image_name", "camera_qx", "camera_qy", "camera_qz", "camera_qw", "x", "y", "z", "qx", "qy", "qz", "qw"]
         with open(annotation_file, mode='w') as f:
             csv.writer(f, delimiter=',').writerow(header)
 
@@ -235,7 +235,7 @@ def main(args):
     # loop over the number of target images
     j = starting_number
     while (j < args.number + starting_number):
-        data = np.empty(9, dtype=object)
+        data = np.empty(13, dtype=object)
         img_name = '{:05d}'.format(j) + '.png'
         data[0] = j
         data[1] = img_name
@@ -243,16 +243,19 @@ def main(args):
         model_pose = generate_random_model_pose()
         camera_settings = get_random_camera_settings(model_pose['pos'])
 
-        # transform the pose from global coordinates to camera coordinates
+        # extract the camera rotation from the camera settings
         view_matrix = np.array(camera_settings['view_matrix']).reshape((4, 4)).transpose()
+        camera_rot = np.linalg.inv(view_matrix[:3, :3])
+        data[2:6] = R.from_matrix(camera_rot).as_quat()
 
+        # transform the pose from global coordinates to camera coordinates
         t = view_matrix.dot(np.array([*model_pose['pos'], 1]))[:3]
         rot = np.array(p.getMatrixFromQuaternion(model_pose['orn'])).reshape((3, 3))
         rot = view_matrix[:3, :3].dot(rot)
-        data[2:5] = t
-        #data[5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
-        #data[5:8] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
-        data[5:9] = R.from_matrix(rot).as_quat()
+        data[6:9] = t
+        #data[9:12] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
+        #data[9:12] = p.getEulerFromQuaternion(R.from_matrix(rot).as_quat())
+        data[9:13] = R.from_matrix(rot).as_quat()
 
         # generate the image of the clamp and the background
         background, clamp_img = generate_image(paths[0], model_pose, camera_settings)

@@ -114,7 +114,7 @@ def main(args):
 
     data = np.loadtxt(args.data_dir + "/data.csv", skiprows=1, usecols=1, delimiter=',', dtype=np.str)
     features = [["id", "image_name", "bb_center_x", "bb_center_y", "bb_height", "bb_width",
-                "bb_angle[radians]", "laplacian_side", "laplacian_sum", "laplacian_abs_sum", "laplacian_count"]]
+                "bb_angle[radians]", "bb_area", "laplacian_side", "laplacian_sum", "laplacian_abs_sum", "laplacian_count"]]
 
 
     for i, f in enumerate(tqdm.tqdm(data)):
@@ -176,8 +176,8 @@ def main(args):
         # ======================================================================
 
         # append feature vector to list
-        features.append([i, f, bounding_box[0][0], bounding_box[0][1], height, width, angle, laplacian_side,
-                        laplacian_sum, laplacian_abs_sum, laplacian_count])
+        features.append([i, f, bounding_box[0][0], bounding_box[0][1], height, width, angle, height * width,
+                        laplacian_side, laplacian_sum, laplacian_abs_sum, laplacian_count])
 
         # visualization
         if args.visualize:
