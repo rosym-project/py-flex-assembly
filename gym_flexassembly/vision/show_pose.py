@@ -22,16 +22,18 @@ from gym_flexassembly.vision.pose_detection.pose_direct import models, datasets
 
 import gym_flexassembly.vision.util_dataset as util_dataset
 import gym_flexassembly.vision.pose_detection.pose_direct.pose_service as pose_service
-from gym_flexassembly.vision.pose_detection.bounding_box_regression.pose_estimator import TranslationEstimator
+from gym_flexassembly.vision.pose_detection.bounding_box_regression.pose_estimator import TranslationEstimator, RotationEstimator
 
 parser = argparse.ArgumentParser()
-pose_service.RotationEstimator.add_args(parser)
+# pose_service.RotationEstimator.add_args(parser)
 # parser = pose_service.create_parser()
+RotationEstimator.add_args(parser)
 TranslationEstimator.add_args(parser)
 args = parser.parse_args()
 print(args)
 # pose_estimator = pose_service.PoseEstimator(args)
-rotation_estimator = pose_service.RotationEstimator(args)
+# rotation_estimator = pose_service.RotationEstimator(args)
+rotation_estimator = RotationEstimator(args)
 translation_estimator = TranslationEstimator(args)
 
 # load the csv file containing the marker points and the paths
@@ -52,6 +54,8 @@ p.resetBasePositionAndOrientation(clamp_id, model_pose['pos'], model_pose['orn']
 
 
 view_matrix = np.array(camera_settings['view_matrix']).reshape((4, 4)).transpose()
+camera_rot = np.linalg.inv(view_matrix[:3, :3])
+camera_rot = R.from_matrix(camera_rot).as_quat()
 
 rgb = util_dataset.get_image(camera_settings)
 
@@ -59,17 +63,19 @@ rgb = util_dataset.get_image(camera_settings)
 img = cv.cvtColor(rgb, cv.COLOR_RGB2BGR)
 
 pose = {}
-print('Estimate rotation...')
-since = time.time()
-pose['orn'] = rotation_estimator.estimate(img)
-diff = time.time() - since
-print(f'Estimate rotation took {diff:.3f}s')
-
 print('Estimate translation...')
 since = time.time()
 pose['pos'] = translation_estimator.estimate(img)
 diff = time.time() - since
 print(f'Estimate translation took {diff:.3f}s')
+
+print('Estimate rotation...')
+since = time.time()
+# pose['orn'] = rotation_estimator.estimate(img)
+pose['orn'] = rotation_estimator.estimate(img, pose['pos'], camera_rot)
+diff = time.time() - since
+print(f'Estimate rotation took {diff:.3f}s')
+
 
 pos, orn = util_dataset.from_camera_to_global(pose['pos'], pose['orn'], view_matrix)
 
