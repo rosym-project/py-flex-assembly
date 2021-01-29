@@ -20,11 +20,10 @@ from std_srvs.srv import Empty, EmptyResponse
 from std_msgs.msg import Float32MultiArray
 
 from geometry_msgs.msg import Pose
-# from geometry_msgs.msg import Point
-# from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Transform, Twist
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint, MultiDOFJointTrajectoryPoint
 from cosima_world_state.srv import RequestTrajectory, RequestTrajectoryResponse
 
 import threading
@@ -48,7 +47,7 @@ class GraspTest(object):
         self.lock = threading.Lock()
 
         # # write trajectory command
-        # self.pub_traj = rospy.Publisher("/traj", Pose, queue_size=1,latch=True)
+        self.pub_traj = rospy.Publisher("/cart/traj_setpoint", MultiDOFJointTrajectoryPoint, queue_size=1,latch=True)
 
         # Create publisher for trajectory
         # pub_traj = rospy.Publisher('flex_planning_ros/traj_setpoints', JointTrajectoryPoint, queue_size=1,latch=True)
@@ -58,8 +57,50 @@ class GraspTest(object):
         # jt_tmp = JointTrajectoryPoint(positions=[1.5,-0.1,0.0,-2.0,0.0,1.0,1.57], velocities=[0]*7)
         # pub_traj.publish(jt_tmp)
         rate = rospy.Rate(10) # 10hz
-        # rate.sleep()
-        # rate.sleep()
+        rate.sleep()
+        rate.sleep()
+
+        cart_traj_point = MultiDOFJointTrajectoryPoint()
+        ros_t = Transform()
+        ros_t.translation.x = 0.4
+        ros_t.translation.y = 0.2
+        ros_t.translation.z = 0.8
+        ros_t.rotation.w = 0
+        ros_t.rotation.x = 0
+        ros_t.rotation.y = 1
+        ros_t.rotation.z = 0
+        cart_traj_point.transforms.append(ros_t)
+        ros_tt = Twist()
+        ros_tt.linear.x = 0
+        ros_tt.linear.y = 0
+        ros_tt.linear.z = 0
+        ros_tt.angular.x = 0
+        ros_tt.angular.y = 0
+        ros_tt.angular.z = 0
+        cart_traj_point.velocities.append(ros_tt)
+        ros_ttt = Twist()
+        ros_ttt.linear.x = 0
+        ros_ttt.linear.y = 0
+        ros_ttt.linear.z = 0
+        ros_ttt.angular.x = 0
+        ros_ttt.angular.y = 0
+        ros_ttt.angular.z = 0
+        cart_traj_point.accelerations.append(ros_ttt)
+        self.pub_traj.publish(cart_traj_point)
+        rate.sleep()
+
+        time.sleep(4)
+
+        cart_traj_point.transforms[0].translation.x = 0.4
+        cart_traj_point.transforms[0].translation.y = 0.20000000000000007
+        cart_traj_point.transforms[0].translation.z = 0.723
+
+        self.pub_traj.publish(cart_traj_point)
+        rate.sleep()
+
+        time.sleep(4)
+
+        return
 
         # Move to first target
         # time.sleep(10)

@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<robot name="window">
+  <link name="frame_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value="0.025"/>
+       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+				<mesh filename="WindowFrame.obj" scale="1 1 0.6"/>
+      </geometry>
+       <material name="white">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+				<mesh filename="WindowFrame.obj" scale="1 1 0.6"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="window_link">
+    <!-- <contact>
+      <lateral_friction value="0.5"/>
+    </contact> -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value="0.025"/>
+       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+				<mesh filename="Window.obj" scale="1 1 0.6"/>
+      </geometry>
+      <material name="lightblue_transparent">
+        <color rgba="0 0.8 1.0 0.1"/>
+        <specular rgb="0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+				<mesh filename="Window.obj" scale="1 1 0.6"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="frame_to_window" type="fixed">
+    <parent link="frame_link"/>
+    <child link="window_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+</robot>
+
