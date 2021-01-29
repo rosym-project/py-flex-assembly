@@ -7,7 +7,7 @@ import cv2 as cv
 import tqdm
 
 
-def detect_bounding_box(image, area_threshold=50):
+def detect_bounding_box(image, area_threshold):
     # create a mask containing the clamp
     # since the background is a simple gray it is easiest to detect the background and invert the resulting mask
     image = cv.cvtColor(image, cv.COLOR_BGR2HSV)
@@ -77,8 +77,12 @@ def detect_side(image, box):
     return 0 if score_1 > score_2 else 1
 
 
-def detect_features(image):
-    bounding_box = detect_bounding_box(image)
+def detect_features(image, area_threshold=50):
+    # ======================================================================
+    # bounding box features
+    # ======================================================================
+
+    bounding_box = detect_bounding_box(image, area_threshold=area_threshold)
     box = cv.boxPoints(bounding_box)
 
     # extract the relevant data from the bounding box
@@ -95,9 +99,30 @@ def detect_features(image):
     if np.linalg.norm(side_vec) < 0.1:
         print("warning: short side")
 
+    # ======================================================================
+    # additional features:
+    # - which half has more pixels with laplacian > 0
+    # - sum of laplacian
+    # - number of pixels where laplacian > 0
+    # ======================================================================
+
     laplacian_side = detect_side(image, box)
 
-    return bounding_box[0][0], bounding_box[0][1], height, width, angle, laplacian_side
+    # compute laplacian
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    laplacian = cv.Laplacian(gray, cv.CV_64F)
+
+    # apply bounding box
+    box_mask = np.zeros(laplacian.shape)
+    cv.fillPoly(box_mask, [np.round(np.array(box)).astype(np.int)], color=1)
+    laplacian = np.where(box_mask == 1, laplacian, 0)
+    laplacian_sum = np.sum(laplacian)
+    laplacian_abs_sum = np.sum(np.abs(laplacian))
+    laplacian = np.where(laplacian != 0, 1, 0)
+    laplacian_count = np.sum(laplacian)
+
+    return box, [bounding_box[0][0], bounding_box[0][1], height, width, angle, height * width,
+        laplacian_side, laplacian_sum, laplacian_abs_sum, laplacian_count]
 
 
 def main(args):
@@ -120,64 +145,18 @@ def main(args):
     for i, f in enumerate(tqdm.tqdm(data)):
         image = cv.imread(args.data_dir + "/" + f)
 
-        # print(image.shape)
-
         try:
-            bounding_box = detect_bounding_box(image, area_threshold=args.area_threshold)
+            box, feature_vec = detect_features(image, area_threshold=args.area_threshold)
         except ValueError as e:
             print(e)
             exit()
-
-        # ======================================================================
-        # bounding box features
-        # ======================================================================
-
-        bounding_box = detect_bounding_box(image)
-        box = cv.boxPoints(bounding_box)
-
-        # extract the relevant data from the bounding box
-        width = max(bounding_box[1])
-        height = min(bounding_box[1])
-
-        side_vec = []
-        if np.linalg.norm(box[0] - box[1]) > np.linalg.norm(box[0] - box[3]):
-            side_vec = box[1] - box[0]
-        else:
-            side_vec = box[3] - box[0]
-        axis_vec = np.array([1, 0])
-        angle = math.acos(axis_vec.dot(side_vec) / np.linalg.norm(side_vec))
-        if np.linalg.norm(side_vec) < 0.1:
-            print("warning: short side")
-
-        # ======================================================================
-        # additional features:
-        # - which half has more pixels with laplacian > 0
-        # - sum of laplacian
-        # - number of pixels where laplacian > 0
-        # ======================================================================
-
-        laplacian_side = detect_side(image, box)
-
-        # compute laplacian
-        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        laplacian = cv.Laplacian(gray, cv.CV_64F)
-
-        # apply bounding box
-        box_mask = np.zeros(laplacian.shape)
-        cv.fillPoly(box_mask, [np.round(np.array(box)).astype(np.int)], color=1)
-        laplacian = np.where(box_mask == 1, laplacian, 0)
-        laplacian_sum = np.sum(laplacian)
-        laplacian_abs_sum = np.sum(np.abs(laplacian))
-        laplacian = np.where(laplacian != 0, 1, 0)
-        laplacian_count = np.sum(laplacian)
 
         # ======================================================================
         # save feature + visualization
         # ======================================================================
 
         # append feature vector to list
-        features.append([i, f, bounding_box[0][0], bounding_box[0][1], height, width, angle, height * width,
-                        laplacian_side, laplacian_sum, laplacian_abs_sum, laplacian_count])
+        features.append([i, f] + feature_vec)
 
         # visualization
         if args.visualize:
@@ -200,7 +179,7 @@ def main(args):
             half_2.extend(middle)
             half_2 = np.round(np.array(half_2)).astype(np.int)
 
-            if laplacian_side == 0:
+            if feature_vec[6] == 0: # laplacian_side
                 cv.polylines(image, [half_1], True, color=(0,0,255))
             else:
                 cv.polylines(image, [half_2], True, color=(0,0,255))
