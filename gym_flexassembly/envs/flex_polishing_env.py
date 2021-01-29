@@ -275,12 +275,12 @@ class FlexPolishingEnv(EnvInterface):
         cj6 = self._p.readUserDebugParameter(self.dp_j6)
         ccc = [cj0,cj1,cj2,cj3,cj4,cj5,cj6]
 
-        for i in range(1,8):
-            self._p.setJointMotorControl2(self.kuka14_1,
-                                    i,
-                                    self._p.POSITION_CONTROL,
-                                    targetPosition=ccc[i-1],
-                                    force=1000.0)
+        # for i in range(1,8):
+        #     self._p.setJointMotorControl2(self.kuka14_1,
+        #                             i,
+        #                             self._p.POSITION_CONTROL,
+        #                             targetPosition=ccc[i-1],
+        #                             force=1000.0)
 
         self._p.setJointMotorControl2(self.kuka14_1,
                                     12,
@@ -301,14 +301,16 @@ class FlexPolishingEnv(EnvInterface):
                 # print(link_index)
                 ddd = 40000.0
                 self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
-                # print((ddd-contact[9])/ddd)
+                # print(contact[9])
             elif contact[3] == 13:
                 # link_index = contact[3]
                 # print(link_index)
                 ddd = 40000.0
                 self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
-                # print((ddd-contact[9])/ddd)
-        
+                # print(contact[9])
+
+        _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
+        print(ft_sensor_forces)
       
 
     def reset_internal(self):
