@@ -161,12 +161,13 @@ class FlexAssemblyEnv(EnvInterface):
         
         self._p.resetBasePositionAndOrientation(self.kuka14_1, [0,-0.2,0.4], [0,0,0,1])
         # TODO
-        self._p.resetJointState(self.kuka14_1, 1, 2.3, 0.0)
-        self._p.resetJointState(self.kuka14_1, 2, 0.0, 0.0)
+        self._p.resetJointState(self.kuka14_1, 1, 2.3, 1.5)
+        self._p.resetJointState(self.kuka14_1, 2, 0.0, -0.1)
         self._p.resetJointState(self.kuka14_1, 3, 0.0, 0.0)
-        self._p.resetJointState(self.kuka14_1, 4, -1.0, 0.0)
+        self._p.resetJointState(self.kuka14_1, 4, -1.0,-2.0)
         self._p.resetJointState(self.kuka14_1, 5, 0.0, 0.0)
-        self._p.resetJointState(self.kuka14_1, 6, 1.4, 0.0)
+        self._p.resetJointState(self.kuka14_1, 6, 1.4, 1.0)
+        self._p.resetJointState(self.kuka14_1, 7, 1.4, 1.57)
 
         # Enable rendering again
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 1)

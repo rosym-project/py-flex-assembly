@@ -24,6 +24,7 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
+
 # DEPLOYMENT IMPORTS
 from pkg_resources import parse_version
 
@@ -66,6 +67,8 @@ class FlexPolishingEnv(EnvInterface):
 
         self.seed()
 
+        self.collect_contact = []
+
         self.cam_global_settings = {'width': 1280,
                                     'height': 720,
                                     'fov': 65,
@@ -76,6 +79,8 @@ class FlexPolishingEnv(EnvInterface):
         self.object_ids = {}
 
         self.env_reset()
+
+        self.startTime = time.time_ns()
 
         # self.env_loop() # TODO
 
@@ -259,58 +264,85 @@ class FlexPolishingEnv(EnvInterface):
         if self.kuka7_1_egp:
             self.kuka7_1_egp.update()
 
-        pose_frame_tx = self._p.readUserDebugParameter(self.dp_frame_tx)
-        pose_frame_ty = self._p.readUserDebugParameter(self.dp_frame_ty)
-        pose_frame_tz = self._p.readUserDebugParameter(self.dp_frame_tz)
-        pose_frame_rr = self._p.readUserDebugParameter(self.dp_frame_rr)
-        pose_frame_rp = self._p.readUserDebugParameter(self.dp_frame_rp)
-        pose_frame_ry = self._p.readUserDebugParameter(self.dp_frame_ry)
+        # pose_frame_tx = self._p.readUserDebugParameter(self.dp_frame_tx)
+        # pose_frame_ty = self._p.readUserDebugParameter(self.dp_frame_ty)
+        # pose_frame_tz = self._p.readUserDebugParameter(self.dp_frame_tz)
+        # pose_frame_rr = self._p.readUserDebugParameter(self.dp_frame_rr)
+        # pose_frame_rp = self._p.readUserDebugParameter(self.dp_frame_rp)
+        # pose_frame_ry = self._p.readUserDebugParameter(self.dp_frame_ry)
 
-        cj0 = self._p.readUserDebugParameter(self.dp_j0)
-        cj1 = self._p.readUserDebugParameter(self.dp_j1)
-        cj2 = self._p.readUserDebugParameter(self.dp_j2)
-        cj3 = self._p.readUserDebugParameter(self.dp_j3)
-        cj4 = self._p.readUserDebugParameter(self.dp_j4)
-        cj5 = self._p.readUserDebugParameter(self.dp_j5)
-        cj6 = self._p.readUserDebugParameter(self.dp_j6)
-        ccc = [cj0,cj1,cj2,cj3,cj4,cj5,cj6]
+        # cj0 = self._p.readUserDebugParameter(self.dp_j0)
+        # cj1 = self._p.readUserDebugParameter(self.dp_j1)
+        # cj2 = self._p.readUserDebugParameter(self.dp_j2)
+        # cj3 = self._p.readUserDebugParameter(self.dp_j3)
+        # cj4 = self._p.readUserDebugParameter(self.dp_j4)
+        # cj5 = self._p.readUserDebugParameter(self.dp_j5)
+        # cj6 = self._p.readUserDebugParameter(self.dp_j6)
+        # ccc = [cj0,cj1,cj2,cj3,cj4,cj5,cj6]
 
-        # for i in range(1,8):
-        #     self._p.setJointMotorControl2(self.kuka14_1,
-        #                             i,
+        # # for i in range(1,8):
+        # #     self._p.setJointMotorControl2(self.kuka14_1,
+        # #                             i,
+        # #                             self._p.POSITION_CONTROL,
+        # #                             targetPosition=ccc[i-1],
+        # #                             force=1000.0)
+
+        # self._p.setJointMotorControl2(self.kuka14_1,
+        #                             12,
         #                             self._p.POSITION_CONTROL,
-        #                             targetPosition=ccc[i-1],
-        #                             force=1000.0)
-
-        self._p.setJointMotorControl2(self.kuka14_1,
-                                    12,
-                                    self._p.POSITION_CONTROL,
-                                    targetPosition=0,
-                                    force=90000.0)
-        self._p.setJointMotorControl2(self.kuka14_1,
-                                    13,
-                                    self._p.POSITION_CONTROL,
-                                    targetPosition=0,
-                                    force=90000.0)
+        #                             targetPosition=0,
+        #                             force=90000.0)
+        # self._p.setJointMotorControl2(self.kuka14_1,
+        #                             13,
+        #                             self._p.POSITION_CONTROL,
+        #                             targetPosition=0,
+        #                             force=90000.0)
 
         contacts = self._p.getContactPoints(bodyA=self.kuka14_1, bodyB=self.window_id, linkIndexB=0)
         # contactFlag, bodyUniqueIdA, bodyUniqueIdB, linkIndexA, linkIndexB, positionOnA, positionOnB, contactNormalOnB, contactDistance, normalForce, lateralFriction1, lateralFrictionDir1, lateralFriction2, lateralFrictionDir2
         for contact in contacts:
-            if contact[3] == 12:
-                # link_index = contact[3]
-                # print(link_index)
-                ddd = 40000.0
-                self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
-                # print(contact[9])
-            elif contact[3] == 13:
-                # link_index = contact[3]
-                # print(link_index)
-                ddd = 40000.0
-                self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
-                # print(contact[9])
+            # if contact[3] == 12:
+            #     # link_index = contact[3]
+            #     # print(link_index)
+            #     ddd = 40000.0
+            #     self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
+            #     # print(contact[9])
+            # elif contact[3] == 13:
+            #     # link_index = contact[3]
+            #     # print(link_index)
+            #     ddd = 40000.0
+            #     self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
+            #     # print(contact[9])
+            if contact[3] == 12 or contact[3] == 13:
+                # contact[6]
+                _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
+                self.collect_contact.append([contact[6],ft_sensor_forces[2]])
 
-        _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
-        print(ft_sensor_forces)
+        # print(time.time_ns())
+        if (time.time_ns() - self.startTime) > 1000:
+            self.startTime = time.time_ns()
+            keys = p.getKeyboardEvents()
+            for k, v in keys.items():
+                if (k == p.B3G_RETURN and (v & p.KEY_WAS_TRIGGERED)):
+                    print("Draw")
+                    # print(self.collect_contact)
+                    last = np.array([0,0,0])
+                    count = 0
+                    print("size: " + str(len(self.collect_contact)))
+                    for a in self.collect_contact:
+                        atmp = np.array(a[0])
+                        if math.fabs(np.linalg.norm(last-atmp)) < 0.1:
+                            continue
+                        last = atmp
+                        self._p.addUserDebugLine(last, last + np.array([-0.001,0,0])*a[1], [1,0,0], 4)
+                        count = count + 1
+                    print(count)
+                if (k == p.B3G_RIGHT_ARROW and (v & p.KEY_WAS_TRIGGERED)):
+                    self.collect_contact = []
+                    print("pressed")
+
+        
+        # # # print(ft_sensor_forces)
       
 
     def reset_internal(self):
