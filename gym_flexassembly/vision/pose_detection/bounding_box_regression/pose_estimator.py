@@ -14,7 +14,7 @@ class TranslationEstimator():
     def estimate(self, img):
         _, features = detect_features(img)
         features = np.array([features])
-        return self.model.predict(features[:, :6])[0]
+        return self.model.predict(features[:, [0,1,2,3,4,6]])[0]
 
     @classmethod
     def add_args(cls, parser):
