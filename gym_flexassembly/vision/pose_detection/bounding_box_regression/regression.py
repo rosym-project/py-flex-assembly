@@ -130,12 +130,14 @@ def main(args):
     print(args)
 
     # load the datasets
-    """
+    #"""
     # predict translation
     data_train_x = np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
-    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
+    #data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
+    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[2, 3, 4], delimiter=',')
     data_val_x = np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
-    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
+    #data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
+    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[2, 3, 4], delimiter=',')
     """
     # predict rotation
     #feature_cols = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
