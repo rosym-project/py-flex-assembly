@@ -162,7 +162,19 @@ def main(args):
         #mask = cv.bitwise_not(cv.inRange(image, lower, upper))
         image = cv.cvtColor(image, cv.COLOR_HSV2BGR)
 
+        clamp = np.copy(image)
+        mask = np.full(image.shape[:2], cv.GC_BGD, np.uint8)
+        bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
+        fgdModel = np.zeros((1 ,65), np.float64)
+        rect = (400, 200, 150, 120)
+        cv.rectangle(mask, rect, cv.GC_PR_FGD, -1)
+        #cv.rectangle(image, rect, (255, 0, 0))
+        cv.grabCut(clamp, mask, rect, bgdModel, fgdModel, 10, cv.GC_INIT_WITH_MASK)
+        mask = np.isin(mask, [cv.GC_BGD, cv.GC_PR_BGD])
+        clamp[mask] = [0, 0, 0]
+
         cv.imshow("depth", depth)
+        cv.imshow("clamp", clamp)
         #cv.imshow("test", np.where(cv.inRange(d, 390, 405), 255, 0).astype(np.uint8))
         #cv.imshow("test", np.where(cv.inRange(d, 1, 3), 255, 0).astype(np.uint8))
         cv.imshow("image", image)
