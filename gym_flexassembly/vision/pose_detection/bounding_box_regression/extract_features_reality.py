@@ -8,33 +8,84 @@ import tqdm
 
 
 def detect_bounding_box(image, depth, area_threshold):
-    # create a mask containing the clamp
-    # since the background is a simple gray it is easiest to detect the background and invert the resulting mask
+    # create a mask that roughly contains the clamp
+    # approach 1: depth image, fixed threshold
+    #"""
+    d = np.copy(depth)
+    d = cv.convertScaleAbs(d, alpha=0.3)
+    d = cv.equalizeHist(d)
+
+    mask = np.where(cv.inRange(d, 1, 4), 255, 0).astype(np.uint8)
+    # move the mask to the right (temporary resolution for realigning depth image and image)
+    M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
+    mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
+    """
+    #"""
+
+    # approach 2: HSV values of the clamp
+    """
     image = cv.cvtColor(image, cv.COLOR_BGR2HSV)
-    lower = np.array([0, 0, 20])
-    upper = np.array([255, 10, 255])
-    mask = cv.bitwise_not(cv.inRange(image, lower, upper))
+    lower = np.array([0, 0, 0])
+    upper = np.array([255, 30, 120])
+    mask = cv.inRange(image, lower, upper)
     image = cv.cvtColor(image, cv.COLOR_HSV2BGR)
+    """
+    #"""
+
+    # dilate the mask
+    cv.imshow("mask, original", mask)
+    size = 20
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (2 * size + 1, 2 * size + 1), (size, size))
+    mask = cv.dilate(mask, kernel)
+    cv.imshow("mask, dialted", mask)
+
+    # only keep the largest region of the mask
+    retval, labels, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=4)
+    max_area_i = 1
+    max_area = stats[max_area_i, cv.CC_STAT_AREA]
+    for j in range(2, retval):
+        if stats[j, cv.CC_STAT_AREA] > max_area:
+            max_area = stats[j, cv.CC_STAT_AREA]
+            max_area_i = j
+
+    mask = np.where(labels == max_area_i, cv.GC_PR_FGD, 0).astype(np.uint8)
+
+    # use grabCut to refine the mask borders
+    bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
+    fgdModel = np.zeros((1 ,65), np.float64)
+    cv.grabCut(image, mask, None, bgdModel, fgdModel, 5, cv.GC_INIT_WITH_MASK)
+    mask = np.isin(mask, [cv.GC_FGD, cv.GC_PR_FGD]).astype(np.uint8)
+
+    clamp = np.copy(image)
+    clamp[np.where(mask==1, False, True)] = [0, 0, 0]
+    cv.imshow("maks, grabCut", mask*255)
+    cv.imshow("image, grabCut", clamp)
 
     # detect a contour around the clamp
     contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
     if len(contours) != 1:
         # multiple countours detected => ignore small areas
         retval, labels, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=4)
 
-        clamp_found = False
         # iterate through all areas (ignore label 0 = background)
         for j in range(1, retval):
-            if stats[j, cv.CC_STAT_AREA] >= area_threshold:
-                if clamp_found:
-                    # already found a clamp => error
-                    print("multiple clamps detected")
-                    exit()
-                # recompute the contour using only the current label
-                contours, _ = cv.findContours(np.where(labels == j, 1, 0).astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-                clamp_found = True
+            # remove small areas
+            if stats[j, cv.CC_STAT_AREA] < area_threshold:
+                labels = np.where(labels == j, 0, labels)
 
-        if not clamp_found:
+        # recompute the contour
+        contours, _ = cv.findContours(np.where(labels == 0, 0, 1).astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
+        if len(contours) > 1:
+            # mask still contains multiple contours
+            # assume that grabCut split the clamp in multiple parts
+            # => compute convex hull of contours
+            contours = np.concatenate(contours)
+            contours = contours.reshape(-1, contours.shape[-1]).astype(np.float32)
+            contours = cv.convexHull(contours)
+            contours = [contours]
+        elif len(contours) == 0:
             raise ValueError('Could not detect clamp')
     elif np.sum(mask) < area_threshold:
         raise ValueError('Could not detect clamp')
@@ -147,44 +198,6 @@ def main(args):
         image = cv.imread(args.data_dir + "/" + image_data[i])
         depth = np.load(args.data_dir + "/" + depth_data[i])
 
-        d = np.copy(depth)
-        depth = cv.convertScaleAbs(depth, alpha=0.3)
-        depth = cv.equalizeHist(depth)
-        d = np.copy(depth)
-        depth = cv.applyColorMap(depth, cv.COLORMAP_JET)
-
-        image = cv.cvtColor(image, cv.COLOR_BGR2HSV)
-        lower = np.array([50, 20, 80])
-        upper = np.array([120, 100, 150])
-        lower = np.array([0, 0, 0])
-        upper = np.array([255, 30, 120])
-        mask = cv.inRange(image, lower, upper)
-        #mask = cv.bitwise_not(cv.inRange(image, lower, upper))
-        image = cv.cvtColor(image, cv.COLOR_HSV2BGR)
-
-        clamp = np.copy(image)
-        mask = np.full(image.shape[:2], cv.GC_BGD, np.uint8)
-        bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
-        fgdModel = np.zeros((1 ,65), np.float64)
-        rect = (400, 200, 150, 120)
-        cv.rectangle(mask, rect, cv.GC_PR_FGD, -1)
-        #cv.rectangle(image, rect, (255, 0, 0))
-        cv.grabCut(clamp, mask, rect, bgdModel, fgdModel, 10, cv.GC_INIT_WITH_MASK)
-        mask = np.isin(mask, [cv.GC_BGD, cv.GC_PR_BGD])
-        clamp[mask] = [0, 0, 0]
-
-        cv.imshow("depth", depth)
-        cv.imshow("clamp", clamp)
-        #cv.imshow("test", np.where(cv.inRange(d, 390, 405), 255, 0).astype(np.uint8))
-        #cv.imshow("test", np.where(cv.inRange(d, 1, 3), 255, 0).astype(np.uint8))
-        cv.imshow("image", image)
-        #cv.imshow("image", cv.cvtColor(image, cv.COLOR_BGR2HSV))
-        #cv.imshow("mask", mask)
-        if cv.waitKey(0) == ord('q'):
-            cv.destroyAllWindows()
-            exit()
-        continue
-
         try:
             box, feature_vec = detect_features(image, depth, area_threshold=args.area_threshold)
         except ValueError as e:
@@ -200,6 +213,12 @@ def main(args):
 
         # visualization
         if args.visualize:
+            # visualize the depth image
+            depth = cv.convertScaleAbs(depth, alpha=0.3)
+            depth = cv.equalizeHist(depth)
+            depth = cv.applyColorMap(depth, cv.COLORMAP_JET)
+            #cv.imshow("depth", depth)
+
             # draw bounding box
             box = np.intp(box)
             cv.drawContours(image, [box], 0, (0,255,0))
