@@ -14,6 +14,8 @@ import math
 
 import rospy
 
+import pyquaternion
+
 from std_msgs.msg import String
 from std_srvs.srv import Empty, EmptyResponse
 
@@ -75,6 +77,9 @@ class AssemblyTest(object):
         ros_t.rotation.x = 0.0359157
         ros_t.rotation.y = 0.993429
         ros_t.rotation.z = 0.10855
+
+        cur_quat = pyquaternion.Quaternion(w=0.00510724,x=0.0359157,y=0.993429,z=0.10855)
+
         cart_traj_point.transforms.append(ros_t)
         ros_tt = Twist()
         ros_tt.linear.x = 0
@@ -191,6 +196,95 @@ class AssemblyTest(object):
         ros_t.translation.x = target[0]
         ros_t.translation.y = target[1]
         ros_t.translation.z = target[2]
+        self.pub_traj.publish(cart_traj_point)
+        rate.sleep()
+        time.sleep(3)
+
+
+        # RAIL Schraeg
+        target = np.array([0.0,0.433,0.759])
+        # Quaternion(w, x, y, z)
+        target_quat = pyquaternion.Quaternion(w=0.0,x=0.0,y=-0.924,z=-0.386)
+        quadT = 1.0/(math.fabs(np.linalg.norm(target - cur)) / 0.0001)
+        timeq = 0
+
+        step = self.normalized(target - cur,0) * 0.0001
+        while math.fabs(np.linalg.norm(target - cur)) > 0.0001:
+            # print(math.fabs(np.linalg.norm(target - cur)))
+            cur = cur + step
+            # print(cur)
+            ros_t.translation.x = cur[0]
+            ros_t.translation.y = cur[1]
+            ros_t.translation.z = cur[2]
+
+            timeq = timeq + quadT
+            if (timeq > 1.0):
+                timeq = 1.0
+            q = pyquaternion.Quaternion.slerp(cur_quat, target_quat, timeq)
+            ros_t.rotation.x = q[1]
+            ros_t.rotation.y = q[2]
+            ros_t.rotation.z = q[3]
+            ros_t.rotation.w = q[0]
+
+            self.pub_traj.publish(cart_traj_point)
+            rate.sleep()
+
+        ros_t.translation.x = target[0]
+        ros_t.translation.y = target[1]
+        ros_t.translation.z = target[2]
+        ros_t.rotation.x = target_quat[1]
+        ros_t.rotation.y = target_quat[2]
+        ros_t.rotation.z = target_quat[3]
+        ros_t.rotation.w = target_quat[0]
+        cur_quat = target_quat
+        self.pub_traj.publish(cart_traj_point)
+        rate.sleep()
+        time.sleep(3)
+
+
+        # RAIL Approach
+        target = np.array([0.0,0.45,0.759])
+        step = self.normalized(target - cur,0) * 0.0001
+        while math.fabs(np.linalg.norm(target - cur)) > 0.0001:
+            # print(math.fabs(np.linalg.norm(target - cur)))
+            cur = cur + step
+            # print(cur)
+            ros_t.translation.x = cur[0]
+            ros_t.translation.y = cur[1]
+            ros_t.translation.z = cur[2]
+            self.pub_traj.publish(cart_traj_point)
+            rate.sleep()
+
+        ros_t.translation.x = target[0]
+        ros_t.translation.y = target[1]
+        ros_t.translation.z = target[2]
+        self.pub_traj.publish(cart_traj_point)
+        rate.sleep()
+        time.sleep(3)
+
+        # RAIL Gerade
+        # Quaternion(w, x, y, z)
+        target_quat = pyquaternion.Quaternion(w=0.00510724,x=0.0359157,y=0.993429,z=0.10855)
+        quadT = 0.0001
+        timeq = 0
+
+        while timeq < 1.0:
+            timeq = timeq + quadT
+            if (timeq > 1.0):
+                timeq = 1.0
+            q = pyquaternion.Quaternion.slerp(cur_quat, target_quat, timeq)
+            ros_t.rotation.x = q[1]
+            ros_t.rotation.y = q[2]
+            ros_t.rotation.z = q[3]
+            ros_t.rotation.w = q[0]
+
+            self.pub_traj.publish(cart_traj_point)
+            rate.sleep()
+        ros_t.rotation.x = target_quat[1]
+        ros_t.rotation.y = target_quat[2]
+        ros_t.rotation.z = target_quat[3]
+        ros_t.rotation.w = target_quat[0]
+        cur_quat = target_quat
         self.pub_traj.publish(cart_traj_point)
         rate.sleep()
         time.sleep(3)

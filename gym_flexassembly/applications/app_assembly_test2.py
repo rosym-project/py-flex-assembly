@@ -76,8 +76,8 @@ class AssemblyTest(object):
         # ros_t.rotation.z = -0.383
 
         ros_t.translation.x = 0.0
-        ros_t.translation.y = 0.433
-        ros_t.translation.z = 0.755
+        ros_t.translation.y = 0.45
+        ros_t.translation.z = 0.759
         ros_t.rotation.w = 0.0
         ros_t.rotation.x = 0.0
         ros_t.rotation.y = -0.924
