@@ -33,11 +33,11 @@ def detect_bounding_box(image, depth, area_threshold):
     #"""
 
     # dilate the mask
-    cv.imshow("mask, original", mask)
+    #cv.imshow("mask, original", mask)
     size = 20
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (2 * size + 1, 2 * size + 1), (size, size))
     mask = cv.dilate(mask, kernel)
-    cv.imshow("mask, dialted", mask)
+    #cv.imshow("mask, dilated", mask)
 
     # only keep the largest region of the mask
     retval, labels, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=4)
@@ -58,8 +58,8 @@ def detect_bounding_box(image, depth, area_threshold):
 
     clamp = np.copy(image)
     clamp[np.where(mask==1, False, True)] = [0, 0, 0]
-    cv.imshow("maks, grabCut", mask*255)
-    cv.imshow("image, grabCut", clamp)
+    #cv.imshow("maks, grabCut", mask*255)
+    #cv.imshow("image, grabCut", clamp)
 
     # detect a contour around the clamp
     contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
