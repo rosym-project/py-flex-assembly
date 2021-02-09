@@ -6,6 +6,84 @@ import numpy as np
 import cv2 as cv
 import tqdm
 
+def discriminant_analysis(img):
+    """
+    Perform a discriminant analysis to find an optimal threshold
+    for an image.
+    """
+    hist = cv.calcHist([img], [0], None, [256], [0, 256], accumulate=False)
+    hist = hist[:, 0]
+    hist = hist / (img.shape[0] * img.shape[1])
+    
+    threshes = np.arange(0, 256)
+    mean_t = np.sum(threshes * hist)
+    
+    values = []
+    for t in threshes:
+        mean_1 = np.sum(threshes[:t] * hist[:t])
+        mean_2 = np.sum(threshes[t:] * hist[t:])
+        
+        var_i_1 = np.sum(hist[:t] * np.power(threshes[:t] - mean_1, 2))
+        var_i_2 = np.sum(hist[t:] * np.power(threshes[t:] - mean_2, 2))
+        var_i = var_i_1 + var_i_2
+        
+        var_b_1 = np.power(mean_1 - mean_t, 2) * np.sum(hist[:t])
+        var_b_2 = np.power(mean_2 - mean_t, 2) * np.sum(hist[t:])
+        var_b = var_b_1 + var_b_2
+        
+        values.append(var_b / var_i)
+    return np.argmax(values)
+
+
+def detect_bb2(depth, area_threshold):
+    """
+    Compute a bounding box for a clamp based on a thresholded depth image.
+    The threshold is computed with a discriminant analysis.
+    """
+    # ignore the border of the depth images since they have a low certainty
+    # and thus contain large outliers
+    #TODO test if this is still needed if the depth image is averaged over multiple frames
+    offset = (25, 25)
+    _depth = depth[offset[0]:depth.shape[0]-offset[0], \
+                   offset[1]:depth.shape[1]-offset[1]]
+    _depth = cv.convertScaleAbs(_depth, alpha=0.3)
+
+    # compute and apply a threshold
+    threshold = discriminant_analysis(_depth)
+    _, thresholded = cv.threshold(_depth, threshold, 255, cv.THRESH_BINARY_INV)
+
+    # find all contours on the thresholded image
+    cnts, _ = cv.findContours(thresholded, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+    # filter contours whose area is too small
+    cnts = list(filter(lambda cnt: cv.contourArea(cnt) > area_threshold, cnts))
+    # filter areas that are too large (outside the border of the table) 
+    def too_large_filter(cnt):
+        _, _, width, height = cv.boundingRect(cnt)
+        if width > _depth.shape[1] / 2 or height > _depth.shape[0] / 2:
+            return False
+        return True
+    cnts = list(filter(too_large_filter, cnts))
+
+    # sort regions by their average depth value to find the region containing
+    # the clamp since it should have the highest elevation
+    def avg_elevation_key(cnt):
+        mask = np.zeros(_depth.shape, np.uint8)
+        cv.drawContours(mask, [cnt], -1, 255, -1)
+        elevation_sum = np.where(mask == 255, _depth, np.zeros(_depth.shape)).sum()
+        area = cv.contourArea(cnt)
+        return elevation_sum / area
+    cnts.sort(key=avg_elevation_key)
+    cnts = cnts[::-1]
+
+    #TODO remove if depth image is alreay aligned
+    mask = np.zeros(depth.shape, np.uint8) 
+    cv.drawContours(mask, cnts, 0, 255, -1, offset=offset)
+    M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
+    mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
+    cnts, _m = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
+    return cv.minAreaRect(cnts[0])
+
 
 def detect_bounding_box(image, depth, area_threshold):
     # create a mask that roughly contains the clamp
@@ -133,7 +211,8 @@ def detect_features(image, depth, area_threshold=50):
     # bounding box features
     # ======================================================================
 
-    bounding_box = detect_bounding_box(image, depth, area_threshold=area_threshold)
+    # bounding_box = detect_bounding_box(image, depth, area_threshold=area_threshold)
+    bounding_box = detect_bb2(depth, area_threshold=area_threshold)
     box = cv.boxPoints(bounding_box)
 
     # extract the relevant data from the bounding box
