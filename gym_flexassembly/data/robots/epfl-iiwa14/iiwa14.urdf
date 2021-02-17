@@ -497,7 +497,7 @@
     </collision>
     <inertial>
       <origin xyz="9.396e-4  0.017  -7.545e-4" rpy="0 0 0" />
-      <mass value="0.215" />
+      <mass value="0.283" />
       <!-- mass: 0.255 ? from https://github.com/ubi-agni/ati_sensor_description/blob/master/robots/sensor_types.yaml#L6 -->
       <inertia ixx="1.055e-4" ixy="-7.262e-7" ixz="6.186e-6" iyy="1.7e-4" iyz="6.529e-7" izz="1.076e-4" />
     </inertial>
@@ -553,7 +553,7 @@
   <!-- Base -->
   <link name="iiwa_link_ee">
     <inertial>
-      <mass value="0.6" />
+      <mass value="0.822" />
       <!-- <origin rpy="0 0 0" xyz="0.00078059 -0.00070996 0.04726637" /> -->
       <origin rpy="0 0 0" xyz="0.00078059 -0.00070996 -0.11273363" />
       <inertia ixx="0.0011357" ixy="-0.00000024461" ixz="0.000014912" iyy="0.0012832" iyz="0.0000085651" izz="0.00066545" />
@@ -581,7 +581,7 @@
   <!-- Finger 1 -->
   <link name="SchunkEGP40_Finger1_link">
     <inertial>
-      <mass value="0.04" />
+      <mass value="0.015" />
       <origin rpy="0 0 0" xyz="0 0 0" />
       <inertia ixx="0.0000013454" ixy="0" ixz="0" iyy="0.00000061207" iyz="0" izz="0.00000097333" />
     </inertial>
@@ -626,7 +626,7 @@
   <!-- Finger 2 -->
   <link name="SchunkEGP40_Finger2_link">
     <inertial>
-      <mass value="0.04" />
+      <mass value="0.015" />
       <origin rpy="0 0 0" xyz="0 0 0" />
       <inertia ixx="0.0000013454" ixy="0" ixz="0" iyy="0.00000061207" iyz="0" izz="0.00000097333" />
     </inertial>
