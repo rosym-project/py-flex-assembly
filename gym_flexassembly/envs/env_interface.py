@@ -35,7 +35,7 @@ from gym_flexassembly.constraints import frame
 from gym_flexassembly.constraints import constraint_manager
 from gym_flexassembly.constraints import frame_manager
 
-from gym_flexassembly.smartobjects import camera
+from gym_flexassembly.smartobjects import camera, forcetorquesensor
 
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Pose
@@ -64,6 +64,9 @@ class EnvInterface(gym.Env):
         self._camera_map = {}
         self._cameras = {}
         self._node_name = "env"
+
+        self._ft_map = {}
+        self._force_torque_sensors = {}
 
         self._override_rospy_init = override_rospy_init
 
@@ -118,6 +121,7 @@ class EnvInterface(gym.Env):
 
         self._p.resetSimulation()
         self._p.setGravity(0, 0, -9.81)
+        # self._p.setGravity(0, 0, 0)
         self._p.setTimeStep(self._timeStep)
 
         # Floor SHOULD BE ALWAYS ID 0 because hitrays need this to work properly
@@ -177,6 +181,9 @@ class EnvInterface(gym.Env):
         for v in self._cameras.values():
             v.update()
 
+        for v in self._force_torque_sensors.values():
+            v.update()
+
         if self._run:
             self._p.stepSimulation()
 
@@ -193,9 +200,13 @@ class EnvInterface(gym.Env):
         self._robot_map = {}
         self._camera_map = {}
         self._cameras = {}
+
+        self._ft_map = {}
+        self._force_torque_sensors = {}
         # TODO trigger a reset message
         self._p.setTimeStep(self._timeStep)
         self._p.setGravity(0, 0, -9.81)
+        # self._p.setGravity(0, 0, 0)
 
         # reset the fuction overridden by the derived class
         self.reset_internal()
@@ -313,6 +324,9 @@ class EnvInterface(gym.Env):
         for camera in self._cameras:
             self.remove_camera(camera)
 
+        for ft in self._force_torque_sensors:
+            self.remove_force_torque_sensor(ft)
+
         self._p.disconnect()
 
     def set_running(self, run):
@@ -331,11 +345,26 @@ class EnvInterface(gym.Env):
         print("remove camera " + str(name))
         self._cameras[name].terminate()
         del self._cameras[name]
+
+    def remove_ft(self, name):
+        if name not in self._force_torque_sensors:
+            return
+        print("remove ft " + str(name))
+        self._force_torque_sensors[name].terminate()
+        del self._force_torque_sensors[name]
     
     def add_camera(self, settings, name, model_id, link_id=None):
         if name in self._cameras:
             raise ValueError('Camera[%s] already exists!' % name)
         self._cameras[name] = camera.Camera(self._p, settings, name, model_id, link_id, use_real_interface=self._use_real_interface)
 
+    def add_ft(self, name, model_id, link_id):
+        if name in self._force_torque_sensors:
+            raise ValueError('FT[%s] already exists!' % name)
+        self._force_torque_sensors[name] = forcetorquesensor.ForceTorqueSensor(self._p, name, model_id, link_id, use_real_interface=self._use_real_interface)
+
     def getCameraMap(self):
         return self._camera_map
+
+    def getFTMap(self):
+        return self._ft_map

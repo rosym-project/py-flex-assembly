@@ -70,8 +70,12 @@ class Camera:
 
                 def thread_func():
                     while not self._terminate_thread:
+                        save = False
+                        self._lock.acquire()
+                        save = self._new_data_available
+                        self._lock.release()
 
-                        if self._new_data_available:
+                        if save:
                             # create a header for the messages
                             header = Header()
                             header.stamp = rospy.Time.now()
@@ -109,6 +113,9 @@ class Camera:
     def update(self):
         if not self._terminate_thread:
             if (perf_counter() - self._start_time) < self._wait_frame_rate:
+                return
+
+            if self._lock.locked():
                 return
 
             self._start_time = perf_counter()
@@ -185,9 +192,8 @@ class Camera:
             self._lock.acquire()
             self._depth = self._far * self._near / (self._far - (self._far - self._near) * depth_buffer)
             self._rgb = rgba[:, :, :3]
-            self._lock.release()
-
             self._new_data_available = True
+            self._lock.release()
 
     def getModelId(self):
         return self._model_id

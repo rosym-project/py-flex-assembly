@@ -77,6 +77,8 @@ class FlexAssemblyEnv(EnvInterface):
 
         self.env_reset()
 
+        self.link_ft = 9 # 8?
+
         # self.env_loop() # TODO
 
     def loadEnvironment(self):
@@ -192,11 +194,8 @@ class FlexAssemblyEnv(EnvInterface):
         # self._p.addUserDebugLine([0, -0.1+0.31, 0+0.75], [0, 0.1+0.31, 0+0.75], [0, 1, 0])
         # self._p.addUserDebugLine([0, 0+0.31, -0.1+0.75], [0, 0+0.31, 0.1+0.75], [0, 0, 1])
 
-  
-
-
-        link_ft = 9 # 8?
-        self._p.enableJointForceTorqueSensor(self.kuka14_1, link_ft, True)
+        self.link_ft = 9 # 8?
+        self._ft_map["ft_0"] = {'model_id':self.kuka14_1, 'link_id':self.link_ft}
         
         # self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
         # self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
@@ -268,14 +267,20 @@ class FlexAssemblyEnv(EnvInterface):
             self.remove_camera(name=k)
             self.add_camera(settings=self.cam_global_settings, name=k, model_id=v['model_id'], link_id=v['link_id'])
 
+    def loadFTs(self):
+        if not self._use_real_interface:
+            return
+
+        for k,v in self._ft_map.items():
+            self.remove_ft(name=k)
+            self.add_ft(name=k, model_id=v['model_id'], link_id=v['link_id'])
+
     def step_internal(self):
         if self.kuka7_1_egp:
             self.kuka7_1_egp.update()
         
         # pos, orn = self.tmp_frame.getInternalPosOrn()
         # self.tmp_frame.resetPositionAndOrientation(pos, orn)
-        
-        # _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
         
         # ikSolver = 0
         # jd=[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]
@@ -334,10 +339,12 @@ class FlexAssemblyEnv(EnvInterface):
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)
+        # self._p.setGravity(0, 0, 0)
 
         self.loadEnvironment()
         self.loadRobot()
         self.loadCameras()
+        self.loadFTs()
 
         # Do one simulation step
         self._p.stepSimulation()
