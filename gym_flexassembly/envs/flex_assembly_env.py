@@ -334,6 +334,7 @@ class FlexAssemblyEnv(EnvInterface):
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)
+        # self._p.setGravity(0, 0, 0)
 
         self.loadEnvironment()
         self.loadRobot()

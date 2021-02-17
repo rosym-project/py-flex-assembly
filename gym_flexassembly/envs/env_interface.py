@@ -118,6 +118,7 @@ class EnvInterface(gym.Env):
 
         self._p.resetSimulation()
         self._p.setGravity(0, 0, -9.81)
+        # self._p.setGravity(0, 0, 0)
         self._p.setTimeStep(self._timeStep)
 
         # Floor SHOULD BE ALWAYS ID 0 because hitrays need this to work properly
@@ -196,6 +197,7 @@ class EnvInterface(gym.Env):
         # TODO trigger a reset message
         self._p.setTimeStep(self._timeStep)
         self._p.setGravity(0, 0, -9.81)
+        # self._p.setGravity(0, 0, 0)
 
         # reset the fuction overridden by the derived class
         self.reset_internal()
