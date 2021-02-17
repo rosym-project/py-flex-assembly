@@ -87,8 +87,13 @@ class GraspTest(object):
         ros_ttt.angular.y = 0
         ros_ttt.angular.z = 0
         cart_traj_point.accelerations.append(ros_ttt)
+
+        ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
         self.pub_traj.publish(cart_traj_point)
+        ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
+
         rate.sleep()
+
 
         # time.sleep(4)
 
@@ -96,35 +101,55 @@ class GraspTest(object):
 
         while (ros_t.translation.y > -0.285):
             ros_t.translation.y = ros_t.translation.y - 0.0005
+            
+            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
+            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
+
             rate.sleep()
 
         time.sleep(0.8)
 
         while (ros_t.translation.z > 1.44):
             ros_t.translation.z = ros_t.translation.z - 0.0005
+            
+            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
+            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
+
             rate.sleep()
 
         time.sleep(0.8)
 
         while (ros_t.translation.y < 0.285):
             ros_t.translation.y = ros_t.translation.y + 0.0005
+            
+            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
+            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
+
             rate.sleep()
 
         time.sleep(0.8)
 
         while (ros_t.translation.z > 1.26):
             ros_t.translation.z = ros_t.translation.z - 0.0005
+            
+            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
+            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
+
             rate.sleep()
 
         time.sleep(0.8)
 
         while (ros_t.translation.y > -0.285):
             ros_t.translation.y = ros_t.translation.y - 0.001
+            
+            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
+            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
+
             rate.sleep()
 
         # cart_traj_point.transforms[0].translation.x = 0.4
