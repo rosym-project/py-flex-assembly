@@ -43,17 +43,24 @@ def detect_bb2(depth, area_threshold):
     # ignore the border of the depth images since they have a low certainty
     # and thus contain large outliers
     #TODO test if this is still needed if the depth image is averaged over multiple frames
-    offset = (25, 25)
-    _depth = depth[offset[0]:depth.shape[0]-offset[0], \
-                   offset[1]:depth.shape[1]-offset[1]]
+    offset_width = 100
+    offset_height = 100
+    _depth = depth[offset_height:depth.shape[0] - offset_height, \
+                   offset_width:depth.shape[1] - offset_width]
     _depth = cv.convertScaleAbs(_depth, alpha=0.3)
 
     # compute and apply a threshold
     threshold = discriminant_analysis(_depth)
     _, thresholded = cv.threshold(_depth, threshold, 255, cv.THRESH_BINARY_INV)
 
+    # perform closing for holes
+    thresholded = cv.dilate(thresholded, np.ones((5, 5), np.uint8), iterations=10)
+    thresholded = cv.erode(thresholded, np.ones((5, 5), np.uint8), iterations=10)
+
+    cv.imshow('Th', thresholded)
+
     # find all contours on the thresholded image
-    cnts, _ = cv.findContours(thresholded, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+    cnts, _ = cv.findContours(thresholded, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE, offset=(offset_width, offset_height))
     # filter contours whose area is too small
     cnts = list(filter(lambda cnt: cv.contourArea(cnt) > area_threshold, cnts))
     # filter areas that are too large (outside the border of the table) 
@@ -65,22 +72,22 @@ def detect_bb2(depth, area_threshold):
     cnts = list(filter(too_large_filter, cnts))
 
     # sort regions by their average depth value to find the region containing
-    # the clamp since it should have the highest elevation
+    # the clamp since it should have the lowest distance from the camere
     def avg_elevation_key(cnt):
-        mask = np.zeros(_depth.shape, np.uint8)
-        cv.drawContours(mask, [cnt], -1, 255, -1)
-        elevation_sum = np.where(mask == 255, _depth, np.zeros(_depth.shape)).sum()
+        mask = np.zeros(depth.shape, np.uint8)
+        cv.drawContours(mask, [cnt], -1, 255, -1,)
+        elevation_sum = np.where(mask == 255, depth, np.zeros(depth.shape)).sum()
         area = cv.contourArea(cnt)
         return elevation_sum / area
     cnts.sort(key=avg_elevation_key)
-    cnts = cnts[::-1]
+    # cnts = cnts[::-1]
 
     #TODO remove if depth image is alreay aligned
-    mask = np.zeros(depth.shape, np.uint8) 
-    cv.drawContours(mask, cnts, 0, 255, -1, offset=offset)
-    M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
-    mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
-    cnts, _m = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+    # mask = np.zeros(depth.shape, np.uint8) 
+    # cv.drawContours(mask, cnts, 0, 255, -1, offset=offset)
+    # M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
+    # mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
+    # cnts, _m = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
     return cv.minAreaRect(cnts[0])
 
@@ -287,9 +294,6 @@ def main(args):
         # save feature + visualization
         # ======================================================================
 
-        # append feature vector to list
-        features.append([i, image_data[i]] + feature_vec)
-
         # visualization
         if args.visualize:
             # visualize the depth image
@@ -327,8 +331,19 @@ def main(args):
             #cv.drawContours(mask, [box], 0, 125)
             #cv.imshow("mask", mask)
 
-            if cv.waitKey(0) == ord('q'):
+            key = cv.waitKey(0)
+            if key == ord('q'):
                 break
+            elif key == ord('c'):
+                feature_vec[6] = 0 if feature_vec[6] == 1 else 1
+            elif key == ord('s'):
+                print(f'Skip image: {image_data[i]}')
+                continue
+
+        # append feature vector to list
+        features.append([i, image_data[i]] + feature_vec)
+
+
 
     cv.destroyAllWindows()
     np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
