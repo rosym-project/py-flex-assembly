@@ -82,6 +82,9 @@ class FlexPolishingEnv(EnvInterface):
 
         self.startTime = time.time_ns()
 
+        self.itercount = 0
+        self.gogogo = True
+
         # self.env_loop() # TODO
 
     def loadEnvironment(self):
@@ -98,7 +101,7 @@ class FlexPolishingEnv(EnvInterface):
         # self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly, "objects/plane_solid.urdf"), useMaximalCoordinates=True) # Brauche ich fuer die hit rays
 
         self.window_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/window.urdf", useFixedBase=True)
-        self.window_pos = np.array([0.75,0,1.1])
+        self.window_pos = np.array([0.72,0,1.3])
         p.resetBasePositionAndOrientation(self.window_id, self.window_pos, [0,0,0,1])
         self.object_ids['window'] = self.window_id
 
@@ -143,15 +146,20 @@ class FlexPolishingEnv(EnvInterface):
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 0)
         # os.path.join(flexassembly_data.getDataPath(), "robots/epfl-iiwa14/iiwa14.urdf")
         # Load robot KUKA IIWA 14
-        self.kuka14_1 = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf", useFixedBase=True)
+        # self.kuka14_1 = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf", useFixedBase=True)
+        # if self._use_real_interface:
+        #     f = open("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf","r") # TODO
+        #     self.upload_urdf(f.read(), "robot_description")
+
+        self.kuka14_1 = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-wischer/iiwa14.urdf", useFixedBase=True)
         if self._use_real_interface:
-            f = open("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf","r") # TODO
+            f = open("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14-wischer/iiwa14.urdf","r") # TODO
             self.upload_urdf(f.read(), "robot_description")
         
         self._p.resetBasePositionAndOrientation(self.kuka14_1, [0,0,0.7], [0,0,0,1])
         # TODO
         self._p.resetJointState(self.kuka14_1, 1, 0.0, 0.0)
-        self._p.resetJointState(self.kuka14_1, 2, 0.126, 0.0)
+        self._p.resetJointState(self.kuka14_1, 2, 0.0, 0.0)
         self._p.resetJointState(self.kuka14_1, 3, 0.0, 0.0)
         self._p.resetJointState(self.kuka14_1, 4, -0.884, 0.0)
         self._p.resetJointState(self.kuka14_1, 5, 0.0, 0.0)
@@ -185,10 +193,8 @@ class FlexPolishingEnv(EnvInterface):
         # self._p.addUserDebugLine([0, 0+0.31, -0.1+0.75], [0, 0+0.31, 0.1+0.75], [0, 0, 1])
 
   
-
-
-        link_ft = 9 # 8?
-        self._p.enableJointForceTorqueSensor(self.kuka14_1, link_ft, True)
+        self.link_ft = 9 # 8?
+        self._ft_map["ft_0"] = {'model_id':self.kuka14_1, 'link_id':self.link_ft}
         
         # self._p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
         # self._p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.kuka14_1, parentLinkIndex=link_ft)
@@ -260,6 +266,14 @@ class FlexPolishingEnv(EnvInterface):
             self.remove_camera(name=k)
             self.add_camera(settings=self.cam_global_settings, name=k, model_id=v['model_id'], link_id=v['link_id'])
 
+    def loadFTs(self):
+        if not self._use_real_interface:
+            return
+
+        for k,v in self._ft_map.items():
+            self.remove_ft(name=k)
+            self.add_ft(name=k, model_id=v['model_id'], link_id=v['link_id'])
+
     def step_internal(self):
         if self.kuka7_1_egp:
             self.kuka7_1_egp.update()
@@ -298,25 +312,33 @@ class FlexPolishingEnv(EnvInterface):
         #                             targetPosition=0,
         #                             force=90000.0)
 
-        contacts = self._p.getContactPoints(bodyA=self.kuka14_1, bodyB=self.window_id, linkIndexB=0)
-        # contactFlag, bodyUniqueIdA, bodyUniqueIdB, linkIndexA, linkIndexB, positionOnA, positionOnB, contactNormalOnB, contactDistance, normalForce, lateralFriction1, lateralFrictionDir1, lateralFriction2, lateralFrictionDir2
-        for contact in contacts:
-            # if contact[3] == 12:
-            #     # link_index = contact[3]
-            #     # print(link_index)
-            #     ddd = 40000.0
-            #     self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
-            #     # print(contact[9])
-            # elif contact[3] == 13:
-            #     # link_index = contact[3]
-            #     # print(link_index)
-            #     ddd = 40000.0
-            #     self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
-            #     # print(contact[9])
-            if contact[3] == 12 or contact[3] == 13:
-                # contact[6]
-                _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
-                self.collect_contact.append([contact[6],ft_sensor_forces[2]])
+        if self.itercount > 100 and self.gogogo:
+            contacts = self._p.getContactPoints(bodyA=self.kuka14_1, bodyB=self.window_id, linkIndexB=0)
+            # contactFlag, bodyUniqueIdA, bodyUniqueIdB, linkIndexA, linkIndexB, positionOnA, positionOnB, contactNormalOnB, contactDistance, normalForce, lateralFriction1, lateralFrictionDir1, lateralFriction2, lateralFrictionDir2
+            for contact in contacts:
+                if contact[3] == 12:
+                    # link_index = contact[3]
+                    # print(link_index)
+                    # ddd = 40000.0
+                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
+                    # print(contact[9])
+
+                    self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
+                    self.itercount = 0
+                elif contact[3] == 13:
+                    # link_index = contact[3]
+                    # print(link_index)
+                    # ddd = 40000.0
+                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
+
+                    self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
+                    self.itercount = 0
+                    # print(contact[9])
+                # if contact[3] == 12 or contact[3] == 13:
+                #     # contact[6]
+                #     _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
+                #     self.collect_contact.append([contact[6],ft_sensor_forces[2]])
+                #     self.itercount = 0
 
         # print(time.time_ns())
         if (time.time_ns() - self.startTime) > 1000:
@@ -325,6 +347,7 @@ class FlexPolishingEnv(EnvInterface):
             for k, v in keys.items():
                 if (k == p.B3G_RETURN and (v & p.KEY_WAS_TRIGGERED)):
                     print("Draw")
+                    self.gogogo = False
                     # print(self.collect_contact)
                     last = np.array([0,0,0])
                     count = 0
@@ -340,6 +363,8 @@ class FlexPolishingEnv(EnvInterface):
                 if (k == p.B3G_RIGHT_ARROW and (v & p.KEY_WAS_TRIGGERED)):
                     self.collect_contact = []
                     print("pressed")
+        
+        self.itercount = self.itercount + 1
 
         
         # # # print(ft_sensor_forces)
@@ -351,6 +376,7 @@ class FlexPolishingEnv(EnvInterface):
         self.loadEnvironment()
         self.loadRobot()
         # self.loadCameras()
+        self.loadFTs()
 
         self.dp_frame_tx = self._p.addUserDebugParameter("tx", -0.1, 0.1, -0.08)
         self.dp_frame_ty = self._p.addUserDebugParameter("ty", -2.5, 2.5, 0)

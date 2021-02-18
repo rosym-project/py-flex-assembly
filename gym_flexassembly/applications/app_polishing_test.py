@@ -26,6 +26,8 @@ from geometry_msgs.msg import Quaternion
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint, MultiDOFJointTrajectoryPoint
 from cosima_world_state.srv import RequestTrajectory, RequestTrajectoryResponse
 
+import pyquaternion
+
 import threading
 
 import numpy as np
@@ -63,13 +65,35 @@ class GraspTest(object):
 
         cart_traj_point = MultiDOFJointTrajectoryPoint()
         ros_t = Transform()
-        ros_t.translation.x = 0.73
-        ros_t.translation.y = 0.285
-        ros_t.translation.z = 1.62
-        ros_t.rotation.w = 0.687369
-        ros_t.rotation.x = 0.00235423
-        ros_t.rotation.y = 0.726303
-        ros_t.rotation.z = -0.00156439
+        ros_t.translation.x = 0.649552
+        ros_t.translation.y = 0.25
+        ros_t.translation.z = 1.6
+        # ros_t.rotation.w = 0.680043
+        # ros_t.rotation.x = -0.00707333
+        # ros_t.rotation.y = -0.733138
+        # ros_t.rotation.z = 0.000840555
+        ros_t.rotation.w = 0.707
+        ros_t.rotation.x = 0.0
+        ros_t.rotation.y = -0.707
+        ros_t.rotation.z = 0.0
+
+        cur_quat = pyquaternion.Quaternion(w=ros_t.rotation.w,x=ros_t.rotation.x,y=ros_t.rotation.y,z=ros_t.rotation.z)
+        # target_quat = pyquaternion.Quaternion(w=0.653,x=0.271,y=0.653,z=0.271)
+
+        # target_quat_right = cur_quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) # Rotate 45 about Y
+        target_quat_left = cur_quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-45.0 / 180.0 * 3.14159265)
+        ros_t.rotation.x = target_quat_left[1]
+        ros_t.rotation.y = target_quat_left[2]
+        ros_t.rotation.z = target_quat_left[3]
+        ros_t.rotation.w = target_quat_left[0]
+  
+
+
+ 
+
+
+
+
         cart_traj_point.transforms.append(ros_t)
         ros_tt = Twist()
         ros_tt.linear.x = 0
@@ -88,9 +112,7 @@ class GraspTest(object):
         ros_ttt.angular.z = 0
         cart_traj_point.accelerations.append(ros_ttt)
 
-        ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
         self.pub_traj.publish(cart_traj_point)
-        ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
 
         rate.sleep()
 
@@ -99,56 +121,75 @@ class GraspTest(object):
 
         time.sleep(3)
 
-        while (ros_t.translation.y > -0.285):
-            ros_t.translation.y = ros_t.translation.y - 0.0005
+        speed = 0.0001
+
+        while (ros_t.translation.y > -0.01):
+            ros_t.translation.y = ros_t.translation.y - speed
             
-            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
-            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
 
             rate.sleep()
 
         time.sleep(0.8)
 
-        while (ros_t.translation.z > 1.44):
-            ros_t.translation.z = ros_t.translation.z - 0.0005
-            
-            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
+        cur_quat = pyquaternion.Quaternion(w=ros_t.rotation.w,x=ros_t.rotation.x,y=ros_t.rotation.y,z=ros_t.rotation.z)
+        # target_quat = pyquaternion.Quaternion(w=0.653,x=0.271,y=0.653,z=0.271)
+        target_quat = cur_quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-90.0 / 180.0 * 3.14159265)
+        quadT = 0.001
+        timeq = 0
+        while timeq < 1.0:
+            timeq = timeq + quadT
+            if (timeq > 1.0):
+                timeq = 1.0
+            q = pyquaternion.Quaternion.slerp(cur_quat, target_quat, timeq)
+            ros_t.rotation.x = q[1]
+            ros_t.rotation.y = q[2]
+            ros_t.rotation.z = q[3]
+            ros_t.rotation.w = q[0]
             self.pub_traj.publish(cart_traj_point)
-            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
 
             rate.sleep()
 
         time.sleep(0.8)
 
-        while (ros_t.translation.y < 0.285):
-            ros_t.translation.y = ros_t.translation.y + 0.0005
+        while (ros_t.translation.z > 1.65):
+            ros_t.translation.z = ros_t.translation.z - speed
             
-            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
-            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
 
             rate.sleep()
 
         time.sleep(0.8)
+
+        while (ros_t.translation.y < 0.25):
+            ros_t.translation.y = ros_t.translation.y + speed
+            
+            self.pub_traj.publish(cart_traj_point)
+
+            rate.sleep()
+
+        time.sleep(0.8)
+
+        
+
+        
+
+        return
 
         while (ros_t.translation.z > 1.26):
-            ros_t.translation.z = ros_t.translation.z - 0.0005
+            ros_t.translation.z = ros_t.translation.z - speed
             
-            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
-            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
 
             rate.sleep()
 
+
         time.sleep(0.8)
 
-        while (ros_t.translation.y > -0.285):
-            ros_t.translation.y = ros_t.translation.y - 0.001
+        while (ros_t.translation.y > -0.2):
+            ros_t.translation.y = ros_t.translation.y - speed
             
-            ros_t.translation.z -= 0.7 # TODO DLW DELTE ONLY FOR POUYA
             self.pub_traj.publish(cart_traj_point)
-            ros_t.translation.z += 0.7 # TODO DLW DELTE ONLY FOR POUYA
 
             rate.sleep()
 

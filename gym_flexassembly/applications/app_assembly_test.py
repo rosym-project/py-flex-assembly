@@ -208,6 +208,9 @@ class AssemblyTest(object):
         quadT = 1.0/(math.fabs(np.linalg.norm(target - cur)) / 0.0001)
         timeq = 0
 
+
+        # NEW IDEA use attractor or spline!
+
         step = self.normalized(target - cur,0) * 0.0001
         while math.fabs(np.linalg.norm(target - cur)) > 0.0001:
             # print(math.fabs(np.linalg.norm(target - cur)))
