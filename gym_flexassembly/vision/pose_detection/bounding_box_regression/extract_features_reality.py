@@ -361,7 +361,7 @@ def main(args):
 
 
     cv.destroyAllWindows()
-    # np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
+    np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
 
 
 if __name__ == '__main__':
