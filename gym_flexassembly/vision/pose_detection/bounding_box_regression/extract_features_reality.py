@@ -84,6 +84,67 @@ def detect_bb2(depth, area_threshold):
     return cv.minAreaRect(cnts[0])
 
 
+def refine_bb(bounding_box, image, area_threshold):
+    # enlarge the bounding box
+    size_increase = 1.2
+    new_size = tuple([bounding_box[1][0] * size_increase, bounding_box[1][1] * size_increase])
+    bounding_box = tuple([bounding_box[0], new_size, bounding_box[2]])
+
+    # create the mask
+    mask = np.zeros(image.shape[:2], np.uint8)
+    box = cv.boxPoints(bounding_box)
+    box = np.intp(box)
+    cv.drawContours(mask, [box], 0, cv.GC_PR_FGD, -1)
+
+    # high pass filter
+    i = np.copy(image)
+    i = i - cv.GaussianBlur(i, (21, 21), 0) + 127
+    #cv.imshow("filter", i)
+
+    # use grabCut to refine the mask borders
+    bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
+    fgdModel = np.zeros((1 ,65), np.float64)
+    cv.grabCut(i, mask, None, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_MASK)
+    mask = np.isin(mask, [cv.GC_FGD, cv.GC_PR_FGD]).astype(np.uint8)
+
+    clamp = np.copy(image)
+    clamp[np.where(mask==1, False, True)] = [0, 0, 0]
+    #cv.imshow("maks, grabCut", mask*255)
+    #cv.imshow("image, grabCut", clamp)
+
+    # detect a contour around the clamp
+    contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
+    if len(contours) != 1:
+        # multiple countours detected => ignore small areas
+        retval, labels, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=4)
+
+        # iterate through all areas (ignore label 0 = background)
+        for j in range(1, retval):
+            # remove small areas
+            if stats[j, cv.CC_STAT_AREA] < area_threshold:
+                labels = np.where(labels == j, 0, labels)
+
+        # recompute the contour
+        contours, _ = cv.findContours(np.where(labels == 0, 0, 1).astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
+        if len(contours) > 1:
+            # mask still contains multiple contours
+            # assume that grabCut split the clamp in multiple parts
+            # => compute convex hull of contours
+            contours = np.concatenate(contours)
+            contours = contours.reshape(-1, contours.shape[-1]).astype(np.float32)
+            contours = cv.convexHull(contours)
+            contours = [contours]
+        elif len(contours) == 0:
+            raise ValueError('Could not detect clamp')
+    elif np.sum(mask) < area_threshold:
+        raise ValueError('Could not detect clamp')
+
+    # calculate an oriented bounding box
+    return cv.minAreaRect(contours[0])
+
+
 def detect_bounding_box(image, depth, area_threshold):
     # create a mask that roughly contains the clamp
     # approach 1: depth image, fixed threshold
@@ -91,11 +152,12 @@ def detect_bounding_box(image, depth, area_threshold):
     d = np.copy(depth)
     d = cv.convertScaleAbs(d, alpha=0.3)
     d = cv.equalizeHist(d)
+    cv.imshow("depth", d)
 
     mask = np.where(cv.inRange(d, 1, 4), 255, 0).astype(np.uint8)
-    # move the mask to the right (temporary resolution for realigning depth image and image)
-    M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
-    mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
+    # move the mask to the right (temporary solution for realigning depth image and image)
+    #M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
+    #mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
     """
     #"""
 
@@ -178,9 +240,10 @@ def detect_side(image, box):
     laplacian = np.where(laplacian > 0, 1, 0)
 
     # TEST CODE
+    """
     # detect hole
     gray = cv.medianBlur(gray, 3)
-    cv.imshow("gray", gray)
+    #cv.imshow("gray", gray)
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
                             param1=50, param2=9, minRadius=3, maxRadius=8)[0]
 
@@ -189,7 +252,7 @@ def detect_side(image, box):
     for i in range(circles.shape[0]):
         if cv.pointPolygonTest(box, tuple(circles[i, 0:2]), False) == -1:
             circles[i, :] = np.full((3), np.nan)
-    circles = circles[~np.isnan(circles).any(axis=1)]    
+    circles = circles[~np.isnan(circles).any(axis=1)]
 
     # draw circles
     if circles is not None:
@@ -199,6 +262,7 @@ def detect_side(image, box):
             # circle outline
             radius = i[2]
             cv.circle(image, center, radius, (0, 0, 255), 1)
+    """
 
     # create masks for the two halves of the clamp
     half_1 = []
@@ -235,6 +299,7 @@ def detect_features(image, depth, area_threshold=50):
 
     # bounding_box = detect_bounding_box(image, depth, area_threshold=area_threshold)
     bounding_box = detect_bb2(depth, area_threshold=area_threshold)
+    bounding_box = refine_bb(bounding_box, image, area_threshold)
     box = cv.boxPoints(bounding_box)
 
     # extract the relevant data from the bounding box
