@@ -14,23 +14,23 @@ def discriminant_analysis(img):
     hist = cv.calcHist([img], [0], None, [256], [0, 256], accumulate=False)
     hist = hist[:, 0]
     hist = hist / (img.shape[0] * img.shape[1])
-    
+
     threshes = np.arange(0, 256)
     mean_t = np.sum(threshes * hist)
-    
+
     values = []
     for t in threshes:
         mean_1 = np.sum(threshes[:t] * hist[:t])
         mean_2 = np.sum(threshes[t:] * hist[t:])
-        
+
         var_i_1 = np.sum(hist[:t] * np.power(threshes[:t] - mean_1, 2))
         var_i_2 = np.sum(hist[t:] * np.power(threshes[t:] - mean_2, 2))
         var_i = var_i_1 + var_i_2
-        
+
         var_b_1 = np.power(mean_1 - mean_t, 2) * np.sum(hist[:t])
         var_b_2 = np.power(mean_2 - mean_t, 2) * np.sum(hist[t:])
         var_b = var_b_1 + var_b_2
-        
+
         values.append(var_b / var_i)
     return np.argmax(values)
 
@@ -63,7 +63,7 @@ def detect_bb2(depth, area_threshold):
     cnts, _ = cv.findContours(thresholded, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE, offset=(offset_width, offset_height))
     # filter contours whose area is too small
     cnts = list(filter(lambda cnt: cv.contourArea(cnt) > area_threshold, cnts))
-    # filter areas that are too large (outside the border of the table) 
+    # filter areas that are too large (outside the border of the table)
     def too_large_filter(cnt):
         _, _, width, height = cv.boundingRect(cnt)
         if width > _depth.shape[1] / 2 or height > _depth.shape[0] / 2:
@@ -80,14 +80,6 @@ def detect_bb2(depth, area_threshold):
         area = cv.contourArea(cnt)
         return elevation_sum / area
     cnts.sort(key=avg_elevation_key)
-    # cnts = cnts[::-1]
-
-    #TODO remove if depth image is alreay aligned
-    # mask = np.zeros(depth.shape, np.uint8) 
-    # cv.drawContours(mask, cnts, 0, 255, -1, offset=offset)
-    # M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
-    # mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
-    # cnts, _m = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
     return cv.minAreaRect(cnts[0])
 
@@ -184,6 +176,29 @@ def detect_side(image, box):
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     laplacian = cv.Laplacian(gray, cv.CV_64F)
     laplacian = np.where(laplacian > 0, 1, 0)
+
+    # TEST CODE
+    # detect hole
+    gray = cv.medianBlur(gray, 3)
+    cv.imshow("gray", gray)
+    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
+                            param1=50, param2=9, minRadius=3, maxRadius=8)[0]
+
+    # filter circles
+    # only keep circles within the bounding box
+    for i in range(circles.shape[0]):
+        if cv.pointPolygonTest(box, tuple(circles[i, 0:2]), False) == -1:
+            circles[i, :] = np.full((3), np.nan)
+    circles = circles[~np.isnan(circles).any(axis=1)]    
+
+    # draw circles
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        for i in circles:
+            center = (i[0], i[1])
+            # circle outline
+            radius = i[2]
+            cv.circle(image, center, radius, (0, 0, 255), 1)
 
     # create masks for the two halves of the clamp
     half_1 = []
@@ -346,7 +361,7 @@ def main(args):
 
 
     cv.destroyAllWindows()
-    np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
+    # np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
 
 
 if __name__ == '__main__':
