@@ -115,6 +115,7 @@ class Regressor():
         # reconfigure the model using the hyperparameters
         self.config(self.model_type, self.hyperparameters)
 
+
 def main(args):
     parser = argparse.ArgumentParser('Trains and evaluates a support vector regression on a dataset',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -129,25 +130,57 @@ def main(args):
     args = parser.parse_args(args[1:])
     print(args)
 
+
+    import csv
+    import os
+    with open(os.path.join(args.data_train + '/features.csv'), mode='r') as csv_file:
+        feature_headers = next(csv.reader(csv_file))
+        feature_headers = dict([(name, column) for column, name in enumerate(feature_headers)])
+
+    with open(os.path.join(args.data_train + '/data.csv'), mode='r') as csv_file:
+        data_headers = next(csv.reader(csv_file))
+        data_headers = dict([(name, column) for column, name in enumerate(data_headers)])
+
+    translation_cols = [data_headers[key] for key in data_headers if key in ['x', 'y', 'z']]
+    orientation_cols = [data_headers[key] for key in data_headers if key in ['qx', 'qy', 'qz', 'qw']]
+    cam_orientation_cols = [data_headers[key] for key in data_headers if key in ['camera_qx', 'camera_qy', 'camera_qz', 'camera_qw']]
+
+    features_all = ['bb_center_x',
+                    'bb_center_y',
+                    'bb_height',
+                    'bb_width',
+                    'bb_angle[radians]',
+                    'bb_area',
+                    'laplacian_side',
+                    'laplacian_sum',
+                    'laplacian_abs_sum',
+                    'laplacian_count']
+
     # load the datasets
-    #"""
+    """
     # predict translation
-    data_train_x = np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
-    #data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
-    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[2, 3, 4], delimiter=',')
-    data_val_x = np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=[2, 3, 4, 5, 6, 7], delimiter=',')
-    #data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[6, 7, 8], delimiter=',')
-    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[2, 3, 4], delimiter=',')
+    translation_features = features_all[:7]
+    translation_features_cols = [feature_headers[key] for key in feature_headers if key in translation_features]
+
+    print(f'Use features {translation_features}')
+
+    data_train_x = np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=translation_features_cols, delimiter=',')
+    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=translation_cols, delimiter=',')
+    data_val_x = np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=translation_features_cols, delimiter=',')
+    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=translation_cols, delimiter=',')
     """
     # predict rotation
-    #feature_cols = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-    feature_cols = [4, 6, 8, 10]
-    data_train_x = np.c_[np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=feature_cols, delimiter=','),
-                        np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[2, 3, 4, 5], delimiter=',')]
-    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=[9, 10, 11, 12], delimiter=',')
-    data_val_x = np.c_[np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=feature_cols, delimiter=','),
-                    np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[2, 3, 4, 5], delimiter=',')]
-    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=[9, 10, 11, 12], delimiter=',')
+    rotation_features = ['bb_height', 'bb_angle[radians]', 'laplacian_side', 'laplacian_abs_sum']
+    rotation_features_cols = [feature_headers[key] for key in feature_headers if key in rotation_features]
+
+    print(f'Use features {rotation_features}')
+
+    data_train_x = np.c_[np.loadtxt(args.data_train + "/features.csv", skiprows=1, usecols=rotation_features_cols, delimiter=','),
+                        np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=cam_orientation_cols, delimiter=',')]
+    data_train_y = np.loadtxt(args.data_train + "/data.csv", skiprows=1, usecols=orientation_cols, delimiter=',')
+    data_val_x = np.c_[np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=rotation_features_cols, delimiter=','),
+                    np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=cam_orientation_cols, delimiter=',')]
+    data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=orientation_cols, delimiter=',')
     #"""
 
     # setup and train the model
