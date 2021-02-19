@@ -95,11 +95,11 @@ def refine_bb(bounding_box, image):
     # enlarge the bounding box
     size_increase = 1.2
     new_size = tuple([bounding_box[1][0] * size_increase, bounding_box[1][1] * size_increase])
-    bounding_box = tuple([bounding_box[0], new_size, bounding_box[2]])
+    new_bb = tuple([bounding_box[0], new_size, bounding_box[2]])
 
     # create the mask
     mask = np.zeros(image.shape[:2], np.uint8)
-    box = cv.boxPoints(bounding_box)
+    box = cv.boxPoints(new_bb)
     box = np.intp(box)
     cv.drawContours(mask, [box], 0, cv.GC_PR_FGD, -1)
 
@@ -131,7 +131,8 @@ def refine_bb(bounding_box, image):
     contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
     if len(contours) == 0:
-        raise ValueError('Could not detect clamp')
+        print("Could not detect clamp. Aborting bounding box refinement.")
+        return bounding_box
     elif len(contours) > 1:
         # grabCut often splits the clamp into multiple parts
         # => compute convex hull of contours
@@ -145,25 +146,81 @@ def refine_bb(bounding_box, image):
 
 
 def detect_side(image, box):
-    # compute laplacian
-    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    laplacian = cv.Laplacian(gray, cv.CV_64F)
-    laplacian = np.where(laplacian > 0, 1, 0)
-
-    # TEST CODE
     """
-    # detect hole
+    Uses a Hough Circle Transform and post processing of the detected circles
+    to detect the side of the clamp that has the hole in it.
+    """
+    # detect circles
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 3)
     #cv.imshow("gray", gray)
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
-                            param1=50, param2=9, minRadius=3, maxRadius=8)[0]
+                            param1=50, param2=10, minRadius=4, maxRadius=6)[0]
 
-    # filter circles
-    # only keep circles within the bounding box
+    # create boxes for the regions where the hole is expected to be
+    if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
+        side_vec = box[2] - box[1]
+        b_1 = [box[0], box[1]]
+        b_2 = [box[3], box[2]]
+    else:
+        side_vec = box[0] - box[1]
+        b_1 = [box[1], box[2]]
+        b_2 = [box[0], box[3]]
+
+    lower = 0.25
+    upper = 0.425
+
+    b_1 = [b_1[0] + lower * side_vec, b_1[1] + lower * side_vec,
+           b_1[1] + upper * side_vec, b_1[0] + upper * side_vec]
+    b_1 = np.array(b_1)
+    b_2 = [b_2[0] - lower * side_vec, b_2[1] - lower * side_vec,
+           b_2[1] - upper * side_vec, b_2[0] - upper * side_vec]
+    b_2 = np.array(b_2)
+
+    #cv.polylines(image, [np.round(b_1).astype(np.int)], True, color=(255,0,0))
+    #cv.polylines(image, [np.round(b_2).astype(np.int)], True, color=(255,0,0))
+
+    # filter the detected circles
+    # count the number of circles in each region and average their color value
+    count_1, count_2 = 0, 0
+    color_1, color_2 = np.zeros(3, np.uint64), np.zeros(3, np.uint64)
+    pixel_1, pixel_2 = 0, 0
+
     for i in range(circles.shape[0]):
-        if cv.pointPolygonTest(box, tuple(circles[i, 0:2]), False) == -1:
+        if cv.pointPolygonTest(b_1, tuple(circles[i, 0:2]), False) == 1:
+            count_1 += 1
+
+            mask = np.zeros(image.shape, np.uint8)
+            c = np.uint16(np.around(circles[i]))
+            center = (c[0], c[1])
+            radius = c[2]
+            cv.circle(mask, center, radius, (1, 1, 1), -1)
+            color_1 += np.sum(np.multiply(mask, image), axis=tuple([0, 1]))
+            pixel_1 += np.sum(mask)
+
+        elif cv.pointPolygonTest(b_2, tuple(circles[i, 0:2]), False) == 1:
+            count_2 += 1
+
+            mask = np.zeros(image.shape, np.uint8)
+            c = np.uint16(np.around(circles[i]))
+            center = (c[0], c[1])
+            radius = c[2]
+            cv.circle(mask, center, radius, (1, 1, 1), -1)
+            color_2 += np.sum(np.multiply(mask, image), axis=tuple([0, 1]))
+            pixel_2 += np.sum(mask)
+
+        else:
             circles[i, :] = np.full((3), np.nan)
+
+    # remove circles outside the regions
     circles = circles[~np.isnan(circles).any(axis=1)]
+
+    # average the colors if both regions contain circles
+    if pixel_1 > 0 and pixel_2 > 0:
+        color_1 = color_1.astype(np.float)
+        color_1 /= pixel_1
+        color_2 = color_2.astype(np.float)
+        color_2 /= pixel_2
 
     # draw circles
     if circles is not None:
@@ -173,34 +230,23 @@ def detect_side(image, box):
             # circle outline
             radius = i[2]
             cv.circle(image, center, radius, (0, 0, 255), 1)
-    """
 
-    # create masks for the two halves of the clamp
-    half_1 = []
-    half_2 = []
-    if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
-        half_1 = [box[0], box[1]]
-        half_2 = [box[3], box[2]]
+    if count_1 > count_2:
+        return 0
+    elif count_2 > count_1:
+        return 1
     else:
-        half_1 = [box[1], box[2]]
-        half_2 = [box[0], box[3]]
-
-    middle = [(half_1[0] + half_2[0]) / 2, (half_1[1] + half_2[1]) / 2]
-    middle.reverse()
-    half_1.extend(middle)
-    half_1 = np.round(np.array(half_1)).astype(np.int)
-    half_2.extend(middle)
-    half_2 = np.round(np.array(half_2)).astype(np.int)
-
-    mask_1 = np.zeros(image.shape[:2])
-    cv.fillPoly(mask_1, [half_1], color=1)
-    mask_2 = np.zeros(image.shape[:2])
-    cv.fillPoly(mask_2, [half_2], color=1)
-
-    # count pixels with laplacian > 0
-    score_1 = np.sum(np.where(mask_1 == 1, laplacian, 0))
-    score_2 = np.sum(np.where(mask_2 == 1, laplacian, 0))
-    return 0 if score_1 > score_2 else 1
+        # same number of circles in both regions
+        if count_1 == 0 and count_2 == 0:
+            # no regions detected, no prediction possible
+            # since this occurs rarely it is valid to predict a fixed side
+            print("No holes detected")
+            return 0
+        elif np.linalg.norm(color_1) < np.linalg.norm(color_2):
+            # the darker region is more likely to contain the hole
+            return 0
+        else:
+            return 1
 
 
 def detect_features(image, depth, area_threshold=50):
@@ -231,12 +277,12 @@ def detect_features(image, depth, area_threshold=50):
 
     # ======================================================================
     # additional features:
-    # - which half has more pixels with laplacian > 0
+    # - which half is the one with the hole in it
     # - sum of laplacian
     # - number of pixels where laplacian > 0
     # ======================================================================
 
-    laplacian_side = detect_side(image, box)
+    side = detect_side(image, box)
 
     # compute laplacian
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
@@ -252,7 +298,7 @@ def detect_features(image, depth, area_threshold=50):
     laplacian_count = np.sum(laplacian)
 
     return box, [bounding_box[0][0], bounding_box[0][1], height, width, angle, height * width,
-        laplacian_side, laplacian_sum, laplacian_abs_sum, laplacian_count]
+        side, laplacian_sum, laplacian_abs_sum, laplacian_count]
 
 
 def visualize(image, depth, box, feature_vec):
@@ -330,6 +376,7 @@ def main(args):
             if key == ord('q'):
                 break
             elif key == ord('c'):
+                print(f'Corrected the detected side for image: {image_data[i]}')
                 feature_vec[6] = 0 if feature_vec[6] == 1 else 1
             elif key == ord('s'):
                 print(f'Skip image: {image_data[i]}')
