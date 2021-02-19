@@ -35,7 +35,7 @@ def discriminant_analysis(img):
     return np.argmax(values)
 
 
-def detect_bb2(depth, area_threshold):
+def detect_bb(depth, area_threshold):
     """
     Compute a bounding box for a clamp based on a thresholded depth image.
     The threshold is computed with a discriminant analysis.
@@ -57,7 +57,7 @@ def detect_bb2(depth, area_threshold):
     thresholded = cv.dilate(thresholded, np.ones((5, 5), np.uint8), iterations=10)
     thresholded = cv.erode(thresholded, np.ones((5, 5), np.uint8), iterations=10)
 
-    cv.imshow('Th', thresholded)
+    #cv.imshow('threshold', thresholded)
 
     # find all contours on the thresholded image
     cnts, _ = cv.findContours(thresholded, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE, offset=(offset_width, offset_height))
@@ -84,7 +84,14 @@ def detect_bb2(depth, area_threshold):
     return cv.minAreaRect(cnts[0])
 
 
-def refine_bb(bounding_box, image, area_threshold):
+def refine_bb(bounding_box, image):
+    """
+    Refines an existing bounding box by executing the following steps:
+    - Enlarge the bounding box to include the border of the clamp that might have been missed
+    - Apply a high pass filter to the image emphasize the edges of the clamp
+    - Use grabCut to extract the clamp from the image.
+      The resulting bounding box is a lot better than the initial bounding box from the depth image.
+    """
     # enlarge the bounding box
     size_increase = 1.2
     new_size = tuple([bounding_box[1][0] * size_increase, bounding_box[1][1] * size_increase])
@@ -96,138 +103,42 @@ def refine_bb(bounding_box, image, area_threshold):
     box = np.intp(box)
     cv.drawContours(mask, [box], 0, cv.GC_PR_FGD, -1)
 
-    # high pass filter
-    i = np.copy(image)
-    i = i - cv.GaussianBlur(i, (21, 21), 0) + 127
-    #cv.imshow("filter", i)
+    # apply a high pass filter to emphasize the edges
+    filtered = np.copy(image)
+    kernel_size = 21
+    kernel = cv.getGaussianKernel(kernel_size, 0)
+    kernel = -1 * np.outer(kernel, kernel)
+    kernel[int((kernel_size - 1) / 2), int((kernel_size - 1) / 2)] += 2
+    filtered = cv.filter2D(image, cv.CV_8UC1, kernel)
+    #cv.imshow("filter", filtered)
 
     # use grabCut to refine the mask borders
     bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
     fgdModel = np.zeros((1 ,65), np.float64)
-    cv.grabCut(i, mask, None, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_MASK)
+    cv.grabCut(filtered, mask, None, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_MASK)
     mask = np.isin(mask, [cv.GC_FGD, cv.GC_PR_FGD]).astype(np.uint8)
 
+    # debug: show grabCut results
+    """
     clamp = np.copy(image)
     clamp[np.where(mask==1, False, True)] = [0, 0, 0]
-    #cv.imshow("maks, grabCut", mask*255)
-    #cv.imshow("image, grabCut", clamp)
+    cv.imshow("mask, grabCut", mask * 255)
+    cv.imshow("image, grabCut", clamp)
+    """
+    #"""
 
     # detect a contour around the clamp
     contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
-    if len(contours) != 1:
-        # multiple countours detected => ignore small areas
-        retval, labels, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=4)
-
-        # iterate through all areas (ignore label 0 = background)
-        for j in range(1, retval):
-            # remove small areas
-            if stats[j, cv.CC_STAT_AREA] < area_threshold:
-                labels = np.where(labels == j, 0, labels)
-
-        # recompute the contour
-        contours, _ = cv.findContours(np.where(labels == 0, 0, 1).astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-
-        if len(contours) > 1:
-            # mask still contains multiple contours
-            # assume that grabCut split the clamp in multiple parts
-            # => compute convex hull of contours
-            contours = np.concatenate(contours)
-            contours = contours.reshape(-1, contours.shape[-1]).astype(np.float32)
-            contours = cv.convexHull(contours)
-            contours = [contours]
-        elif len(contours) == 0:
-            raise ValueError('Could not detect clamp')
-    elif np.sum(mask) < area_threshold:
+    if len(contours) == 0:
         raise ValueError('Could not detect clamp')
-
-    # calculate an oriented bounding box
-    return cv.minAreaRect(contours[0])
-
-
-def detect_bounding_box(image, depth, area_threshold):
-    # create a mask that roughly contains the clamp
-    # approach 1: depth image, fixed threshold
-    #"""
-    d = np.copy(depth)
-    d = cv.convertScaleAbs(d, alpha=0.3)
-    d = cv.equalizeHist(d)
-    cv.imshow("depth", d)
-
-    mask = np.where(cv.inRange(d, 1, 4), 255, 0).astype(np.uint8)
-    # move the mask to the right (temporary solution for realigning depth image and image)
-    #M = np.array([[1, 0, 55], [0, 1, 0]]).astype(np.float64)
-    #mask = cv.warpAffine(mask, M, (mask.shape[1], mask.shape[0]))
-    """
-    #"""
-
-    # approach 2: HSV values of the clamp
-    """
-    image = cv.cvtColor(image, cv.COLOR_BGR2HSV)
-    lower = np.array([0, 0, 0])
-    upper = np.array([255, 30, 120])
-    mask = cv.inRange(image, lower, upper)
-    image = cv.cvtColor(image, cv.COLOR_HSV2BGR)
-    """
-    #"""
-
-    # dilate the mask
-    #cv.imshow("mask, original", mask)
-    size = 20
-    kernel = cv.getStructuringElement(cv.MORPH_RECT, (2 * size + 1, 2 * size + 1), (size, size))
-    mask = cv.dilate(mask, kernel)
-    #cv.imshow("mask, dilated", mask)
-
-    # only keep the largest region of the mask
-    retval, labels, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=4)
-    max_area_i = 1
-    max_area = stats[max_area_i, cv.CC_STAT_AREA]
-    for j in range(2, retval):
-        if stats[j, cv.CC_STAT_AREA] > max_area:
-            max_area = stats[j, cv.CC_STAT_AREA]
-            max_area_i = j
-
-    mask = np.where(labels == max_area_i, cv.GC_PR_FGD, 0).astype(np.uint8)
-
-    # use grabCut to refine the mask borders
-    bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
-    fgdModel = np.zeros((1 ,65), np.float64)
-    cv.grabCut(image, mask, None, bgdModel, fgdModel, 5, cv.GC_INIT_WITH_MASK)
-    mask = np.isin(mask, [cv.GC_FGD, cv.GC_PR_FGD]).astype(np.uint8)
-
-    clamp = np.copy(image)
-    clamp[np.where(mask==1, False, True)] = [0, 0, 0]
-    #cv.imshow("maks, grabCut", mask*255)
-    #cv.imshow("image, grabCut", clamp)
-
-    # detect a contour around the clamp
-    contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-
-    if len(contours) != 1:
-        # multiple countours detected => ignore small areas
-        retval, labels, stats, centroids = cv.connectedComponentsWithStats(mask, connectivity=4)
-
-        # iterate through all areas (ignore label 0 = background)
-        for j in range(1, retval):
-            # remove small areas
-            if stats[j, cv.CC_STAT_AREA] < area_threshold:
-                labels = np.where(labels == j, 0, labels)
-
-        # recompute the contour
-        contours, _ = cv.findContours(np.where(labels == 0, 0, 1).astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-
-        if len(contours) > 1:
-            # mask still contains multiple contours
-            # assume that grabCut split the clamp in multiple parts
-            # => compute convex hull of contours
-            contours = np.concatenate(contours)
-            contours = contours.reshape(-1, contours.shape[-1]).astype(np.float32)
-            contours = cv.convexHull(contours)
-            contours = [contours]
-        elif len(contours) == 0:
-            raise ValueError('Could not detect clamp')
-    elif np.sum(mask) < area_threshold:
-        raise ValueError('Could not detect clamp')
+    elif len(contours) > 1:
+        # grabCut often splits the clamp into multiple parts
+        # => compute convex hull of contours
+        contours = np.concatenate(contours)
+        contours = contours.reshape(-1, contours.shape[-1]).astype(np.float32)
+        contours = cv.convexHull(contours)
+        contours = [contours]
 
     # calculate an oriented bounding box
     return cv.minAreaRect(contours[0])
@@ -293,13 +204,15 @@ def detect_side(image, box):
 
 
 def detect_features(image, depth, area_threshold=50):
+    """
+    Extracts a bounding box and a feature vector from a clamp image and its depth image.
+    """
     # ======================================================================
     # bounding box features
     # ======================================================================
 
-    # bounding_box = detect_bounding_box(image, depth, area_threshold=area_threshold)
-    bounding_box = detect_bb2(depth, area_threshold=area_threshold)
-    bounding_box = refine_bb(bounding_box, image, area_threshold)
+    bounding_box = detect_bb(depth, area_threshold=area_threshold)
+    bounding_box = refine_bb(bounding_box, image)
     box = cv.boxPoints(bounding_box)
 
     # extract the relevant data from the bounding box
@@ -342,6 +255,45 @@ def detect_features(image, depth, area_threshold=50):
         laplacian_side, laplacian_sum, laplacian_abs_sum, laplacian_count]
 
 
+def visualize(image, depth, box, feature_vec):
+    """
+    Visualizes the extracted bounding box.
+    """
+    # visualize the depth image
+    depth = cv.convertScaleAbs(depth, alpha=0.3)
+    depth = cv.equalizeHist(depth)
+    depth = cv.applyColorMap(depth, cv.COLORMAP_JET)
+    #cv.imshow("depth", depth)
+
+    # draw bounding box
+    box = np.intp(box)
+    cv.drawContours(image, [box], 0, (0,255,0))
+
+    # draw a box around the side contining the hole
+    half_1 = []
+    half_2 = []
+    if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
+        half_1 = [box[0], box[1]]
+        half_2 = [box[3], box[2]]
+    else:
+        half_1 = [box[1], box[2]]
+        half_2 = [box[0], box[3]]
+    middle = [(half_1[0] + half_2[0]) / 2, (half_1[1] + half_2[1]) / 2]
+    middle.reverse()
+    half_1.extend(middle)
+    half_1 = np.round(np.array(half_1)).astype(np.int)
+    half_2.extend(middle)
+    half_2 = np.round(np.array(half_2)).astype(np.int)
+
+    if feature_vec[6] == 0: # laplacian_side
+        cv.polylines(image, [half_1], True, color=(0,0,255))
+    else:
+        cv.polylines(image, [half_2], True, color=(0,0,255))
+
+    cv.imshow("image", image)
+    return cv.waitKey(0)
+
+
 def main(args):
     parser = argparse.ArgumentParser('Calculates the bounding boxes and other features for an image dataset',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -361,57 +313,20 @@ def main(args):
 
 
     for i in tqdm.tqdm(range(len(image_data))):
+        # load the images
         image = cv.imread(args.data_dir + "/" + image_data[i])
         depth = np.load(args.data_dir + "/" + depth_data[i])
 
+        # extract the features
         try:
             box, feature_vec = detect_features(image, depth, area_threshold=args.area_threshold)
         except ValueError as e:
             print(e)
             exit()
 
-        # ======================================================================
-        # save feature + visualization
-        # ======================================================================
-
-        # visualization
+        # visualize the results
         if args.visualize:
-            # visualize the depth image
-            depth = cv.convertScaleAbs(depth, alpha=0.3)
-            depth = cv.equalizeHist(depth)
-            depth = cv.applyColorMap(depth, cv.COLORMAP_JET)
-            #cv.imshow("depth", depth)
-
-            # draw bounding box
-            box = np.intp(box)
-            cv.drawContours(image, [box], 0, (0,255,0))
-
-            half_1 = []
-            half_2 = []
-            if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
-                half_1 = [box[0], box[1]]
-                half_2 = [box[3], box[2]]
-            else:
-                half_1 = [box[1], box[2]]
-                half_2 = [box[0], box[3]]
-            middle = [(half_1[0] + half_2[0]) / 2, (half_1[1] + half_2[1]) / 2]
-            middle.reverse()
-            half_1.extend(middle)
-            half_1 = np.round(np.array(half_1)).astype(np.int)
-            half_2.extend(middle)
-            half_2 = np.round(np.array(half_2)).astype(np.int)
-
-            if feature_vec[6] == 0: # laplacian_side
-                cv.polylines(image, [half_1], True, color=(0,0,255))
-            else:
-                cv.polylines(image, [half_2], True, color=(0,0,255))
-
-            cv.imshow("image", image)
-
-            #cv.drawContours(mask, [box], 0, 125)
-            #cv.imshow("mask", mask)
-
-            key = cv.waitKey(0)
+            key = visualize(image, depth, box, feature_vec)
             if key == ord('q'):
                 break
             elif key == ord('c'):
@@ -422,8 +337,6 @@ def main(args):
 
         # append feature vector to list
         features.append([i, image_data[i]] + feature_vec)
-
-
 
     cv.destroyAllWindows()
     np.savetxt(args.data_dir + "/features.csv", features, fmt='%s', delimiter=',')
