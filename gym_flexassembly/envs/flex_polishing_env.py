@@ -101,7 +101,7 @@ class FlexPolishingEnv(EnvInterface):
         # self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly, "objects/plane_solid.urdf"), useMaximalCoordinates=True) # Brauche ich fuer die hit rays
 
         self.window_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/window.urdf", useFixedBase=True)
-        self.window_pos = np.array([0.72,0,1.3])
+        self.window_pos = np.array([0.72,0.13,1.22])
         p.resetBasePositionAndOrientation(self.window_id, self.window_pos, [0,0,0,1])
         self.object_ids['window'] = self.window_id
 
@@ -109,26 +109,26 @@ class FlexPolishingEnv(EnvInterface):
         ###   Draw Traj Path   ###
         ##########################
 
-        start = self.window_pos + np.array([-0.01,0.3,0.52])
+        start = np.array([0.71,0.25,1.7])
         self.robot_start = start
-        end = start + np.array([0,-0.6,0])
+        end = start + np.array([0,-0.25,0])
         p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
         # dir
         p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+[0,0.03,0.03], [0.3, 0.3, 0.3], 2)
         p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+[0,0.03,-0.03], [0.3, 0.3, 0.3], 2)
 
-        for i in range(0,2):
+        for i in range(0,7):
             start = end
-            end = end + np.array([0,0,-0.18])
+            end = end + np.array([0,0,-0.05])
             p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
 
             start = end
             if i % 2:
-                end = end + np.array([0,-0.6,0])
+                end = end + np.array([0,-0.25,0])
                 dir1 = [0,0.03,0.03]
                 dir2 = [0,0.03,-0.03]
             else:
-                end = end + np.array([0,0.6,0])
+                end = end + np.array([0,0.25,0])
                 dir1 = [0,-0.03,0.03]
                 dir2 = [0,-0.03,-0.03]
             p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
@@ -323,16 +323,20 @@ class FlexPolishingEnv(EnvInterface):
                     # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
                     # print(contact[9])
 
-                    self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
-                    self.itercount = 0
-                elif contact[3] == 13:
+                    # self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
+                    # self.itercount = 0
+                    pass
+                elif contact[3] == 14:
                     # link_index = contact[3]
                     # print(link_index)
-                    # ddd = 40000.0
-                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
+                    ddd = 1000.0
+                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*contact[9]*0.001, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
 
-                    self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
-                    self.itercount = 0
+                    _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
+                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*ft_sensor_forces[2]*0.001, [ft_sensor_forces[2]/ddd, 0, (ddd-ft_sensor_forces[2])/ddd], 4)
+
+                    # self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
+                    # self.itercount = 0
                     # print(contact[9])
                 # if contact[3] == 12 or contact[3] == 13:
                 #     # contact[6]

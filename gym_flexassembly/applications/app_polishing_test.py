@@ -19,6 +19,7 @@ from std_srvs.srv import Empty, EmptyResponse
 
 from std_msgs.msg import Float32MultiArray
 
+from geometry_msgs.msg import Wrench
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Transform, Twist
 from geometry_msgs.msg import Point
@@ -42,59 +43,48 @@ class GraspTest(object):
         rospy.init_node('coord', anonymous=False)
         print("Init coord node")
 
-        # receive current eef pose
-        # rospy.Subscriber("/cur_ee_pose", Float32MultiArray, self.listener_cur_ee_pose)
-        # rospy.Subscriber("/cart_imped_high/cartesian_pose", Pose, self.listener_cur_ee_pose)
-        # self.var_cur_ee_pose = Pose()
-        self.lock = threading.Lock()
+        # receive self.current eef pose
+        rospy.Subscriber("/env/ft/ft_0", Wrench, self.listener_ft_wrench)
+        self.wrench_data = None
+        self.wrench_data_internal = None
+        
+        rospy.Subscriber("/robot/fdb/cart_pose_0", Pose, self.listener_cart_pose)
+        self.pose_data = None
+        self.pose_data_internal = None
 
-        # # write trajectory command
+        self.lock_wrench = threading.Lock()
+        self.lock_pose = threading.Lock()
+
+        # write trajectory command
         self.pub_traj = rospy.Publisher("/cart/traj_setpoint", MultiDOFJointTrajectoryPoint, queue_size=1,latch=True)
 
-        # Create publisher for trajectory
-        # pub_traj = rospy.Publisher('flex_planning_ros/traj_setpoints', JointTrajectoryPoint, queue_size=1,latch=True)
-        # print(" > Initialized publisher on flex_planning_ros/traj_setpoints")
+        # Wait for the first pose feedback
+        self.rate = rospy.Rate(500) # 10hz
 
-        # # HOMING
-        # jt_tmp = JointTrajectoryPoint(positions=[1.5,-0.1,0.0,-2.0,0.0,1.0,1.57], velocities=[0]*7)
-        # pub_traj.publish(jt_tmp)
-        rate = rospy.Rate(500) # 10hz
-        rate.sleep()
-        rate.sleep()
+        print("Waiting for Pose feedback from robot...")
 
+        while self.pose_data_internal == None:
+            self.lock_pose.acquire()
+            self.pose_data_internal = self.pose_data
+            self.lock_pose.release()
+            self.rate.sleep()
 
-        cart_traj_point = MultiDOFJointTrajectoryPoint()
-        ros_t = Transform()
-        ros_t.translation.x = 0.649552
-        ros_t.translation.y = 0.25
-        ros_t.translation.z = 1.6
-        # ros_t.rotation.w = 0.680043
-        # ros_t.rotation.x = -0.00707333
-        # ros_t.rotation.y = -0.733138
-        # ros_t.rotation.z = 0.000840555
-        ros_t.rotation.w = 0.707
-        ros_t.rotation.x = 0.0
-        ros_t.rotation.y = -0.707
-        ros_t.rotation.z = 0.0
+        print("Received Pose feedback from robot!")
 
-        cur_quat = pyquaternion.Quaternion(w=ros_t.rotation.w,x=ros_t.rotation.x,y=ros_t.rotation.y,z=ros_t.rotation.z)
-        # target_quat = pyquaternion.Quaternion(w=0.653,x=0.271,y=0.653,z=0.271)
+        self.cart_traj_point = MultiDOFJointTrajectoryPoint()
+        self.ros_t = Transform()
+        self.ros_t.translation.x = self.pose_data_internal.position.x
+        self.ros_t.translation.y = self.pose_data_internal.position.y
+        self.ros_t.translation.z = self.pose_data_internal.position.z
+        self.cur = np.array([self.ros_t.translation.x, self.ros_t.translation.y, self.ros_t.translation.z])
 
-        # target_quat_right = cur_quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) # Rotate 45 about Y
-        target_quat_left = cur_quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-45.0 / 180.0 * 3.14159265)
-        ros_t.rotation.x = target_quat_left[1]
-        ros_t.rotation.y = target_quat_left[2]
-        ros_t.rotation.z = target_quat_left[3]
-        ros_t.rotation.w = target_quat_left[0]
-  
+        self.ros_t.rotation.w = self.pose_data_internal.orientation.w
+        self.ros_t.rotation.x = self.pose_data_internal.orientation.x
+        self.ros_t.rotation.y = self.pose_data_internal.orientation.y
+        self.ros_t.rotation.z = self.pose_data_internal.orientation.z
+        self.cur_quat = pyquaternion.Quaternion(w=self.ros_t.rotation.w,x=self.ros_t.rotation.x,y=self.ros_t.rotation.y,z=self.ros_t.rotation.z)
 
-
- 
-
-
-
-
-        cart_traj_point.transforms.append(ros_t)
+        self.cart_traj_point.transforms.append(self.ros_t)
         ros_tt = Twist()
         ros_tt.linear.x = 0
         ros_tt.linear.y = 0
@@ -102,7 +92,7 @@ class GraspTest(object):
         ros_tt.angular.x = 0
         ros_tt.angular.y = 0
         ros_tt.angular.z = 0
-        cart_traj_point.velocities.append(ros_tt)
+        self.cart_traj_point.velocities.append(ros_tt)
         ros_ttt = Twist()
         ros_ttt.linear.x = 0
         ros_ttt.linear.y = 0
@@ -110,232 +100,160 @@ class GraspTest(object):
         ros_ttt.angular.x = 0
         ros_ttt.angular.y = 0
         ros_ttt.angular.z = 0
-        cart_traj_point.accelerations.append(ros_ttt)
+        self.cart_traj_point.accelerations.append(ros_ttt)
 
-        self.pub_traj.publish(cart_traj_point)
+        self.pub_traj.publish(self.cart_traj_point)
 
-        rate.sleep()
+        print("Feed same position back!")
 
+        self.rate.sleep()
 
-        # time.sleep(4)
+        time.sleep(1)
+        
+        z = 1.7
+        speed = 0.0005
+        solo_tor_speed = 0.01
 
-        time.sleep(3)
+        target_quat_left = pyquaternion.Quaternion(w=0.707,x=0.0,y=-0.707,z=0.0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-35.0 / 180.0 * 3.14159265)
 
-        speed = 0.0001
+        self.moveTo(target=np.array([0.643882,0.25,1.7]), target_quat=target_quat_left, step_width=speed, solo_rot_step=solo_tor_speed)
+        time.sleep(2)
 
-        while (ros_t.translation.y > -0.01):
-            ros_t.translation.y = ros_t.translation.y - speed
+        self.moveGuarded(cart_direction=[1,0,0], step_width_in_m=0.00005, max_force_in_n=40.0)
+
+        time.sleep(1)
+
+        x = self.cur[0]
+
+        for i in range(4):
+            print("Move to: " + str ([x,0.25,z]) + " : " + str(target_quat_left))
             
-            self.pub_traj.publish(cart_traj_point)
+            self.moveTo(target=np.array([x,0.25,z]), target_quat=target_quat_left, step_width=speed, solo_rot_step=solo_tor_speed)
+            time.sleep(1)
 
-            rate.sleep()
+            print("Move to: " + str ([x,0.0,z]) + " : " + str(target_quat_left))
+            speed = 0.0001
+            self.moveTo(target=np.array([x,0.0,z]), target_quat=target_quat_left, step_width=speed, solo_rot_step=solo_tor_speed)
+            time.sleep(1)
 
-        time.sleep(0.8)
+            z = z - 0.05
 
-        cur_quat = pyquaternion.Quaternion(w=ros_t.rotation.w,x=ros_t.rotation.x,y=ros_t.rotation.y,z=ros_t.rotation.z)
-        # target_quat = pyquaternion.Quaternion(w=0.653,x=0.271,y=0.653,z=0.271)
-        target_quat = cur_quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-90.0 / 180.0 * 3.14159265)
-        quadT = 0.001
+            target_quat_right = target_quat_left * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-100.0 / 180.0 * 3.14159265)
+            print("Rotate to: " + str ([x,0.25,z]) + " : " + str(target_quat_right))
+            speed = 0.0001
+            self.moveTo(target=np.array([x,0.0,z]), target_quat=target_quat_right, step_width=speed, solo_rot_step=solo_tor_speed)
+            time.sleep(1)
+
+            print("Move to: " + str ([x,0.25,z]) + " : " + str(target_quat_right))
+            speed = 0.0001
+            self.moveTo(target=np.array([x,0.25,z]), target_quat=target_quat_right, step_width=speed, solo_rot_step=solo_tor_speed)
+            time.sleep(1)
+            z = z - 0.05
+        
+
+        print("Finished")
+
+    def listener_ft_wrench(self, data):
+        self.lock_wrench.acquire()
+        self.wrench_data = data
+        self.lock_wrench.release()
+
+    def listener_cart_pose(self, data):
+        self.lock_pose.acquire()
+        self.pose_data = data
+        self.lock_pose.release()
+
+    def moveTo(self, target, target_quat, step_width=0.0001, solo_rot_step=0.01):
+        # Quaternion(w, x, y, z)
+        leng = math.fabs(np.linalg.norm(target - self.cur))
         timeq = 0
+        if leng > 0:
+            quadT = 1.0/(leng) / step_width
+        
+            step = self.normalized(target - self.cur,0) * step_width
+            while math.fabs(np.linalg.norm(target - self.cur)) > step_width:
+                # print(math.fabs(np.linalg.norm(target - self.cur)))
+                self.cur = self.cur + step
+                # print(self.cur)
+                self.ros_t.translation.x = self.cur[0]
+                self.ros_t.translation.y = self.cur[1]
+                self.ros_t.translation.z = self.cur[2]
+
+                timeq = timeq + quadT
+                if (timeq > 1.0):
+                    timeq = 1.0
+                q = pyquaternion.Quaternion.slerp(self.cur_quat, target_quat, timeq)
+                self.ros_t.rotation.x = q[1]
+                self.ros_t.rotation.y = q[2]
+                self.ros_t.rotation.z = q[3]
+                self.ros_t.rotation.w = q[0]
+
+                self.pub_traj.publish(self.cart_traj_point)
+                self.rate.sleep()
+        else:
+            quadT = solo_rot_step
+
         while timeq < 1.0:
             timeq = timeq + quadT
             if (timeq > 1.0):
                 timeq = 1.0
-            q = pyquaternion.Quaternion.slerp(cur_quat, target_quat, timeq)
-            ros_t.rotation.x = q[1]
-            ros_t.rotation.y = q[2]
-            ros_t.rotation.z = q[3]
-            ros_t.rotation.w = q[0]
-            self.pub_traj.publish(cart_traj_point)
+            q = pyquaternion.Quaternion.slerp(self.cur_quat, target_quat, timeq)
+            self.ros_t.rotation.x = q[1]
+            self.ros_t.rotation.y = q[2]
+            self.ros_t.rotation.z = q[3]
+            self.ros_t.rotation.w = q[0]
+            self.pub_traj.publish(self.cart_traj_point)
+            self.rate.sleep()
 
-            rate.sleep()
+        self.ros_t.translation.x = target[0]
+        self.ros_t.translation.y = target[1]
+        self.ros_t.translation.z = target[2]
+        self.ros_t.rotation.x = target_quat[1]
+        self.ros_t.rotation.y = target_quat[2]
+        self.ros_t.rotation.z = target_quat[3]
+        self.ros_t.rotation.w = target_quat[0]
+        self.cur_quat = target_quat
+        self.cur = target
+        self.pub_traj.publish(self.cart_traj_point)
+        self.rate.sleep()
 
-        time.sleep(0.8)
-
-        while (ros_t.translation.z > 1.65):
-            ros_t.translation.z = ros_t.translation.z - speed
-            
-            self.pub_traj.publish(cart_traj_point)
-
-            rate.sleep()
-
-        time.sleep(0.8)
-
-        while (ros_t.translation.y < 0.25):
-            ros_t.translation.y = ros_t.translation.y + speed
-            
-            self.pub_traj.publish(cart_traj_point)
-
-            rate.sleep()
-
-        time.sleep(0.8)
-
+    def moveGuarded(self, cart_direction=[0,0,0], step_width_in_m=0.00001, max_force_in_n=40.0):
+        # Quaternion(w, x, y, z)
+        dire = np.array(cart_direction)
+        step = dire * step_width_in_m
+        # If no wrench reading return
+        self.lock_wrench.acquire()
+        self.wrench_data_internal = self.wrench_data
+        self.lock_wrench.release()
+        if self.wrench_data_internal == None:
+            print("Returning, no wrench reading!")
+            return
         
+        force = np.array([self.wrench_data_internal.force.x, self.wrench_data_internal.force.y, self.wrench_data_internal.force.z])
+        force_length = np.linalg.norm(force * dire)
 
-        
+        print("Start Guarded Move")
+        # add time-based smoothing?
+        while force_length < max_force_in_n:
+            self.cur = self.cur + step
+            self.ros_t.translation.x = self.cur[0]
+            self.ros_t.translation.y = self.cur[1]
+            self.ros_t.translation.z = self.cur[2]
+            self.pub_traj.publish(self.cart_traj_point)
+            self.rate.sleep()
 
-        return
+            self.lock_wrench.acquire()
+            self.wrench_data_internal = self.wrench_data
+            self.lock_wrench.release()
+            force = np.array([self.wrench_data_internal.force.x, self.wrench_data_internal.force.y, self.wrench_data_internal.force.z])
+            force_length = np.linalg.norm(force * dire)
 
-        while (ros_t.translation.z > 1.26):
-            ros_t.translation.z = ros_t.translation.z - speed
-            
-            self.pub_traj.publish(cart_traj_point)
+        print("Force Sensed!")
 
-            rate.sleep()
-
-
-        time.sleep(0.8)
-
-        while (ros_t.translation.y > -0.2):
-            ros_t.translation.y = ros_t.translation.y - speed
-            
-            self.pub_traj.publish(cart_traj_point)
-
-            rate.sleep()
-
-        # cart_traj_point.transforms[0].translation.x = 0.4
-        # cart_traj_point.transforms[0].translation.y = 0.20000000000000007
-        # cart_traj_point.transforms[0].translation.z = 0.723
-
-        # self.pub_traj.publish(cart_traj_point)
-        # rate.sleep()
-
-        # time.sleep(4)
-
-        return
-
-        # Move to first target
-        # time.sleep(10)
-        print("Next state")
-        rospy.wait_for_service('flex_planning_ros/plan')
-        try:
-            add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
-            goal = Pose()
-            goal.position.x = 0.4
-            goal.position.y = 0.2
-            goal.position.z = 0.8
-
-            goal.orientation.x = 0
-            goal.orientation.y = 1
-            goal.orientation.z = 0
-            goal.orientation.w = 0
-            resp1 = add_two_ints(goal)
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-        
-        rate.sleep()
-        time.sleep(10)
-        return
-
-        print("Prepare Grasp")
-        rospy.wait_for_service('flex_planning_ros/plan')
-        try:
-            add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
-            goal = Pose()
-            goal.position.x = 0.4
-            goal.position.y = 0.2
-            goal.position.z = 0.72
-
-            goal.orientation.x = 0
-            goal.orientation.y = 1
-            goal.orientation.z = 0
-            goal.orientation.w = 0
-            resp1 = add_two_ints(goal)
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-        
-        rate.sleep()
-        time.sleep(10)
-        print("Grasp")
-        rospy.wait_for_service('/gripper1/close_gripper')
-        try:
-            close_g = rospy.ServiceProxy('/gripper1/close_gripper', Empty)
-            close_g()
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-        
-        rate.sleep()
-        time.sleep(2)
-        print("Go up")
-        rospy.wait_for_service('flex_planning_ros/plan')
-        try:
-            add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
-            goal = Pose()
-            goal.position.x = 0.4
-            goal.position.y = 0.2
-            goal.position.z = 0.8
-
-            goal.orientation.x = 0
-            goal.orientation.y = 1
-            goal.orientation.z = 0
-            goal.orientation.w = 0
-            resp1 = add_two_ints(goal)
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-        time.sleep(10)
-        print("Go to rail")
-        rospy.wait_for_service('flex_planning_ros/plan')
-        try:
-            add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
-            goal = Pose()
-            goal.position.x = 0.0
-            goal.position.y = 0.4
-            goal.position.z = 0.8
-
-            goal.orientation.x = 0
-            goal.orientation.y = 1
-            goal.orientation.z = 0
-            goal.orientation.w = 0
-            resp1 = add_two_ints(goal)
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-        time.sleep(10)
-        # print("Release")
-        # rospy.wait_for_service('/gripper1/open_gripper')
-        # try:
-        #     open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
-        #     open_g()
-        # except rospy.ServiceException as e:
-        #     print("Service call failed: %s"%e)
-        
-        # rate.sleep()
-        # time.sleep(2)
-        ####################################
-        print("Rotate")
-        rospy.wait_for_service('flex_planning_ros/plan')
-        try:
-            add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
-            goal = Pose()
-            goal.position.x = 0.0
-            goal.position.y = 0.4
-            goal.position.z = 0.8
-
-            goal.orientation.x = 0
-            goal.orientation.y = -0.924
-            goal.orientation.z = -0.383
-            goal.orientation.w = 0
-            resp1 = add_two_ints(goal)
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-        time.sleep(10)
-        print("Doooown")
-        rospy.wait_for_service('flex_planning_ros/plan')
-        try:
-            add_two_ints = rospy.ServiceProxy('flex_planning_ros/plan', RequestTrajectory)
-            goal = Pose()
-            goal.position.x = 0.0
-            goal.position.y = 0.4
-            goal.position.z = 0.75
-
-            goal.orientation.x = 0
-            goal.orientation.y = -0.924
-            goal.orientation.z = -0.383
-            goal.orientation.w = 0
-            resp1 = add_two_ints(goal)
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-        time.sleep(10)
-        print("Finished")
+    def normalized(self,a, axis=-1, order=2):
+        l2 = np.atleast_1d(np.linalg.norm(a))
+        # l2[l2==0] = 1
+        return a / l2
 
 if __name__ == "__main__":
     c = GraspTest()
