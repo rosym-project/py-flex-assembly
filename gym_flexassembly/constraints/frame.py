@@ -7,17 +7,20 @@ import gym_flexassembly.data as data
 import rospy
 from geometry_msgs.msg import TransformStamped
 
+import pyquaternion
+
 class Frame(object):
     """ TODO
     """
 
-    def __init__(self, pb, text, fixed_base=True, ref_name="world", ref_id=-1, ref_link_id=-1, is_body_frame=False, scale=-1):
+    def __init__(self, pb, text, fixed_base=True, ref_name="world", ref_id=-1, ref_link_id=-1, is_body_frame=False, scale=-1, dirtext=[0,0.15,0.15]):
         self.p = pb
         self.text = text
         self.ref_id = ref_id
         self.ref_link_id = ref_link_id
         self.ref_name = ref_name
         self.is_body_frame = is_body_frame
+        self.dirtext = dirtext
         urdfRootPath = data.getDataPath()
 
         # calculate scaling
@@ -37,12 +40,12 @@ class Frame(object):
         self.p.addUserDebugLine([0, 0, 0], [0.1, 0, 0], [1, 0, 0], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
         self.p.addUserDebugLine([0, 0, 0], [0, 0.1, 0], [0, 1, 0], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
         self.p.addUserDebugLine([0, 0, 0], [0, 0, 0.1], [0, 0, 1], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
-        self.frame_text_node = self.p.addUserDebugText(str(self.text), [0, 0.15, 0.15],
+        self.frame_text_node = self.p.addUserDebugText(str(self.text), self.dirtext,
                         textColorRGB=[0, 0, 0],
                         textSize=1.0,
                         parentObjectUniqueId=self.frame_ghost_id,
                         parentLinkIndex=-1)
-        self.p.addUserDebugLine([0, 0.05, 0.05], [0, 0.14, 0.14], [0, 0, 0], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
+        self.p.addUserDebugLine([0, 0.05, 0.05], np.array(self.dirtext)*0.9, [0, 0, 0], parentObjectUniqueId=self.frame_ghost_id, parentLinkIndex=-1)
 
         self.deselectedTransparency = 0.5
         self.selectedTransparency = 1
@@ -129,11 +132,11 @@ class Frame(object):
 
     def setFrameText(self, text):
         self.text = text
-        self.frame_text_node = self.p.addUserDebugText(str(self.text), [0, 0.15, 0.15],
-                        textColorRGB=[0, 0, 0],
-                        textSize=1.0,
-                        parentObjectUniqueId=frame_ghost_id,
-                        parentLinkIndex=-1,
+        self.frame_text_node = self.p.addUserDebugText(str(self.text), self.dirtext,
+                        textColorRGB = [0, 0, 0],
+                        textSize = 1.0,
+                        parentObjectUniqueId = self.frame_ghost_id,
+                        parentLinkIndex = -1,
                         replaceItemUniqueId = self.frame_text_node)
 
     def resetPositionAndOrientation(self, pos, orn):
@@ -144,9 +147,13 @@ class Frame(object):
             if self.ref_link_id > -1:
                 # TODO check indexing
                 # (x, y, z), (a, b, c, d), _, _, _, _
-                linkWorldPosition, linkWorldOrientation, localInertialFramePosition, localInertialFrameOrientation, worldLinkFramePosition, worldLinkFrameOrientation = self.p.getLinkState(self.ref_link_id, self.ref_id)
+                # linkWorldPosition, linkWorldOrientation, localInertialFramePosition, localInertialFrameOrientation, worldLinkFramePosition, worldLinkFrameOrientation = self.p.getLinkState(self.ref_link_id, self.ref_id)
+                _, _, _, _, worldLinkFramePosition, worldLinkFrameOrientation = self.p.getLinkState(self.ref_id, self.ref_link_id)
                 self.absolute_pos = worldLinkFramePosition
-                self.absolute_orn = worldLinkFrameOrientation
+
+                pp = pyquaternion.Quaternion(w=worldLinkFrameOrientation[3],x=worldLinkFrameOrientation[0],y=worldLinkFrameOrientation[1],z=worldLinkFrameOrientation[2]) * pyquaternion.Quaternion(w=self.internal_orn[3],x=self.internal_orn[0],y=self.internal_orn[1],z=self.internal_orn[2])
+                # self.absolute_orn = worldLinkFrameOrientation * self.internal_orn
+                self.absolute_orn = [pp.x, pp.y, pp.z, pp.w]
                 self.p.resetBasePositionAndOrientation(self.frame_ghost_id, self.absolute_pos, self.absolute_orn)
             else:
                 rpos, rorn = self.p.getBasePositionAndOrientation(self.ref_id)

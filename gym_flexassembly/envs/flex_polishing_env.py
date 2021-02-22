@@ -158,13 +158,22 @@ class FlexPolishingEnv(EnvInterface):
         
         self._p.resetBasePositionAndOrientation(self.kuka14_1, [0,0,0.7], [0,0,0,1])
         # TODO
-        self._p.resetJointState(self.kuka14_1, 1, 0.0, 0.0)
-        self._p.resetJointState(self.kuka14_1, 2, 0.0, 0.0)
-        self._p.resetJointState(self.kuka14_1, 3, 0.0, 0.0)
-        self._p.resetJointState(self.kuka14_1, 4, -0.884, 0.0)
-        self._p.resetJointState(self.kuka14_1, 5, 0.0, 0.0)
-        self._p.resetJointState(self.kuka14_1, 6, 0.632, 0.0)
-        self._p.resetJointState(self.kuka14_1, 7, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 1, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 2, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 3, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 4, -0.884, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 5, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 6, 0.632, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 7, 0.0, 0.0)
+
+        self._p.resetJointState(self.kuka14_1, 1, 0.196338, 0.0)
+        self._p.resetJointState(self.kuka14_1, 2, -0.00784231, 0.0)
+        self._p.resetJointState(self.kuka14_1, 3, 0.212446, 0.0)
+        self._p.resetJointState(self.kuka14_1, 4, -1.47407, 0.0)
+        self._p.resetJointState(self.kuka14_1, 5, -1.33124, 0.0)
+        self._p.resetJointState(self.kuka14_1, 6, 0.422643, 0.0)
+        self._p.resetJointState(self.kuka14_1, 7, 2.10829, 0.0)
+
 
         # Enable rendering again
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 1)
@@ -278,6 +287,8 @@ class FlexPolishingEnv(EnvInterface):
         if self.kuka7_1_egp:
             self.kuka7_1_egp.update()
 
+        self.getFrameManager().updateFramePoses()
+
         # pose_frame_tx = self._p.readUserDebugParameter(self.dp_frame_tx)
         # pose_frame_ty = self._p.readUserDebugParameter(self.dp_frame_ty)
         # pose_frame_tz = self._p.readUserDebugParameter(self.dp_frame_tz)
@@ -381,6 +392,25 @@ class FlexPolishingEnv(EnvInterface):
         self.loadRobot()
         # self.loadCameras()
         self.loadFTs()
+
+        # TODO coordinates
+        fw = self.getFrameManager().createFrame("fw", pos=[0,0,0], orn=[0,0,0,1], ref_id=-1, scale=2.5, dirtext=[0,0.25,0.25])
+
+        
+        fc = self.getFrameManager().createFrame("fc", ref_id=self.kuka14_1, ref_link_id=14, is_body_frame=True, scale=1.4, orn=[0,1,0,0])
+        fc.setVisibility(2, False)
+        fc.setVisibility(4, False)
+
+        fee = self.getFrameManager().createFrame("fee", ref_id=self.kuka14_1, ref_link_id=9, is_body_frame=True, scale=0.5, orn=[0,0,0,1], dirtext=[-0.15,0,0.15])
+
+        fm = self.getFrameManager().createFrame("fm", pos=[0.7,0.0,1.6], orn=[0,0.707,0,0.707], ref_id=-1, scale=0.5, dirtext=[-0.15,0,0.15])
+
+        fo1 = self.getFrameManager().createFrame("fo1", ref_id=self.kuka14_1, ref_link_id=-1, is_body_frame=True, scale=1.8)
+
+        fo2 = self.getFrameManager().createFrame("fo2", ref_id=self.window_id, ref_link_id=-1, is_body_frame=True, scale=0.8)
+
+
+        
 
         self.dp_frame_tx = self._p.addUserDebugParameter("tx", -0.1, 0.1, -0.08)
         self.dp_frame_ty = self._p.addUserDebugParameter("ty", -2.5, 2.5, 0)
