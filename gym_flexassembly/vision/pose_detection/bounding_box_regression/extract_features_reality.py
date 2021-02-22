@@ -92,6 +92,7 @@ def refine_bb(bounding_box, image):
     - Use grabCut to extract the clamp from the image.
       The resulting bounding box is a lot better than the initial bounding box from the depth image.
     """
+
     # enlarge the bounding box
     size_increase = 1.2
     new_size = tuple([bounding_box[1][0] * size_increase, bounding_box[1][1] * size_increase])
@@ -103,19 +104,24 @@ def refine_bb(bounding_box, image):
     box = np.intp(box)
     cv.drawContours(mask, [box], 0, cv.GC_PR_FGD, -1)
 
+    # only work on a cutout to improve runtime
+    rect = cv.boundingRect(box)
+    shape = np.array([rect[2], rect[3]])
+    p_1 = np.array([rect[0], rect[1]])
+    p_2 = p_1 + shape
+
     # apply a high pass filter to emphasize the edges
-    filtered = np.copy(image)
     kernel_size = 21
     kernel = cv.getGaussianKernel(kernel_size, 0)
     kernel = -1 * np.outer(kernel, kernel)
     kernel[int((kernel_size - 1) / 2), int((kernel_size - 1) / 2)] += 2
-    filtered = cv.filter2D(image, cv.CV_8UC1, kernel)
+    filtered = cv.filter2D(image[p_1[1] : p_2[1], p_1[0] : p_2[0]], cv.CV_8UC1, kernel)
     #cv.imshow("filter", filtered)
 
     # use grabCut to refine the mask borders
     bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
     fgdModel = np.zeros((1 ,65), np.float64)
-    cv.grabCut(filtered, mask, None, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_MASK)
+    cv.grabCut(filtered, mask[p_1[1] : p_2[1], p_1[0] : p_2[0]], None, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_MASK)
     mask = np.isin(mask, [cv.GC_FGD, cv.GC_PR_FGD]).astype(np.uint8)
 
     # debug: show grabCut results
@@ -150,12 +156,28 @@ def detect_side(image, box):
     Uses a Hough Circle Transform and post processing of the detected circles
     to detect the side of the clamp that has the hole in it.
     """
+    # only work on a cutout to improve runtime
+    rect = cv.boundingRect(box)
+    shape = np.array([rect[2], rect[3]])
+    p_1 = np.array([rect[0], rect[1]])
+    p_2 = p_1 + shape
+
     # detect circles
-    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    gray = cv.cvtColor(image[p_1[1] : p_2[1], p_1[0] : p_2[0]], cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 3)
     #cv.imshow("gray", gray)
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
-                            param1=50, param2=10, minRadius=4, maxRadius=6)[0]
+                            param1=50, param2=10, minRadius=4, maxRadius=6)
+    if circles is None:
+        # no regions detected, no prediction possible
+        # since this occurs rarely it is valid to predict a fixed side
+        print("No holes detected")
+        return 0
+    circles = circles[0]
+
+    # adjust circle translation
+    for c in circles:
+        c[:2] += p_1
 
     # create boxes for the regions where the hole is expected to be
     if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
@@ -253,6 +275,7 @@ def detect_features(image, depth, area_threshold=50):
     """
     Extracts a bounding box and a feature vector from a clamp image and its depth image.
     """
+
     # ======================================================================
     # bounding box features
     # ======================================================================
