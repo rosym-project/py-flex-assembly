@@ -94,48 +94,48 @@ class FlexAssemblyEnv(EnvInterface):
         # # Floor SHOULD BE ALWAYS ID 0
         # self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly, "objects/plane_solid.urdf"), useMaximalCoordinates=True) # Brauche ich fuer die hit rays
 
-        # Table
-        table_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/table_2", "table_2.urdf"), useFixedBase=True, flags = self._p.URDF_USE_INERTIA_FROM_FILE)
-        table_offset_world_x = 0.5
-        table_offset_world_y = 1.05
-        table_offset_world_z = 0
-        self._p.resetBasePositionAndOrientation(table_id, [table_offset_world_x, table_offset_world_y, table_offset_world_z], [0,0,0,1])
-        self.object_ids['table'] = table_id
+        # # Table
+        # table_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/table_2", "table_2.urdf"), useFixedBase=True, flags = self._p.URDF_USE_INERTIA_FROM_FILE)
+        # table_offset_world_x = 0.5
+        # table_offset_world_y = 1.05
+        # table_offset_world_z = 0
+        # self._p.resetBasePositionAndOrientation(table_id, [table_offset_world_x, table_offset_world_y, table_offset_world_z], [0,0,0,1])
+        # self.object_ids['table'] = table_id
 
-        # Load Rail
-        rail_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/flexassembly", "rail.urdf"), useFixedBase=True)
-        self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.85, 0.435, table_offset_world_z+0.73], [0, 0, 0, 1])
-        self.object_ids['rail'] = rail_id
+        # # Load Rail
+        # rail_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/flexassembly", "rail.urdf"), useFixedBase=True)
+        # self._p.resetBasePositionAndOrientation(rail_id, [table_offset_world_x-0.85, 0.435, table_offset_world_z+0.73], [0, 0, 0, 1])
+        # self.object_ids['rail'] = rail_id
 
-        # Workpiece clamp 1
-        workpiece_1_offset_table_x = -0.1
-        workpiece_1_offset_table_y = -0.85
-        workpiece_1_offset_table_z = 0.73
-        workpiece_1_offset_world = [table_offset_world_x + workpiece_1_offset_table_x, table_offset_world_y + workpiece_1_offset_table_y, table_offset_world_z + workpiece_1_offset_table_z]
-        workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
-        #  orn=[0,-0.131,0.991,0]
-        print("clamp 1 pose: "+str(workpiece_1_offset_world))
-        # Workpiece clamp 2
-        workpiece_2_offset_table_x = -0.2
-        workpiece_2_offset_table_y = -0.85
-        workpiece_2_offset_table_z = 0.73
-        workpiece_2_offset_world = [table_offset_world_x + workpiece_2_offset_table_x, table_offset_world_y + workpiece_2_offset_table_y, table_offset_world_z + workpiece_2_offset_table_z]
-        workpiece_2 = SpringClamp(pos=workpiece_2_offset_world)
+        # # Workpiece clamp 1
+        # workpiece_1_offset_table_x = -0.1
+        # workpiece_1_offset_table_y = -0.85
+        # workpiece_1_offset_table_z = 0.73
+        # workpiece_1_offset_world = [table_offset_world_x + workpiece_1_offset_table_x, table_offset_world_y + workpiece_1_offset_table_y, table_offset_world_z + workpiece_1_offset_table_z]
+        # workpiece_1 = SpringClamp(pos=workpiece_1_offset_world)
+        # #  orn=[0,-0.131,0.991,0]
+        # print("clamp 1 pose: "+str(workpiece_1_offset_world))
+        # # Workpiece clamp 2
+        # workpiece_2_offset_table_x = -0.2
+        # workpiece_2_offset_table_y = -0.85
+        # workpiece_2_offset_table_z = 0.73
+        # workpiece_2_offset_world = [table_offset_world_x + workpiece_2_offset_table_x, table_offset_world_y + workpiece_2_offset_table_y, table_offset_world_z + workpiece_2_offset_table_z]
+        # workpiece_2 = SpringClamp(pos=workpiece_2_offset_world)
 
-        # Workpiece clamp 3
-        workpiece_3_offset_table_x = -0.3
-        workpiece_3_offset_table_y = -0.85
-        workpiece_3_offset_table_z = 0.73
-        workpiece_3_offset_world = [table_offset_world_x + workpiece_3_offset_table_x, table_offset_world_y + workpiece_3_offset_table_y, table_offset_world_z + workpiece_3_offset_table_z]
-        workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
-        self.object_ids['clamps'] = [workpiece._model_id for workpiece in [workpiece_1, workpiece_2, workpiece_3]]
+        # # Workpiece clamp 3
+        # workpiece_3_offset_table_x = -0.3
+        # workpiece_3_offset_table_y = -0.85
+        # workpiece_3_offset_table_z = 0.73
+        # workpiece_3_offset_world = [table_offset_world_x + workpiece_3_offset_table_x, table_offset_world_y + workpiece_3_offset_table_y, table_offset_world_z + workpiece_3_offset_table_z]
+        # workpiece_3 = SpringClamp(pos=workpiece_3_offset_world)
+        # self.object_ids['clamps'] = [workpiece._model_id for workpiece in [workpiece_1, workpiece_2, workpiece_3]]
 
 
-        # self.addVisFrame(workpiece_1_offset_world,'F1')
+        # # self.addVisFrame(workpiece_1_offset_world,'F1')
 
-        # self.addVisFrame([0.4012, 0.200289, 0.821851],'O1')
+        # # self.addVisFrame([0.4012, 0.200289, 0.821851],'O1')
 
-        self.addVisFrame([0.4, 0.2, 0.8],'O1')
+        # self.addVisFrame([0.4, 0.2, 0.8],'O1')
 
         # # Global camera
         # self.cam_global_settings['pos'] = [table_offset_world_x-0.29, table_offset_world_y-0.54, table_offset_world_z + 1.375]
@@ -161,7 +161,7 @@ class FlexAssemblyEnv(EnvInterface):
             f = open("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf","r") # TODO
             self.upload_urdf(f.read(), "robot_description")
         
-        self._p.resetBasePositionAndOrientation(self.kuka14_1, [0,-0.2,0.4], [0,0,0,1])
+        self._p.resetBasePositionAndOrientation(self.kuka14_1, [0,0,0], [0,0,0,1])
         # TODO
         # self._p.resetJointState(self.kuka14_1, 1, 2.3, 1.5)
         # self._p.resetJointState(self.kuka14_1, 2, 0.0, -0.1)

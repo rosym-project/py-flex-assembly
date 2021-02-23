@@ -407,7 +407,11 @@ class FlexPolishingEnv(EnvInterface):
 
         fo1 = self.getFrameManager().createFrame("fo1", ref_id=self.kuka14_1, ref_link_id=-1, is_body_frame=True, scale=1.8)
 
-        fo2 = self.getFrameManager().createFrame("fo2", ref_id=self.window_id, ref_link_id=-1, is_body_frame=True, scale=0.8)
+        
+
+        fs = self.getFrameManager().createFrame("fs", ref_id=self.window_id, ref_link_id=-1, is_body_frame=True, scale=0.8, orn=[0,-0.707,0,0.707])
+
+        fo2 = self.getFrameManager().createFrame("fo2", pos=[0,0.315,0], ref_id=fs.getFrameId(), scale=0.8, orn=[0,0.707,0,0.707])
 
 
         

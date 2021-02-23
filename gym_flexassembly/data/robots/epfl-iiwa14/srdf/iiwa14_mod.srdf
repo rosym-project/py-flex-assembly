@@ -23,8 +23,8 @@
   <group name="arms">
     <group name="arm1"/>
   </group>
-  <group name="legs">
-  </group>
+  <!-- <group name="legs">
+  </group> -->
 
   <!-- CHAINS -->
   <!-- CONSTRAINT: keep it in the end, it refers to already defined groups -->

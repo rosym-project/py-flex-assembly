@@ -158,7 +158,10 @@ class Frame(object):
             else:
                 rpos, rorn = self.p.getBasePositionAndOrientation(self.ref_id)
                 self.absolute_pos = rpos
-                self.absolute_orn = rorn
+                # self.absolute_orn = rorn
+
+                pp = pyquaternion.Quaternion(w=rorn[3],x=rorn[0],y=rorn[1],z=rorn[2]) * pyquaternion.Quaternion(w=self.internal_orn[3],x=self.internal_orn[0],y=self.internal_orn[1],z=self.internal_orn[2])
+                self.absolute_orn = [pp.x, pp.y, pp.z, pp.w]
                 self.p.resetBasePositionAndOrientation(self.frame_ghost_id, self.absolute_pos, self.absolute_orn)
         else:
             if self.ref_id > -1:
