@@ -65,6 +65,11 @@ class FlexPolishingEnv(EnvInterface):
         self.RENDER_HEIGHT = 720 # TODO
         self.RENDER_WIDTH = 960 # TODO
 
+        self.me_line_1 = p.addUserDebugLine([0,0,0], [0,0,0], [0.9, 0.6, 0.0], 5)
+        self.me_line_1_a = p.addUserDebugLine([0,0,0], [0,0,0], [0.9, 0.6, 0.0], 5)
+        self.me_line_1_b = p.addUserDebugLine([0,0,0], [0,0,0], [0.9, 0.6, 0.0], 5)
+        self.me_line_2 = p.addUserDebugLine([0,0,0], [0,0,0], [0.9, 0.6, 0.0], 5)
+
         self.seed()
 
         self.collect_contact = []
@@ -112,29 +117,31 @@ class FlexPolishingEnv(EnvInterface):
         start = np.array([0.71,0.25,1.7])
         self.robot_start = start
         end = start + np.array([0,-0.25,0])
-        p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
+        # p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
+        ccolor = [0.3, 0.3, 0.3]
         # dir
-        p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+[0,0.03,0.03], [0.3, 0.3, 0.3], 2)
-        p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+[0,0.03,-0.03], [0.3, 0.3, 0.3], 2)
+        # p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+[0,0.03,0.03], [0.3, 0.3, 0.3], 2)
+        # p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+[0,0.03,-0.03], [0.3, 0.3, 0.3], 2)
 
-        for i in range(0,7):
-            start = end
-            end = end + np.array([0,0,-0.05])
-            p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
+        # for i in range(0,7):
+        #     start = end
+        #     end = end + np.array([0,0,-0.05])
+        #     p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
 
-            start = end
-            if i % 2:
-                end = end + np.array([0,-0.25,0])
-                dir1 = [0,0.03,0.03]
-                dir2 = [0,0.03,-0.03]
-            else:
-                end = end + np.array([0,0.25,0])
-                dir1 = [0,-0.03,0.03]
-                dir2 = [0,-0.03,-0.03]
-            p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
-            # dir
-            p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+dir1, [0.3, 0.3, 0.3], 2)
-            p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+dir2, [0.3, 0.3, 0.3], 2)
+        #     start = end
+        #     if i % 2:
+        #         end = end + np.array([0,-0.25,0])
+        #         dir1 = [0,0.03,0.03]
+        #         dir2 = [0,0.03,-0.03]
+        #     else:
+        #         end = end + np.array([0,0.25,0])
+        #         dir1 = [0,-0.03,0.03]
+        #         dir2 = [0,-0.03,-0.03]
+        #     p.addUserDebugLine(start, end, [0.3, 0.3, 0.3], 2)
+        #     # dir
+        #     p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+dir1, [0.3, 0.3, 0.3], 2)
+        #     p.addUserDebugLine(start+0.5*(end-start), start+0.5*(end-start)+dir2, [0.3, 0.3, 0.3], 2)
+
 
         # self.addVisFrame([0.4, 0.2, 0.8],'O1')
 
@@ -173,6 +180,11 @@ class FlexPolishingEnv(EnvInterface):
         self._p.resetJointState(self.kuka14_1, 5, -1.33124, 0.0)
         self._p.resetJointState(self.kuka14_1, 6, 0.422643, 0.0)
         self._p.resetJointState(self.kuka14_1, 7, 2.10829, 0.0)
+
+        self._p.resetJointState(self.kuka14_1, 12, 0.01, 0.0)
+        self._p.resetJointState(self.kuka14_1, 13, 0.01, 0.0)
+
+        
 
 
         # Enable rendering again
@@ -381,6 +393,23 @@ class FlexPolishingEnv(EnvInterface):
         
         self.itercount = self.itercount + 1
 
+
+        _, _, _, _, worldLinkFramePosition, worldLinkFrameOrientation = self._p.getLinkState(self.kuka14_1, 14)
+        self._p.resetBasePositionAndOrientation(self.constraint_edge_glas_id, worldLinkFramePosition, worldLinkFrameOrientation)
+
+        worldLinkFramePosition2, worldLinkFrameOrientation2 = self._p.getBasePositionAndOrientation(self.constraint_glas_id)
+
+        third = (np.array(worldLinkFramePosition)-np.array([0.7,0.0,1.6])) / 3.0
+
+        self.me_line_1 = p.addUserDebugLine(worldLinkFramePosition, np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1)
+        self.me_line_1_a = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_a)
+        self.me_line_1_b = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.7,0.0,1.6], [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_b)
+
+
+        # 
+
+        # self.me_line_2 = p.addUserDebugLine(worldLinkFramePosition, np.array(worldLinkFramePosition2) + np.array([0,0,0.1]), [0.0, 0.65, 0.55], 6)
+        # replaceItemUniqueId=self.me_line_2 ???
         
         # # # print(ft_sensor_forces)
       
@@ -394,26 +423,36 @@ class FlexPolishingEnv(EnvInterface):
         self.loadFTs()
 
         # TODO coordinates
-        fw = self.getFrameManager().createFrame("fw", pos=[0,0,0], orn=[0,0,0,1], ref_id=-1, scale=2.5, dirtext=[0,0.25,0.25])
+        # fw = self.getFrameManager().createFrame("fw", pos=[0,0,0], orn=[0,0,0,1], ref_id=-1, scale=2.5, dirtext=[0,0.25,0.25])
 
         
         fc = self.getFrameManager().createFrame("fc", ref_id=self.kuka14_1, ref_link_id=14, is_body_frame=True, scale=1.4, orn=[0,1,0,0])
         fc.setVisibility(2, False)
         fc.setVisibility(4, False)
 
-        fee = self.getFrameManager().createFrame("fee", ref_id=self.kuka14_1, ref_link_id=9, is_body_frame=True, scale=0.5, orn=[0,0,0,1], dirtext=[-0.15,0,0.15])
+        # fee = self.getFrameManager().createFrame("fee", ref_id=self.kuka14_1, ref_link_id=9, is_body_frame=True, scale=0.5, orn=[0,0,0,1], dirtext=[-0.15,0,0.15])
 
         fm = self.getFrameManager().createFrame("fm", pos=[0.7,0.0,1.6], orn=[0,0.707,0,0.707], ref_id=-1, scale=0.5, dirtext=[-0.15,0,0.15])
 
-        fo1 = self.getFrameManager().createFrame("fo1", ref_id=self.kuka14_1, ref_link_id=-1, is_body_frame=True, scale=1.8)
+        # fo1 = self.getFrameManager().createFrame("fo1", ref_id=self.kuka14_1, ref_link_id=-1, is_body_frame=True, scale=1.8)
 
         
 
         fs = self.getFrameManager().createFrame("fs", ref_id=self.window_id, ref_link_id=-1, is_body_frame=True, scale=0.8, orn=[0,-0.707,0,0.707])
 
-        fo2 = self.getFrameManager().createFrame("fo2", pos=[0,0.315,0], ref_id=fs.getFrameId(), scale=0.8, orn=[0,0.707,0,0.707])
+        # fo2 = self.getFrameManager().createFrame("fo2", pos=[0,0.315,0], ref_id=fs.getFrameId(), scale=0.8, orn=[0,0.707,0,0.707])
+
+        self.constraint_glas_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/surface_glas.urdf", useFixedBase=True, globalScaling=1.0)
+        p.resetBasePositionAndOrientation(self.constraint_glas_id, [0.72,0.13,1.12], [0,0,0,1])
+
+        self.constraint_edge_glas_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/edge_glas.urdf", useFixedBase=True, globalScaling=1.0)
+        p.resetBasePositionAndOrientation(self.constraint_edge_glas_id, [0.72,0.13,1.12], [0,0,0,1])
 
 
+
+        
+
+        
         
 
         self.dp_frame_tx = self._p.addUserDebugParameter("tx", -0.1, 0.1, -0.08)

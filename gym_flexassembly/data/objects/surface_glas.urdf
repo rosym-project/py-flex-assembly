@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<robot name="surface_glas">
+  <link name="surface_glas_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value="0.025"/>
+       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+				<mesh filename="Window.obj" scale="0.1 0.2 0.2"/>
+      </geometry>
+      <material name="lightorange_transparent">
+        <color rgba="0.0 0.65 0.55 0.5"/>
+        <specular rgb="0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+				<mesh filename="Window.obj" scale="0.1 0.2 0.2"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>
+
