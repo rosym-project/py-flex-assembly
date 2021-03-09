@@ -324,11 +324,11 @@ def detect_features(image, depth, area_threshold=50):
         side, laplacian_sum, laplacian_abs_sum, laplacian_count]
 
 
-def visualize(image, depth, box, feature_vec):
+def visualize_features(image, depth, box, feature_vec):
     """
     Visualizes the extracted bounding box.
     """
-    # visualize the depth image
+    # visualize_features the depth image
     depth = cv.convertScaleAbs(depth, alpha=0.3)
     depth = cv.equalizeHist(depth)
     depth = cv.applyColorMap(depth, cv.COLORMAP_JET)
@@ -371,8 +371,8 @@ def main(args):
                         help='the directory of the dataset')
     parser.add_argument('--area_threshold', type=int, default=50,
                         help='the minimal size of a clamp')
-    parser.add_argument('-v', '--visualize', action="store_true",
-                        help='visualize the clamp detection')
+    parser.add_argument('-v', '--visualize_features', action="store_true",
+                        help='visualize_features the clamp detection')
     args = parser.parse_args(args[1:])
     print(args)
 
@@ -394,9 +394,9 @@ def main(args):
             print(e)
             exit()
 
-        # visualize the results
-        if args.visualize:
-            cv.imshow('image', visualize(image, depth, box, feature_vec))
+        # visualize_features the results
+        if args.visualize_features:
+            cv.imshow('image', visualize_features(image, depth, box, feature_vec))
             key = cv.waitKey(0)
             if key == ord('q'):
                 break
