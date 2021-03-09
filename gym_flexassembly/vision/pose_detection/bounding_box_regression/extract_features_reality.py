@@ -338,7 +338,7 @@ def visualize(image, depth, box, feature_vec):
     box = np.intp(box)
     cv.drawContours(image, [box], 0, (0,255,0))
 
-    # draw a box around the side contining the hole
+    # draw a box around the side containing the hole
     half_1 = []
     half_2 = []
     if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
@@ -359,8 +359,9 @@ def visualize(image, depth, box, feature_vec):
     else:
         cv.polylines(image, [half_2], True, color=(0,0,255))
 
-    cv.imshow("image", image)
-    return cv.waitKey(0)
+    # cv.imshow("image", image)
+    # return cv.waitKey(0)
+    return image
 
 
 def main(args):
@@ -395,7 +396,8 @@ def main(args):
 
         # visualize the results
         if args.visualize:
-            key = visualize(image, depth, box, feature_vec)
+            cv.imshow('image', visualize(image, depth, box, feature_vec))
+            key = cv.waitKey(0)
             if key == ord('q'):
                 break
             elif key == ord('c'):

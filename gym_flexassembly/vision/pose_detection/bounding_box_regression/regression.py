@@ -157,7 +157,7 @@ def main(args):
                     'laplacian_count']
 
     # load the datasets
-    """
+    #"""
     # predict translation
     translation_features = features_all[:7]
     translation_features_cols = [feature_headers[key] for key in feature_headers if key in translation_features]
@@ -181,7 +181,7 @@ def main(args):
     data_val_x = np.c_[np.loadtxt(args.data_val + "/features.csv", skiprows=1, usecols=rotation_features_cols, delimiter=','),
                     np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=cam_orientation_cols, delimiter=',')]
     data_val_y = np.loadtxt(args.data_val + "/data.csv", skiprows=1, usecols=orientation_cols, delimiter=',')
-    #"""
+    """
 
     # setup and train the model
     reg = Regressor()
