@@ -171,8 +171,7 @@ def detect_side(image, box):
     if circles is None:
         # no regions detected, no prediction possible
         # since this occurs rarely it is valid to predict a fixed side
-        print("No holes detected")
-        return 0
+        raise RuntimeError('Could not detect holes')
     circles = circles[0]
 
     # adjust circle translation
@@ -262,8 +261,9 @@ def detect_side(image, box):
         if count_1 == 0 and count_2 == 0:
             # no regions detected, no prediction possible
             # since this occurs rarely it is valid to predict a fixed side
-            print("No holes detected")
-            return 0
+            # print("No holes detected")
+            # return 0
+            raise RuntimeError('No holes detected')
         elif np.linalg.norm(color_1) < np.linalg.norm(color_2):
             # the darker region is more likely to contain the hole
             return 0

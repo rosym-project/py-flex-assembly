@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation as R
 
 from gym_flexassembly.vision.pose_detection.bounding_box_regression.pose_direct import detect_pose
 
-ACCUM_WEIGHT = 0.1
+ACCUM_WEIGHT = 0.25
 # CAMERA_POS = np.array([-0.32364, -0.41404, 0.61695])
 CAMERA_POS = [-0.19575, -0.37105, 0.61695]
 CAMERA_ORN_EULER = [131.03, -0.01, 180.00]
@@ -74,6 +74,8 @@ def display_depth_image(img_depth):
     img_depth = cv.applyColorMap(img_depth, cv.COLORMAP_JET)
     return img_depth
 
+cv.namedWindow('Display', cv.WINDOW_NORMAL)
+cv.resizeWindow('Display', 1920 // 2, 1080)
 
 # create object to align depth and color images
 align = rs.align(rs.stream.color)
@@ -103,16 +105,21 @@ try:
             print(f'Pos {pos}')
             print(f'Orn {orn.as_euler("zyx", degrees=True).astype(np.int)}')
         except:
-            print('Could not detect clamp!')
+            # print('Could not detect clamp!')
+            pass
 
+        to_show = (frame_color, display_depth_image(accum_depth))
+        to_show = np.concatenate(to_show, axis=0)
 
-        cv.imshow('Depth', display_depth_image(accum_depth))
-        cv.imshow('RGB', frame_color)
+        # cv.imshow('Depth', display_depth_image(accum_depth))
+        # cv.imshow('RGB', frame_color)
+        cv.imshow('Display', to_show)
 
         key = cv.waitKey(1)
         if key == ord('q'):
             exit()
 finally:
     pipeline.stop()
+    cv.destroyAllWindows()
 
 
