@@ -47,7 +47,7 @@ class SingleCart(object):
         self.pub_traj = rospy.Publisher("/cart/traj_setpoint", MultiDOFJointTrajectoryPoint, queue_size=1,latch=True)
 
         # Wait for the first pose feedback
-        self.rate = rospy.Rate(500) # 10hz
+        self.rate = rospy.Rate(1000) # 10hz
 
         self.rate.sleep()
 
@@ -57,7 +57,8 @@ class SingleCart(object):
         # self.ros_t.translation.y = -0.529713
         # self.ros_t.translation.z = 0.467274
         self.ros_t.translation.x = -0.0285429
-        self.ros_t.translation.y = -0.529713
+        # self.ros_t.translation.y = -0.529713
+        self.ros_t.translation.y = -0.56
         self.ros_t.translation.z = 0.46
         self.cur = np.array([self.ros_t.translation.x, self.ros_t.translation.y, self.ros_t.translation.z])
 
@@ -101,17 +102,49 @@ class SingleCart(object):
 
         time.sleep(1)
 
-        for i in range(250):
-            self.ros_t.translation.z = self.ros_t.translation.z - 0.001
+        # for i in range(3500):
+        #     self.ros_t.translation.z = self.ros_t.translation.z - 0.0001
+        #     self.pub_traj.publish(self.cart_traj_point)
+        #     self.rate.sleep()
+
+        while self.ros_t.translation.z > 0.105:
+            self.ros_t.translation.z = self.ros_t.translation.z - 0.0001
             self.pub_traj.publish(self.cart_traj_point)
-            time.sleep(0.1)
+            self.rate.sleep()
+        self.ros_t.translation.z = 0.105
+        self.pub_traj.publish(self.cart_traj_point)
+        self.rate.sleep()
 
         time.sleep(4)
 
-        for i in range(250):
-            self.ros_t.translation.z = self.ros_t.translation.z + 0.001
+        # for i in range(3500):
+        #     self.ros_t.translation.z = self.ros_t.translation.z + 0.0001
+        #     self.pub_traj.publish(self.cart_traj_point)
+        #     self.rate.sleep()
+
+        while self.ros_t.translation.z < 0.46:
+            self.ros_t.translation.z = self.ros_t.translation.z + 0.0001
             self.pub_traj.publish(self.cart_traj_point)
-            time.sleep(0.1)
+            self.rate.sleep()
+        self.ros_t.translation.z = 0.46
+        self.pub_traj.publish(self.cart_traj_point)
+        self.rate.sleep()
+
+
+        # del->getPose ->
+        # -0.377317  -0.925618 -0.0293687  -0.026618
+        # -0.924028   0.378402 -0.0546269  -0.526744
+        # 0.0616768 0.00652583  -0.998075   0.115501
+        #         0          0          0          1
+
+        # Out(U) eigen_vector out_cartPos_port => -0.0266127
+        # -0.525968 
+        # 0.114949  
+        # 0.0273749 
+        # 0.557015  
+        # -0.829924 
+        # 0.014535  
+
 
 
         return
