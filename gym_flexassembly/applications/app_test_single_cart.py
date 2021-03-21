@@ -58,14 +58,27 @@ class SingleCart(object):
         # self.ros_t.translation.z = 0.467274
         self.ros_t.translation.x = -0.0285429
         # self.ros_t.translation.y = -0.529713
-        self.ros_t.translation.y = -0.56
+        self.ros_t.translation.y = -0.54
         self.ros_t.translation.z = 0.46
+
+        ##############
+        self.ros_t.translation.x = 0.000114455
+        self.ros_t.translation.y = -0.672586
+        self.ros_t.translation.z = 0.285912
+
+
         self.cur = np.array([self.ros_t.translation.x, self.ros_t.translation.y, self.ros_t.translation.z])
 
-        self.ros_t.rotation.w = 0.0174733
-        self.ros_t.rotation.x = 0.68765
-        self.ros_t.rotation.y = -0.725645
-        self.ros_t.rotation.z = 0.0164777
+        # self.ros_t.rotation.w = 0.0174733
+        # self.ros_t.rotation.x = 0.68765
+        # self.ros_t.rotation.y = -0.725645
+        # self.ros_t.rotation.z = 0.0164777
+
+        ##############
+        self.ros_t.rotation.w = 0.0213997
+        self.ros_t.rotation.x = 0.709535
+        self.ros_t.rotation.y = -0.704049
+        self.ros_t.rotation.z = 0.0203968
         self.cur_quat = pyquaternion.Quaternion(w=self.ros_t.rotation.w,x=self.ros_t.rotation.x,y=self.ros_t.rotation.y,z=self.ros_t.rotation.z)
 
         self.cart_traj_point.transforms.append(self.ros_t)
@@ -102,33 +115,79 @@ class SingleCart(object):
 
         time.sleep(1)
 
-        # for i in range(3500):
-        #     self.ros_t.translation.z = self.ros_t.translation.z - 0.0001
-        #     self.pub_traj.publish(self.cart_traj_point)
-        #     self.rate.sleep()
-
-        while self.ros_t.translation.z > 0.105:
-            self.ros_t.translation.z = self.ros_t.translation.z - 0.0001
+        
+        while self.ros_t.translation.z > 0.07:
+            self.ros_t.translation.z = self.ros_t.translation.z - 0.00003
+            ros_ttt.linear.z = 0.5
             self.pub_traj.publish(self.cart_traj_point)
             self.rate.sleep()
-        self.ros_t.translation.z = 0.105
+        self.ros_t.translation.z = 0.07
+        ros_ttt.linear.z = 0
         self.pub_traj.publish(self.cart_traj_point)
-        self.rate.sleep()
+        # self.rate.sleep()
+        time.sleep(2)
 
-        time.sleep(4)
-
-        # for i in range(3500):
-        #     self.ros_t.translation.z = self.ros_t.translation.z + 0.0001
+        # while self.ros_t.translation.z > 0.14:
+        #     self.ros_t.translation.z = self.ros_t.translation.z - 0.00005
+        #     ros_ttt.linear.z = 0
         #     self.pub_traj.publish(self.cart_traj_point)
         #     self.rate.sleep()
+        # self.ros_t.translation.z = 0.14
+        # ros_ttt.linear.z = 0
+        # self.pub_traj.publish(self.cart_traj_point)
+        # # self.rate.sleep()
+        time.sleep(10)
 
-        while self.ros_t.translation.z < 0.46:
-            self.ros_t.translation.z = self.ros_t.translation.z + 0.0001
+        #############
+
+        # while self.ros_t.translation.y > -0.6:
+        #     self.ros_t.translation.y = self.ros_t.translation.y - 0.00002
+        #     # ros_ttt.linear.y = 0.5
+        #     self.pub_traj.publish(self.cart_traj_point)
+        #     self.rate.sleep()
+        # self.ros_t.translation.y = -0.6
+        # # ros_ttt.linear.y = 0
+        # self.pub_traj.publish(self.cart_traj_point)
+        # # self.rate.sleep()
+
+        # time.sleep(2)
+
+        # while self.ros_t.translation.y < -0.54:
+        #     self.ros_t.translation.y = self.ros_t.translation.y + 0.00002
+        #     # ros_ttt.linear.y = 0.5
+        #     self.pub_traj.publish(self.cart_traj_point)
+        #     self.rate.sleep()
+        # self.ros_t.translation.y = -0.54
+        # # ros_ttt.linear.y = 0
+        # self.pub_traj.publish(self.cart_traj_point)
+        # # self.rate.sleep()
+
+        # time.sleep(4)
+
+        #############
+
+        while self.ros_t.translation.z < 0.285912:
+            self.ros_t.translation.z = self.ros_t.translation.z + 0.00003
+            ros_ttt.linear.z = 0.5
             self.pub_traj.publish(self.cart_traj_point)
             self.rate.sleep()
-        self.ros_t.translation.z = 0.46
+        self.ros_t.translation.z = 0.285912
+        ros_ttt.linear.z = 0
         self.pub_traj.publish(self.cart_traj_point)
-        self.rate.sleep()
+        # self.rate.sleep()
+
+        time.sleep(1)
+
+        # while self.ros_t.translation.z < 0.285912:
+        #     self.ros_t.translation.z = self.ros_t.translation.z + 0.00005
+        #     ros_ttt.linear.z = 0
+        #     self.pub_traj.publish(self.cart_traj_point)
+        #     self.rate.sleep()
+        # self.ros_t.translation.z = 0.285912
+        # ros_ttt.linear.z = 0
+        # self.pub_traj.publish(self.cart_traj_point)
+
+
 
 
         # del->getPose ->
