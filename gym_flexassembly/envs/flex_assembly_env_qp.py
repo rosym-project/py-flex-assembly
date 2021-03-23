@@ -171,14 +171,22 @@ class FlexAssemblyEnv(EnvInterface):
         # self._p.resetJointState(self.kuka14_1, 6, 1.4, 1.0)
         # self._p.resetJointState(self.kuka14_1, 7, 1.4, 1.57)
 
-        self._p.resetJointState(self.kuka14_1, 1, 0.00649109, 0.0)
-        self._p.resetJointState(self.kuka14_1, 2, 0.0769402, 0.0)
-        self._p.resetJointState(self.kuka14_1, 3, -0.0153035, 0.0)
-        self._p.resetJointState(self.kuka14_1, 4, -0.668369,0.0)
-        self._p.resetJointState(self.kuka14_1, 5, 0.0119298, 0.0)
-        self._p.resetJointState(self.kuka14_1, 6, 0.825524, 0.0)
-        self._p.resetJointState(self.kuka14_1, 7, -0.0069144, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 1, 0.00649109, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 2, 0.0769402, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 3, -0.0153035, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 4, -0.668369,0.0)
+        # self._p.resetJointState(self.kuka14_1, 5, 0.0119298, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 6, 0.825524, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 7, -0.0069144, 0.0)
 
+        self._p.resetJointState(self.kuka14_1, 1, 1.66277, 0.0)
+        self._p.resetJointState(self.kuka14_1, 2, -0.735743, 0.0)
+        self._p.resetJointState(self.kuka14_1, 3, -0.175108, 0.0)
+        self._p.resetJointState(self.kuka14_1, 4, 1.00472,0.0)
+        self._p.resetJointState(self.kuka14_1, 5, -2.96706, 0.0)
+        self._p.resetJointState(self.kuka14_1, 6, 1.3856, 0.0)
+        self._p.resetJointState(self.kuka14_1, 7, -3.05433, 0.0)
+        
         # Enable rendering again
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 1)
         # Store name with as unique identified + "_0" and the id
@@ -352,7 +360,7 @@ class FlexAssemblyEnv(EnvInterface):
         self.loadEnvironment()
         self.loadRobot()
         # self.loadCameras()
-        # self.loadFTs()
+        self.loadFTs()
 
         # Do one simulation step
         self._p.stepSimulation()

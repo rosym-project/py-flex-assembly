@@ -315,8 +315,8 @@
   <joint name="iiwa_joint_ft_sensor" type="fixed">
     <parent link="iiwa_link_7"/>
     <child link="ft_sensor"/>
-    <!-- TODO -->
-    <origin xyz="0 0 0.059" rpy="0 0 0" />
+    <!-- TODO DLW ? rot (z)? -->
+    <origin xyz="0 0 0.059" rpy="0 0 -0.785398" />
   </joint>
 
   <joint name="iiwa_joint_camera_mount" type="fixed">
@@ -481,7 +481,8 @@
   <!-- That's why we first translate the FT sensor 24mm -->
   <link name="ft_sensor">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0.52359877559" />
+      <!-- <origin xyz="0 0 0" rpy="0 0 0.52359877559" /> -->
+      <origin xyz="0 0 0" rpy="3.14159 0 0" />
       <geometry>
         <mesh filename="model://ati-gamma/meshes/ati_gamma.stl"/>
       </geometry>
@@ -490,7 +491,8 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0.52359877559" />
+      <!-- <origin xyz="0 0 0" rpy="0 0 0.52359877559" /> -->
+      <origin xyz="0 0 0" rpy="3.14159 0 0" />
       <geometry>
         <mesh filename="model://ati-gamma/meshes/ati_gamma.stl"/>
       </geometry>

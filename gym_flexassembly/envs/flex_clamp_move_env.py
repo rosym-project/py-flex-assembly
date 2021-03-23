@@ -96,7 +96,7 @@ class FlexPolishingEnv(EnvInterface):
         self.x = -0.22
         self.y = -0.54
         self.z = 1.0
-        self.qqq = [0.709535,-0.704049,0.0203968,0.0213997]
+        self.qqq = [0,-1,0,0]
 
         # self.env_loop() # TODO
 
@@ -183,14 +183,22 @@ class FlexPolishingEnv(EnvInterface):
             self.upload_urdf(f.read(), "robot_description")
         
         self._p.resetBasePositionAndOrientation(self.kuka14_1, [0,0,0.7], [0,0,0,1])
+        # TODO
+        # self._p.resetJointState(self.kuka14_1, 1, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 2, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 3, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 4, -0.884, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 5, 0.0, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 6, 0.632, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 7, 0.0, 0.0)
 
-        # self._p.resetJointState(self.kuka14_1, 1, 1.470199006198994, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 2, -0.5261898403312281, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 3, -0.4341553557242494, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 4, 1.363548437136927, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 5, 0.22108229584581565, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 6, -1.2995178504456715, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 7, 1.028728665571519, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 1, 0.6781796865240398, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 2, -0.8102405282122508, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 3, 0.7848354497670429, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 4, -4.749972331779979, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 5, -0.6260180198993508, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 6, -1.0629565169913961, 0.0)
+        # self._p.resetJointState(self.kuka14_1, 7, 1.6192824984624523, 0.0)
 
         self._p.resetJointState(self.kuka14_1, 1, 1.57086, 0.0)
         self._p.resetJointState(self.kuka14_1, 2, -0.698182, 0.0)
@@ -199,17 +207,11 @@ class FlexPolishingEnv(EnvInterface):
         self._p.resetJointState(self.kuka14_1, 5, 0.0, 0.0)
         self._p.resetJointState(self.kuka14_1, 6, -1.32629, 0.0)
         self._p.resetJointState(self.kuka14_1, 7, 0.0, 0.0)
-        
-        # self._p.resetJointState(self.kuka14_1, 1, 0.0, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 2, 0.0, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 3, 0.0, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 4, 0.0, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 5, 0.0, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 6, 0.0, 0.0)
-        # self._p.resetJointState(self.kuka14_1, 7, 0.0, 0.0)
 
         self._p.resetJointState(self.kuka14_1, 12, 0.01, 0.0)
         self._p.resetJointState(self.kuka14_1, 13, 0.01, 0.0)
+
+        
 
 
         # Enable rendering again
@@ -348,69 +350,114 @@ class FlexPolishingEnv(EnvInterface):
 
         self.getFrameManager().updateFramePoses()
 
-        # #lower limits for null space
-        # ll = [-.967, -2, -2.96, 0.19, -2.96, -2.09, -3.05]
-        # #upper limits for null space
-        # ul = [.967, 2, 2.96, 2.29, 2.96, 2.09, 3.05]
-        # #joint ranges for null space
-        # jr = [5.8, 4, 5.8, 4, 5.8, 4, 6]
-        # #restposes for null space
-        # rp = [1.57086,-0.698182,0.0,1.0769,0.0,-1.32629,0.0]
+        # _, _, _, _, worldLinkFramePosition, worldLinkFrameOrientation = self._p.getLinkState(self.kuka14_1, 14)
+        # self._p.resetBasePositionAndOrientation(self.constraint_edge_glas_id, worldLinkFramePosition, worldLinkFrameOrientation)
+        # third = (np.array(worldLinkFramePosition)-np.array([0.7,0.0,1.6])) / 3.0
+        # self.me_line_1 = p.addUserDebugLine(worldLinkFramePosition, np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1)
+        # self.me_line_1_a = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_a)
+        # self.me_line_1_b = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.7,0.0,1.6], [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_b)
 
-        # # rp = [0.6785196181667755, -0.8099947206735864, 0.7842224322887793, -4.7499723318856075, -0.6254912801606999, -1.0627425435028586, 1.618943609718446]
-        # # rp = [0,0,0,0,0,0,0]
-        # #joint damping coefficents
-        # jd = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+        #lower limits for null space
+        ll = [-.967, -2, -2.96, 0.19, -2.96, -2.09, -3.05]
+        #upper limits for null space
+        ul = [.967, 2, 2.96, 2.29, 2.96, 2.09, 3.05]
+        #joint ranges for null space
+        jr = [5.8, 4, 5.8, 4, 5.8, 4, 6]
+        #restposes for null space
+        rp = [1.57086,-0.698182,0.0,1.0769,0.0,-1.32629,0.0]
+
+        # rp = [0.6785196181667755, -0.8099947206735864, 0.7842224322887793, -4.7499723318856075, -0.6254912801606999, -1.0627425435028586, 1.618943609718446]
+        # rp = [0,0,0,0,0,0,0]
+        #joint damping coefficents
+        jd = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
 
-        # jointPoses = self._p.calculateInverseKinematics(self.kuka14_1, 11, [self.x,self.y,self.z], self.qqq, ll, ul, jr, rp)
-        # # print(jointPoses)
+        jointPoses = self._p.calculateInverseKinematics(self.kuka14_1, 11, [self.x,self.y,self.z], self.qqq, ll, ul, jr, rp)
+        # print(jointPoses)
+
+        if self.stage == 1:
+            if self.z > 0.72:
+                self.z = self.z - 0.0001
+            else:
+                # self.kuka7_1_egp.close_gripper(None)
+                self.kuka7_1_egp.close()
+                for kk in range(1000):
+                    if self.kuka7_1_egp:
+                        self.kuka7_1_egp.update()
+                    self._p.stepSimulation()
+                self.stage = 2
+        elif self.stage == 2:
+            if self.z < 0.8:
+                self.z = self.z + 0.0001
+            else:
+                self.stage = 3
+        elif self.stage == 3:
+            if self.y > -0.685:
+                self.y = self.y - 0.0001
+            else:
+                self.stage = 4
+        elif self.stage == 4:
+            if self.z > 0.75:
+                self.z = self.z - 0.0001
+            else:
+                self.stage = 5
+        elif self.stage == 5:
+            # self.qqq
+            # if self.z > 0.75:
+            #     self.z = self.z - 0.0001
+            # else:
+            #     self.stage = 6
+            pass
+        # TODO slerp!
+
+
+        p.setJointMotorControl2(self.kuka14_1,
+                                1,
+                                p.POSITION_CONTROL,
+                                targetPosition=jointPoses[0],
+                                force=1000)
+
+        p.setJointMotorControl2(self.kuka14_1,
+                                2,
+                                p.POSITION_CONTROL,
+                                targetPosition=jointPoses[1],
+                                force=1000)
+
+        p.setJointMotorControl2(self.kuka14_1,
+                                3,
+                                p.POSITION_CONTROL,
+                                targetPosition=jointPoses[2],
+                                force=1000)
+        
+        p.setJointMotorControl2(self.kuka14_1,
+                                4,
+                                p.POSITION_CONTROL,
+                                targetPosition=jointPoses[3],
+                                force=1000)
+
+        p.setJointMotorControl2(self.kuka14_1,
+                                5,
+                                p.POSITION_CONTROL,
+                                targetPosition=jointPoses[4],
+                                force=1000)
+
+        p.setJointMotorControl2(self.kuka14_1,
+                                6,
+                                p.POSITION_CONTROL,
+                                targetPosition=jointPoses[5],
+                                force=1000)
+
+        p.setJointMotorControl2(self.kuka14_1,
+                                7,
+                                p.POSITION_CONTROL,
+                                targetPosition=jointPoses[6],
+                                force=1000)
+
+
+        
+        # self.kuka7_1_egp.close_gripper(None)
 
       
-
-        # p.setJointMotorControl2(self.kuka14_1,
-        #                         1,
-        #                         p.POSITION_CONTROL,
-        #                         targetPosition=jointPoses[0],
-        #                         force=1000)
-
-        # p.setJointMotorControl2(self.kuka14_1,
-        #                         2,
-        #                         p.POSITION_CONTROL,
-        #                         targetPosition=jointPoses[1],
-        #                         force=1000)
-
-        # p.setJointMotorControl2(self.kuka14_1,
-        #                         3,
-        #                         p.POSITION_CONTROL,
-        #                         targetPosition=jointPoses[2],
-        #                         force=1000)
-        
-        # p.setJointMotorControl2(self.kuka14_1,
-        #                         4,
-        #                         p.POSITION_CONTROL,
-        #                         targetPosition=jointPoses[3],
-        #                         force=1000)
-
-        # p.setJointMotorControl2(self.kuka14_1,
-        #                         5,
-        #                         p.POSITION_CONTROL,
-        #                         targetPosition=jointPoses[4],
-        #                         force=1000)
-
-        # p.setJointMotorControl2(self.kuka14_1,
-        #                         6,
-        #                         p.POSITION_CONTROL,
-        #                         targetPosition=jointPoses[5],
-        #                         force=1000)
-
-        # p.setJointMotorControl2(self.kuka14_1,
-        #                         7,
-        #                         p.POSITION_CONTROL,
-        #                         targetPosition=jointPoses[6],
-        #                         force=1000)
-
-        # print(jointPoses)
 
     def reset_internal(self):
         self._p.setGravity(0, 0, -9.81)
