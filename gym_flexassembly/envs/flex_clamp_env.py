@@ -120,13 +120,13 @@ class FlexPolishingEnv(EnvInterface):
 
         self.rail_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/flexassembly/rail.urdf", useFixedBase=True)
         self.object_ids['rail'] = self.rail_id
-        p.resetBasePositionAndOrientation(self.rail_id, [-0.425,-0.7,0.72], [0,0,0,1])
+        p.resetBasePositionAndOrientation(self.rail_id, [-0.425,-0.6,0.72], [0,0,0,1])
 
         # Workpiece clamp 1
-        self.clamp_1 = SpringClamp(pos=[-0.22,-0.54, 0.73], orn=[0,0,1,0])
-        self.clamp_2 = SpringClamp(pos=[-0.27,-0.61, 0.73], orn=[0,0,0.0383,0.924])
-        self.clamp_3 = SpringClamp(pos=[-0.34,-0.5, 0.73], orn=[0,0,0.924,0.383])
-        self.clamp_4 = SpringClamp(pos=[-0.39,-0.63, 0.73], orn=[0,0,-0.5,0.866])
+        self.clamp_1 = SpringClamp(pos=[-0.22,-0.44, 0.73], orn=[0,0,1,0])
+        self.clamp_2 = SpringClamp(pos=[-0.27,-0.51, 0.73], orn=[0,0,0.0383,0.924])
+        self.clamp_3 = SpringClamp(pos=[-0.34,-0.4, 0.73], orn=[0,0,0.924,0.383])
+        self.clamp_4 = SpringClamp(pos=[-0.39,-0.53, 0.73], orn=[0,0,-0.5,0.866])
         
 
         ##########################
