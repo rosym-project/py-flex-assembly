@@ -316,8 +316,8 @@
     <parent link="iiwa_link_7"/>
     <child link="ft_sensor"/>
     <!-- TODO DLW ? rot (z)? -->
-    <origin xyz="0 0 0.059" rpy="0 0 -0.785398" />
-    <!-- <origin xyz="0 0 0.059" rpy="0 0 0" /> -->
+    <!-- <origin xyz="0 0 0.059" rpy="0 0 -0.785398" /> -->
+    <origin xyz="0 0 0.059" rpy="0 0 0" />
   </joint>
 
   <joint name="iiwa_joint_camera_mount" type="fixed">
@@ -338,7 +338,8 @@
     <parent link="realsense_camera"/>
     <child link="iiwa_link_ee"/>
     <!-- TODO -->
-    <origin xyz="0.081 0 0.1351" rpy="0 0 0"/>
+    <!-- <origin xyz="0.081 0 0.1351" rpy="0 0 0"/> -->
+    <origin xyz="0.081 0 0.1621" rpy="0 0 0"/> <!-- TODO +0.027 visual verschieben -->
   </joint>
 
   <!-- Load Gazebo lib and set the robot namespace -->
@@ -553,7 +554,7 @@
   <!-- Base -->
   <link name="iiwa_link_ee">
     <inertial>
-      <mass value="0.822" />
+      <mass value="0.822" /> <!-- TODO +2* 0.015 for fingers -->
       <!-- <origin rpy="0 0 0" xyz="0.00078059 -0.00070996 0.04726637" /> -->
       <origin rpy="0 0 0" xyz="0.00078059 -0.00070996 -0.11273363" />
       <inertia ixx="0.0011357" ixy="-0.00000024461" ixz="0.000014912" iyy="0.0012832" iyz="0.0000085651" izz="0.00066545" />

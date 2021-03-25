@@ -89,25 +89,41 @@ class ClampIt(object):
             try:
                 add_two_ints = rospy.ServiceProxy('/css/move_srv', Move)
 
-                p.position.x = self.clampPose.position.x
-                p.position.y = self.clampPose.position.y
-                p.position.z = 0.1
+                # p.position.x = self.clampPose.position.x
+                # p.position.y = self.clampPose.position.y
+                # p.position.z = 0.1
 
-                p.orientation.w = self.clampQuat[0]
-                p.orientation.x = self.clampQuat[1]
-                p.orientation.y = self.clampQuat[2]
-                p.orientation.z = self.clampQuat[3]
+                # p.orientation.w = self.clampQuat[0]
+                # p.orientation.x = self.clampQuat[1]
+                # p.orientation.y = self.clampQuat[2]
+                # p.orientation.z = self.clampQuat[3]
+
+                p.position.x = -0.0288039
+                p.position.y = -0.530952
+                p.position.z = 0.440385
+
+                p.orientation.w = 0
+                p.orientation.x = 0
+                p.orientation.y = 1
+                p.orientation.z = 0
 
                 
 
                 m.i_pose = p
-                m.i_max_trans_sec = 15.0
-                m.i_max_rot_sec = 5.0
+                m.i_max_trans_sec = 80.0
+                m.i_max_rot_sec = 25.0
                 resp1 = add_two_ints(m)
 
                 print("1 done")
 
                 time.sleep(1)
+
+                return
+
+
+
+
+
 
                 p.position.z = 0.02
 

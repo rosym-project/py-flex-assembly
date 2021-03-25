@@ -316,7 +316,8 @@
     <parent link="iiwa_link_7"/>
     <child link="ft_sensor"/>
     <!-- TODO DLW ? rot (z)? -->
-    <origin xyz="0 0 0.059" rpy="0 0 -0.785398" />
+    <!-- <origin xyz="0 0 0.059" rpy="0 0 -0.785398" /> -->
+    <origin xyz="0 0 0.059" rpy="0 0 0" />
   </joint>
 
   <joint name="iiwa_joint_camera_mount" type="fixed">
@@ -338,7 +339,8 @@
     <child link="iiwa_link_ee"/>
     <!-- TODO -->
     <!-- <origin xyz="0.081 0 -0.0249" rpy="0 0 0"/> 0.1031 -->
-    <origin xyz="0.081 0 0.1351" rpy="0 0 0"/>
+    <!-- <origin xyz="0.081 0 0.1351" rpy="0 0 0"/> -->
+    <origin xyz="0.081 0 0.1621" rpy="0 0 0"/> <!-- TODO +0.027 visual verschieben -->
   </joint>
 
   <!-- Load Gazebo lib and set the robot namespace -->
