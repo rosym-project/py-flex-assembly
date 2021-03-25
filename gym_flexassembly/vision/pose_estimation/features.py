@@ -1,6 +1,8 @@
 import cv2 as cv
 import numpy as np
 
+from sklearn import linear_model
+
 
 class BoundingBox:
 
@@ -58,6 +60,40 @@ def compute_rectangleness(contour):
     return contoure_area / (w * h)
 
 
+def flatten(img_depth):
+    """
+    Flatten a depth image by fitting a plane to the depth image (should be the
+    table). A difference of a constant depth to the plane is added to flatten
+    the data.
+
+    In addition all zero value are set to the maximum depth. This makes the bounding box detection more robust since the clamp is most likely the closest element
+    in the image.
+    """
+    xs, ys = np.nonzero(img_depth)
+    # only use each eighth value for faster computation
+    xs = xs[::8]
+    ys = ys[::8]
+    depths = img_depth[xs, ys]
+
+    # fit plane
+    inputs = np.array([xs, ys]).T
+    model = linear_model.LinearRegression().fit(inputs, depths)
+
+    # create plane image
+    xx = np.arange(img_depth.shape[1])[::-1]
+    yy = np.arange(img_depth.shape[0])[::-1]
+    xx, yy = np.meshgrid(xx, yy)
+    plane = model.intercept_ + model.coef_[1] * xx + model.coef_[0] * yy
+
+    depths = plane.ravel()
+    args = np.argsort(depths)
+    const_depth = depths[args[args.shape[0] // 20]]
+
+    max_depth = np.max(img_depth)
+    res = np.where(img_depth > 0, img_depth + (plane - const_depth), max_depth)
+    return res
+
+
 def detect_bounding_box(depth, min_area=200, viz=None):
     """
     Detect a bounding box around a clamp (the nearest area in the depth image).
@@ -70,10 +106,12 @@ def detect_bounding_box(depth, min_area=200, viz=None):
     _depth = (_depth - _depth.min()) / (_depth.max() - _depth.min())
     _depth = (255 * _depth).astype(np.uint8)
 
-    # equalize hist and threshold
     # equalize hist should make that the nearest area (the clamp) have the lowest value 
     _depth = cv.equalizeHist(_depth)
-    _, thresholded = cv.threshold(_depth, 25, 255, cv.THRESH_BINARY_INV)
+    _, thresholded = cv.threshold(_depth, 2, 255, cv.THRESH_BINARY_INV)
+
+    thresholded = cv.dilate(thresholded, np.ones((3, 3)), iterations=3)
+    thresholded = cv.erode(thresholded, np.ones((3, 3)), iterations=3)
 
     # find contours in threshold image
     cnts, _ = cv.findContours(thresholded, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE, offset=(offset_width, offset_height))
@@ -81,11 +119,14 @@ def detect_bounding_box(depth, min_area=200, viz=None):
     cnts = list(filter(lambda cnt: cv.contourArea(cnt) >= min_area, cnts))
     # filter contours which do not represent rectangular regions
     #TODO: check if should be used or not
-    cnts = list(filter(lambda cnt: compute_rectangleness(cnt) < 0.8, cnts))
+    # cnts = list(filter(lambda cnt: compute_rectangleness(cnt) > 0.50, cnts))
     # compute rectangles for contours
     rects = list(map(lambda cnt: cv.minAreaRect(cnt), cnts))
     # sort contours by their aspect ration
-    rects.sort(key=lambda rect: compute_aspect_ratio(rect))
+    rects.sort(key=lambda rect: abs(compute_aspect_ratio(rect) - 7.5))
+    rects = rects[::-1]
+
+    #print('Rectness', list(map(lambda r: compute_rectangleness(r), cnts)))
 
     if viz is not None:
         _h = offset_height
@@ -96,7 +137,7 @@ def detect_bounding_box(depth, min_area=200, viz=None):
         color_from = np.array([255, 0, 0])
         color_to = np.array([0, 255, 0])
         for i, rect in enumerate(rects):
-            w = i / (len(rects) - 1)
+            w = 1.0 if len(rects) == 1 else i / (len(rects) - 1)
             color = (1.0 - w) * color_from + w * color_to
             color = color.astype(np.int).tolist()
             cv.drawContours(_thresholded, [cv.boxPoints(rect).astype(np.int)], -1, color, 3)
@@ -179,7 +220,6 @@ def detect_side(image, box):
     # detect circles
     gray = cv.cvtColor(image[p_1[1] : p_2[1], p_1[0] : p_2[0]], cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 3)
-    #cv.imshow("gray", gray)
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
                             param1=50, param2=10, minRadius=4, maxRadius=6)
     if circles is None:

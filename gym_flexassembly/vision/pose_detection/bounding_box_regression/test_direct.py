@@ -7,65 +7,25 @@ from scipy.spatial.transform import Rotation as R
 
 from gym_flexassembly.vision.pose_detection.bounding_box_regression.pose_direct import detect_pose
 
-ACCUM_WEIGHT = 0.25
-# CAMERA_POS = np.array([-0.32364, -0.41404, 0.61695])
-CAMERA_POS = [-0.19575, -0.37105, 0.61695]
-CAMERA_ORN_EULER = [131.03, -0.01, 180.00]
-# CAMERA_POS = [-0.31271, -0.41501, 0.61639]
-# CAMERA_ORN_EULER = [131.23, 0, 180]
-CAMERA_ORN = R.from_euler('zyx', CAMERA_ORN_EULER, degrees=True)
+ACCUM_WEIGHT = 0.1
 
-OFFSET_ARM_TO_GRIPPER = np.array([0.0, 0.0, 0.215])
+pos_arm = np.array([-0.32364, -0.41404, 0.61695])
+orn_arm = R.from_euler('zyx', [131.04, 0.0, 180], degrees=True)
 
-def gripper_to_arm(pos, orn):
-    _pos = pos - orn.apply(OFFSET_ARM_TO_GRIPPER)
-    return _pos, orn
+camera_offset = [-0.085, 0, 0.056]
+pos_cam = pos_arm + camera_offset
+orn_cam = orn_arm
 
-def get_wold_pose(pose_in_coords, pose_coords):
-    pos, orn = pose_in_coords
-    pos_c, orn_c = pose_coords
+print(f'Arm pos {pos_arm}')
+print(f'Arm orn {orn_arm.as_euler("zyx", degrees=True).astype(np.int)}')
 
-    pos = orn_c.inv().apply(pos) + pos_c
-    orn = orn_c.inv() * orn
-    return pos, orn
+print(f'Camera pos {pos_cam}')
+print(f'Camera orn {orn_cam.as_euler("zyx", degrees=True).astype(np.int)}')
 
-
-def estimate_pose(img, depth):
-    # compute features
-    box, feature_vec = detect_features(img, depth)
-
-    # compute and print prediction
-    pos_features = np.array([feature_vec])
-    pos = estimator_pos.predict(pos_features[:, [0, 1, 2, 3, 4, 5, 6]])[0]
-    print(f'Predicted position {format_arr(pos)}')
-
-    orn_features = np.array(feature_vec)
-    orn_features = np.hstack((orn_features, pos, CAMERA_ORN.as_quat()))
-    # not all features are used by the current model
-    used_features = [2, 4, 6, 8, 13, 14, 15, 16]
-    # predict and normalize quaternion
-    orn = estimator_orn.predict([orn_features[used_features]])[0]
-    #orn_quat = orn / np.linalg.norm(orn)
-    orn = R.from_quat(orn / np.linalg.norm(orn))
-
-    print(f'Camera position:    {CAMERA_POS}')
-    print(f'Camera orientation: {CAMERA_ORN.as_euler("zyx")}')
-    print()
-    print(f'Position Clamp in Arm:   {format_arr(pos)}')
-    pos, orn = get_wold_pose((pos, orn), (CAMERA_POS, CAMERA_ORN))
-    print(f'Position Clamp in World: {format_arr(pos)}')
-    pos, orn = gripper_to_arm(pos, orn)
-    print(f'Position Arm in World:   {format_arr(pos)}')
-    orn_quat = orn.as_quat()
-    orn_euler = orn.as_euler('zyx', degrees=True)
-    
-    print(f'Position:    {format_arr(pos)}')
-    print(f'Orientation: {format_arr(orn_euler)} as quat {format_arr(orn_quat)}')
-    print(f'Features:    {format_arr(feature_vec)}')
-    print()
-
-    # print and visualize features
-    cv.imshow('Features', visualize(img, depth, box, feature_vec))
+def get_wold_pose(pos, orn):
+    _pos = orn_cam.inv().apply(pos) + pos_cam
+    _orn = orn_cam.inv() * orn
+    return _pos, _orn
 
 
 def display_depth_image(img_depth):
@@ -83,15 +43,47 @@ align = rs.align(rs.stream.color)
 # Create a context object. This object owns the handles to all connected realsense devices
 pipeline = rs.pipeline()
 pipeline.start()
+
+def build_func(udepth, acolor):
+    depth_scale = pipeline.get_active_profile().get_device().first_depth_sensor().get_depth_scale()
+    depth_min = 0.11 #meter
+    depth_max = 1.0 #meter
+
+    depth_intrin = udepth.get_profile().as_video_stream_profile().get_intrinsics()
+    color_intrin = acolor.get_profile().as_video_stream_profile().get_intrinsics()
+
+    depth_to_color_extrin = udepth.get_profile().get_extrinsics_to(acolor.get_profile())
+    color_to_depth_extrin = acolor.get_profile().get_extrinsics_to(udepth.get_profile())
+
+    def func(color_point, depth_frame):
+        return rs.rs2_project_color_pixel_to_depth_pixel(
+                depth_frame.get_data(), depth_scale,
+                depth_min, depth_max,
+                depth_intrin, color_intrin, depth_to_color_extrin, color_to_depth_extrin, color_point)
+    return func
+
+
+def update_transform_func(transform_func, depth_frame):
+    def func(color_point):
+        return transform_func(color_point, depth_frame)
+    return func
+
+
 try:
     # fetch first image to create accumulated depth image
-    frames = align.process(pipeline.wait_for_frames())
+    frames_unaligned = pipeline.wait_for_frames()
+    frames = align.process(frames_unaligned)
+
+    transform_func = build_func(frames_unaligned.get_depth_frame(), frames.get_color_frame())
 
     frame_depth = np.asanyarray(frames.get_depth_frame().as_frame().get_data())
     accum_depth = np.float32(frame_depth)
 
     while True:
-        frames = align.process(pipeline.wait_for_frames())
+        frames_unaligned = pipeline.wait_for_frames()
+        frames = align.process(frames_unaligned)
+
+        tf = update_transform_func(transform_func, frames_unaligned.get_depth_frame())
 
         frame_depth = np.asanyarray(frames.get_depth_frame().as_frame().get_data())
         cv.accumulateWeighted(frame_depth, accum_depth, alpha=ACCUM_WEIGHT)
@@ -100,12 +92,17 @@ try:
         frame_color = cv.cvtColor(frame_color, cv.COLOR_RGB2BGR)
 
         try:
-            pos, orn = detect_pose(frame_color, accum_depth)
+            pos, orn = detect_pose(frame_color, accum_depth, tf)
 
-            print(f'Pos {pos}')
-            print(f'Orn {orn.as_euler("zyx", degrees=True).astype(np.int)}')
-        except:
-            # print('Could not detect clamp!')
+            print(f'In camera pos {pos}')
+            print(f'In camera orn {orn.as_euler("zyx", degrees=True).astype(np.int)}')
+
+            pos, orn = get_wold_pose(pos, orn)
+            print(f'In world pos {pos}')
+            print(f'In world orn {orn.as_euler("zyx", degrees=True).astype(np.int)}')
+        except Exception as e:
+            # continue
+            print('Could not detect clamp!', e)
             pass
 
         to_show = (frame_color, display_depth_image(accum_depth))

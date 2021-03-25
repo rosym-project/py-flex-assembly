@@ -15,6 +15,12 @@ def discriminant_analysis(img):
     hist = hist[:, 0]
     hist = hist / (img.shape[0] * img.shape[1])
 
+    # import matplotlib.pyplot as plt
+    # plt.plot(range(0, 256), hist)
+    # plt.ion()
+    # plt.show()
+    # plt.pause(0.01)
+
     threshes = np.arange(0, 256)
     mean_t = np.sum(threshes * hist)
 
@@ -35,6 +41,77 @@ def discriminant_analysis(img):
     return np.argmax(values)
 
 
+def compute_aspect_ratio(rotated_rect):
+    """
+    Compute the aspect ratio of a rotated rectangle as the
+    ratio between length of the longer and the shorter side.
+    """
+    rotated_rect = np.array(cv.boxPoints(rotated_rect))
+
+    side_1 = rotated_rect[0] - rotated_rect[1]
+    side_2 = rotated_rect[2] - rotated_rect[1]
+
+    side_1_len = np.linalg.norm(side_1)
+    side_2_len = np.linalg.norm(side_2)
+
+    return max(side_1_len, side_2_len) / min(side_1_len, side_2_len)
+
+def compute_rectangleness(contour):
+    """
+    Compute a measure for how much a contour resembles a
+    rectangle.
+    """
+    contoure_area = cv.contourArea(contour)
+    _, (w, h), _ = cv.minAreaRect(contour)
+    return contoure_area / (w * h)
+
+
+def detect_bb_3(depth, min_area=200):
+
+    offset_width = depth.shape[1] // 6
+    offset_height = depth.shape[0] // 6
+    _depth = depth[offset_height:depth.shape[0] - offset_height, \
+                   offset_width:depth.shape[1] - offset_width]
+    _depth = (_depth - _depth.min()) / (_depth.max() - _depth.min())
+    _depth = (255 * _depth).astype(np.uint8)
+
+    eq = cv.equalizeHist(_depth)
+    _, th = cv.threshold(eq, 10, 255, cv.THRESH_BINARY_INV)
+
+    # res = np.concatenate((eq, th), axis=0)
+    # cv.imshow('Res', res)
+    # cv.waitKey(0)
+    # cv.imshow('D', _depth)
+    # cv.imshow('EQ', eq)
+    # cv.imshow('TH', th)
+    # cv.waitKey(0)
+
+    cnts, _ = cv.findContours(th, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE, offset=(offset_width, offset_height))
+    cnts = list(filter(lambda cnt: cv.contourArea(cnt) >= min_area, cnts))
+    # cnts = list(filter(lambda cnt: compute_rectangleness(cnt) < 0.8, cnts))
+    rects = list(map(lambda cnt: cv.minAreaRect(cnt), cnts))
+    rects.sort(key=lambda rect: compute_aspect_ratio(rect))
+
+    # print(rects[0])
+    # print(rects[1])
+    # print(cv.boxPoints(rects[0]))
+
+    # cnt = cv.boxPoints(rects[0])
+    # cnt = np.intp(cnt)
+
+    # # offset = np.array((offset_height, offset_width))
+    # offset = np.array((offset_width, offset_height))
+    # cnt -= offset
+
+    # cv.drawContours(th, [cnt], -1, 127, 3, offset=(offset_width, offset_height))
+    # cv.imshow('TH', th)
+    # cv.waitKey(0)
+    
+
+    return rects[-1]
+
+
+
 def detect_bb(depth, area_threshold):
     """
     Compute a bounding box for a clamp based on a thresholded depth image.
@@ -43,12 +120,12 @@ def detect_bb(depth, area_threshold):
     # ignore the border of the depth images since they have a low certainty
     # and thus contain large outliers
     #TODO test if this is still needed if the depth image is averaged over multiple frames
-    offset_width = 100
+    offset_width = 200
     offset_height = 100
     _depth = depth[offset_height:depth.shape[0] - offset_height, \
                    offset_width:depth.shape[1] - offset_width]
     _depth = cv.convertScaleAbs(_depth, alpha=0.3)
-
+    
     # compute and apply a threshold
     threshold = discriminant_analysis(_depth)
     _, thresholded = cv.threshold(_depth, threshold, 255, cv.THRESH_BINARY_INV)
@@ -56,8 +133,6 @@ def detect_bb(depth, area_threshold):
     # perform closing for holes
     thresholded = cv.dilate(thresholded, np.ones((5, 5), np.uint8), iterations=10)
     thresholded = cv.erode(thresholded, np.ones((5, 5), np.uint8), iterations=10)
-
-    #cv.imshow('threshold', thresholded)
 
     # find all contours on the thresholded image
     cnts, _ = cv.findContours(thresholded, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE, offset=(offset_width, offset_height))
@@ -81,6 +156,9 @@ def detect_bb(depth, area_threshold):
         return elevation_sum / area
     cnts.sort(key=avg_elevation_key)
 
+    if len(cnts) == 0:
+        return [(0, 0), (0, 0), 0]
+
     return cv.minAreaRect(cnts[0])
 
 
@@ -98,6 +176,10 @@ def refine_bb(bounding_box, image):
     new_size = tuple([bounding_box[1][0] * size_increase, bounding_box[1][1] * size_increase])
     new_bb = tuple([bounding_box[0], new_size, bounding_box[2]])
 
+    size_increase = 1.4
+    new_size = tuple([bounding_box[1][0] * size_increase, bounding_box[1][1] * size_increase])
+    _new_bb = tuple([bounding_box[0], new_size, bounding_box[2]])
+
     # create the mask
     mask = np.zeros(image.shape[:2], np.uint8)
     box = cv.boxPoints(new_bb)
@@ -105,6 +187,7 @@ def refine_bb(bounding_box, image):
     cv.drawContours(mask, [box], 0, cv.GC_PR_FGD, -1)
 
     # only work on a cutout to improve runtime
+    box = cv.boxPoints(_new_bb).astype(np.int)
     rect = cv.boundingRect(box)
     shape = np.array([rect[2], rect[3]])
     p_1 = np.array([rect[0], rect[1]])
@@ -116,14 +199,18 @@ def refine_bb(bounding_box, image):
     kernel = -1 * np.outer(kernel, kernel)
     kernel[int((kernel_size - 1) / 2), int((kernel_size - 1) / 2)] += 2
     filtered = cv.filter2D(image[p_1[1] : p_2[1], p_1[0] : p_2[0]], cv.CV_8UC1, kernel)
-    #cv.imshow("filter", filtered)
+
+    x = mask[p_1[1] : p_2[1], p_1[0] : p_2[0]]
+    x = ((x == cv.GC_PR_FGD) * 255).astype(np.uint8)
+    x = x.repeat(3).reshape(filtered.shape)
+    cv.imshow('Mask', np.concatenate((x, filtered), axis=0))
 
     # use grabCut to refine the mask borders
     bgdModel = np.zeros((1, 65), np.float64) # 13*components_count rows
     fgdModel = np.zeros((1 ,65), np.float64)
     cv.grabCut(filtered, mask[p_1[1] : p_2[1], p_1[0] : p_2[0]], None, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_MASK)
     mask = np.isin(mask, [cv.GC_FGD, cv.GC_PR_FGD]).astype(np.uint8)
-
+    print(mask.sum())
     # debug: show grabCut results
     """
     clamp = np.copy(image)
@@ -166,6 +253,9 @@ def detect_side(image, box):
     gray = cv.cvtColor(image[p_1[1] : p_2[1], p_1[0] : p_2[0]], cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 3)
     #cv.imshow("gray", gray)
+
+    cv.imshow('Circles', gray)
+    cv.waitKey(0)
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 10,
                             param1=50, param2=10, minRadius=4, maxRadius=6)
     if circles is None:

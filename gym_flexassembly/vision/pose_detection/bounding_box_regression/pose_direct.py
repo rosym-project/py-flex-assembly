@@ -24,8 +24,12 @@ for key in props:
     setattr(camera_intrinsics, key, props[key])
 
 
-def project_point(pt, depth):
-    pt = rs.rs2_deproject_pixel_to_point(camera_intrinsics, pt, depth)
+def project_point(pt, depth, tf):
+    print(f'Point {pt} to {tf(pt)}, depth {depth}')
+    pt_c = pt.copy()
+    pt = rs.rs2_deproject_pixel_to_point(camera_intrinsics, tf(pt), depth / 1000)
+    pt_wo = rs.rs2_deproject_pixel_to_point(camera_intrinsics, pt_c, depth / 1000)
+    print(f'With {pt} without {pt_wo}')
     return np.array(pt)
 
 
@@ -111,15 +115,15 @@ def compute_lower_plane(box, img_depth):
     return regress_depth_plane(mask_outer, img_depth)
 
 
-def compute_clamp_height(box, depth_plane_upper, depth_plane_lower):
+def compute_clamp_height(box, depth_plane_upper, depth_plane_lower, tf):
     pt = np.mean(box, axis=0)
-    pt_upper = project_point(pt, depth_plane_upper.predict([pt])[0])
-    pt_lower = project_point(pt, depth_plane_lower.predict([pt])[0])
+    pt_upper = project_point(pt, depth_plane_upper.predict([pt])[0], tf)
+    pt_lower = project_point(pt, depth_plane_lower.predict([pt])[0], tf)
     return np.linalg.norm(pt_upper - pt_lower)
 
 
-def compute_bounding_box(box2d, depth_plane, height, feature_side):
-    upper_rect = list(map(lambda pt: project_point(pt, depth_plane.predict([pt])[0]), box2d))
+def compute_bounding_box(box2d, depth_plane, height, feature_side, tf):
+    upper_rect = list(map(lambda pt: project_point(pt, depth_plane.predict([pt])[0], tf), box2d))
 
     # determine x and y direction based on longer side and side with hole
     dir1 = upper_rect[0] - upper_rect[1]
@@ -151,7 +155,7 @@ def compute_bounding_box(box2d, depth_plane, height, feature_side):
 
 def visualize_pose(pos, orn, img):
     axis = np.float32([[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]])
-    axis *= 30
+    #axis *= 30
     rvec, _ = cv.Rodrigues(orn.inv().as_matrix())
 
     pts = list(map(lambda pt: to_2d(pt, tvec=pos, rvec=rvec), axis))
@@ -163,7 +167,9 @@ def visualize_pose(pos, orn, img):
     cv.line(img, tuple(pts[-1]), tuple(pts[2]), (0, 0, 255), 2)
 
 
-def detect_pose(img_color, img_depth, visualize=True):
+fig = None
+ax = None
+def detect_pose(img_color, img_depth, tf, visualize=True):
     # compute features (bounding rectangle and side with hole)
     box, features = detect_features(img_color, img_depth)
     # approximate depth values in rectangle as plane
@@ -174,10 +180,15 @@ def detect_pose(img_color, img_depth, visualize=True):
     # compute height of clamp as distance at bounding rectangle center of planes
     #TODO this computation seems to fail a lot
     # height = compute_clamp_height(box, depth_plane, _depth_plane)
-    height = 50
+    height = 50 / 1000
 
     # compute 3d bounding box
-    box3d, [dir_x, dir_y, dir_z] = compute_bounding_box(box, depth_plane, height, features[6])
+    box3d, [dir_x, dir_y, dir_z] = compute_bounding_box(box, depth_plane, height, features[6], tf)
+
+    print('Box')
+    for pt in box3d:
+        print(pt)
+    print()
 
     # compute pose as center of bounding box and orientation from directions
     pos = box3d.mean(axis=0)
@@ -191,13 +202,39 @@ def detect_pose(img_color, img_depth, visualize=True):
         visualize_features(img_color, img_depth, box, features)
         visualize_pose(pos, orn, img_color)
 
-        print(f'Detected height: {height:2f}mm')
+        # print(f'Detected height: {height:2f}mm')
         c = to_2d(box3d[:4].mean(axis=0))
         c = np.intp(c)
         cv.circle(img_color, tuple(c), 5, (255, 0, 0), -1)
 
-    return pos, orn
 
+        # is_none = fig == None
+        # if is_none:
+            # fig = plt.figure()
+            # ax = fig.gca(projection='3d')
+            # plt.xlabel('X')
+            # plt.ylabel('Y')
+            # ax.set_zlabel('Z')
+            # ax.axis('auto')
+            # ax.axis('tight')
+
+        # mask = np.zeros(img_depth.shape, np.uint8)
+        # cv.drawContours(mask, [np.intp(box)], -1, 255, -1)
+        # mask = mask == 255
+        # visualize_plane(mask, img_depth, (0.3, 0.45), depth_plane, ax)
+
+        # mask_outer = np.zeros(img_depth.shape, np.uint8)
+        # cv.drawContours(mask_outer, [np.intp(scale_box(box, 0.2))], -1, 255, -1)
+        # cv.drawContours(mask_outer, [np.intp(box)], -1, 0, -1)
+        # mask_outer = mask_outer == 255
+        # visualize_plane(mask_outer, img_depth, (0.25, 0.75), _depth_plane, ax)
+
+        # if is_none:
+            # plt.show()
+        # else:
+            # plt.draw()
+
+    return pos, orn
 
 if __name__ == '__main__':
     clamp_dir = 'pose_6'
@@ -207,10 +244,8 @@ if __name__ == '__main__':
         img_depth = np.load(f'./datasets/real/initial/{clamp_dir}/{name}.npy')
         img_color = cv.imread(f'./datasets/real/initial/{clamp_dir}/{name}.png')
 
-        pos, orn = detect_pose(img_color, img_depth)
-        cv.imshow('Img', img_color)
-        if cv.waitKey(0) == ord('q'):
-            break
+        print(img_depth.shape, img_color.shape)
+        print(detect_pose)
 
         # visualize planes
         # fig = plt.figure()
@@ -222,5 +257,10 @@ if __name__ == '__main__':
         # ax.set_zlabel('Z')
         # ax.axis('auto')
         # ax.axis('tight')
-        # plt.show()
+        # plt.draw()
+
+        pos, orn = detect_pose(img_color, img_depth)
+        cv.imshow('Img', img_color)
+        if cv.waitKey(0) == ord('q'):
+            break
 
