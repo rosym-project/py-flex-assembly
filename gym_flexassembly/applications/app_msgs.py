@@ -27,10 +27,26 @@ import numpy as np
 
 import time
 
+import serial
+
 class ClampIt(object):
     def __init__(self):
         self.use_gripper = True
         self.skip_first_phase = False
+        self.real = False
+
+        if self.real:
+            self.ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=2,)
+
+        # # TEST GRIPPER
+        # rospy.wait_for_service('/gripper1/open_gripper')
+        # try:
+        #     open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
+        #     open_g()
+        # except rospy.ServiceException as e:
+        #     print("Service call failed: %s"%e)
+        # return
+        # # TEST GRIPPER
 
         self.clampPose = Pose()
         self.clampPose.position.z = 0.285982
@@ -57,12 +73,15 @@ class ClampIt(object):
 
         if not self.skip_first_phase:
             if self.use_gripper:
-                rospy.wait_for_service('/gripper1/open_gripper')
-                try:
-                    open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
-                    open_g()
-                except rospy.ServiceException as e:
-                    print("Service call failed: %s"%e)
+                if self.real:
+                    self.open_gripper()
+                else:
+                    rospy.wait_for_service('/gripper1/open_gripper')
+                    try:
+                        open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
+                        open_g()
+                    except rospy.ServiceException as e:
+                        print("Service call failed: %s"%e)
                 time.sleep(1)
             
             rospy.wait_for_service('/css/move_srv')
@@ -100,12 +119,15 @@ class ClampIt(object):
                 print("2 done")
 
                 if self.use_gripper:
-                    rospy.wait_for_service('/gripper1/close_gripper')
-                    try:
-                        close_g = rospy.ServiceProxy('/gripper1/close_gripper', Empty)
-                        close_g()
-                    except rospy.ServiceException as e:
-                        print("Service call failed: %s"%e)
+                    if self.real:
+                        self.close_gripper()
+                    else:
+                        rospy.wait_for_service('/gripper1/close_gripper')
+                        try:
+                            close_g = rospy.ServiceProxy('/gripper1/close_gripper', Empty)
+                            close_g()
+                        except rospy.ServiceException as e:
+                            print("Service call failed: %s"%e)
                     time.sleep(1)
 
                 p.position.z = 0.1
@@ -177,6 +199,19 @@ class ClampIt(object):
         #####################
         print("END")
 
+    def close_gripper(self):
+        self.ser.open()
+        self.ser.write([int('00000011', 2)])
+        time.sleep(0.01)
+        self.ser.write([int('00000001', 2)])
+        self.ser.close()
+
+    def open_gripper(self):
+        self.ser.open()
+        self.ser.write([int('00000011', 2)])
+        time.sleep(0.01)
+        self.ser.write([int('00000010', 2)])
+        self.ser.close()
 
 if __name__ == "__main__":
     c = ClampIt()

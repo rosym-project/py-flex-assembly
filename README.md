@@ -23,3 +23,36 @@ Inverse Kinematics:
 * All dimensions contain the adapterplate.
 
 * 3D Model: https://www.ati-ia.com/products/ft/ft_models.aspx?id=Gamma
+
+# Deployment and Launch
+
+ROS Core
+```bash
+roscore
+
+```
+
+Gripper Server
+```bash
+source /home/kogrob/system/flexassembly_dev_ws/devel/setup.zsh
+
+python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py
+
+```
+
+Control Architecture
+```bash
+source /home/kogrob/system/flexassembly_dev_ws/devel/setup.zsh
+source /opt/xbot/setup.sh
+
+rosrun rtt_ros deployer /home/kogrob/system/flexassembly_dev_ws/src/cosima-controller/scripts/real_tests/test_real_interface.ops
+
+```
+
+Coordination
+```bash
+source /home/kogrob/system/flexassembly_dev_ws/devel/setup.zsh
+
+python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_msgs.py
+
+```
