@@ -102,9 +102,9 @@ class ClampIt(object):
                 # p.position.y = -0.53
                 # p.position.z = 0.049
 
-                p.position.x = -0.21
-                p.position.y = -0.53
-                p.position.z = 0.049
+                # p.position.x = -0.21
+                # p.position.y = -0.53
+                # p.position.z = 0.049
 
                 # self.clampQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
 
@@ -117,14 +117,23 @@ class ClampIt(object):
                 p.orientation.y = self.clampQuat[2]
                 p.orientation.z = self.clampQuat[3]
                 p.orientation.w = self.clampQuat[0]
-                
 
+                ####################################################################################################
+                # Move 10) Push Down
+                print("Phase #10: Push Down!")
+                p.position.x = -0.258
+                p.position.y = -0.53
+                p.position.z = 0.046
+                # self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                # p.orientation.x = self.outQuat[1]
+                # p.orientation.y = self.outQuat[2]
+                # p.orientation.z = self.outQuat[3]
+                # p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 80.0
+                m.i_max_trans_sec = 10.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
-
-                print("0 done")
+                print("Done with Phase #10")
 
                 return
 
