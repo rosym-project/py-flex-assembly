@@ -72,17 +72,17 @@ class ClampIt(object):
         rospy.init_node('coordcc', anonymous=False)
 
         if not self.skip_first_phase:
-            if self.use_gripper:
-                if self.real:
-                    self.open_gripper()
-                else:
-                    rospy.wait_for_service('/gripper1/open_gripper')
-                    try:
-                        open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
-                        open_g()
-                    except rospy.ServiceException as e:
-                        print("Service call failed: %s"%e)
-                time.sleep(1)
+            # if self.use_gripper:
+            #     if self.real:
+            #         self.open_gripper()
+            #     else:
+            #         rospy.wait_for_service('/gripper1/open_gripper')
+            #         try:
+            #             open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
+            #             open_g()
+            #         except rospy.ServiceException as e:
+            #             print("Service call failed: %s"%e)
+            #     time.sleep(1)
             
             rospy.wait_for_service('/css/move_srv')
             time.sleep(1)
@@ -98,27 +98,74 @@ class ClampIt(object):
                 # p.orientation.y = self.clampQuat[2]
                 # p.orientation.z = self.clampQuat[3]
 
-                p.position.x = -0.0288039
-                p.position.y = -0.530952
-                p.position.z = 0.440385
+                # p.position.x = -0.258
+                # p.position.y = -0.53
+                # p.position.z = 0.049
 
-                p.orientation.w = 0
-                p.orientation.x = 0
-                p.orientation.y = 1
-                p.orientation.z = 0
+                p.position.x = -0.21
+                p.position.y = -0.53
+                p.position.z = 0.049
 
+                # self.clampQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+
+                self.clampQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+
+                self.clampQuat = self.clampQuat * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+
+
+                p.orientation.x = self.clampQuat[1]
+                p.orientation.y = self.clampQuat[2]
+                p.orientation.z = self.clampQuat[3]
+                p.orientation.w = self.clampQuat[0]
                 
 
                 m.i_pose = p
                 m.i_max_trans_sec = 80.0
-                m.i_max_rot_sec = 25.0
+                m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
 
-                print("1 done")
+                print("0 done")
 
+                return
+
+                time.sleep(3)
+
+                # 1) Rotate init
+                p.position.x = -0.0452333
+                p.position.y = -0.594722
+                p.position.z = 0.301398
+                self.clampQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.clampQuat[1]
+                p.orientation.y = self.clampQuat[2]
+                p.orientation.z = self.clampQuat[3]
+                p.orientation.w = self.clampQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 10.0
+                m.i_max_rot_sec = 20.0
+                resp1 = add_two_ints(m)
+                print("1 done")
+                time.sleep(5)
+
+                # 2) Move to lookout
+                p.position.x = -0.25
+                p.position.y = -0.594722
+                p.position.z = 0.45
+                self.clampQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.clampQuat[1]
+                p.orientation.y = self.clampQuat[2]
+                p.orientation.z = self.clampQuat[3]
+                p.orientation.w = self.clampQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 10.0
+                m.i_max_rot_sec = 20.0
+                resp1 = add_two_ints(m)
+                print("2 done")
                 time.sleep(1)
 
                 return
+
+                # 2) Move clamp 1
+
 
 
 
