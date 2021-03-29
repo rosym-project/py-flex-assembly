@@ -307,6 +307,8 @@ class ClampIt(object):
 
                     c.time = 1.0
 
+                    c.update_pose_first = False
+
                     switchCS(c)
                 except rospy.ServiceException as e:
                     print("Service call failed: %s"%e)
@@ -343,41 +345,83 @@ class ClampIt(object):
                 except rospy.ServiceException as e:
                     print("Service call failed: %s"%e)
 
+                rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
+                try:
+                    switchCS = rospy.ServiceProxy('/css/updateContactSituationBlocking_srv', ContactSituation)
+                    c = ContactSituationRequest()
+                    c.kp_trans.x = 1600.0
+                    c.kp_trans.y = 1600.0
+                    c.kp_trans.z = 1600.0
+                    c.kp_rot.x = 300.0
+                    c.kp_rot.y = 300.0
+                    c.kp_rot.z = 100.0
+
+                    c.kd_trans.x = 80.0
+                    c.kd_trans.y = 80.0
+                    c.kd_trans.z = 80.0
+                    c.kd_rot.x = 1.2
+                    c.kd_rot.y = 1.2
+                    c.kd_rot.z = 1.0
+
+                    c.fdir_trans.x = 0.0
+                    c.fdir_trans.y = 0.0
+                    c.fdir_trans.z = 0.0
+                    c.fdir_rot.x = 0.0
+                    c.fdir_rot.y = 0.0
+                    c.fdir_rot.z = 0.0
+
+                    c.force_trans.x = 0.0
+                    c.force_trans.y = 0.0
+                    c.force_trans.z = 0.0
+                    c.force_rot.x = 0.0
+                    c.force_rot.y = 0.0
+                    c.force_rot.z = 0.0
+
+                    c.time = 3.0
+
+                    c.update_pose_first = True
+
+                    switchCS(c)
+                except rospy.ServiceException as e:
+                    print("Service call failed: %s"%e)
+
+
                 return
-                # TODO DLW remove above!
 
-                # Move 10) Push Down
-                print("Phase #10: Push Down!")
-                p.position.x = -0.258
-                p.position.y = -0.505
-                p.position.z = 0.055
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
-                p.orientation.x = self.outQuat[1]
-                p.orientation.y = self.outQuat[2]
-                p.orientation.z = self.outQuat[3]
-                p.orientation.w = self.outQuat[0]
-                m.i_pose = p
-                m.i_max_trans_sec = 10.0
-                m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
-                print("Done with Phase #10")
-                time.sleep(5)
 
-                # Move 11) Up again
-                print("Phase #11: Up again!")
-                p.position.x = -0.258
-                p.position.y = -0.515
-                p.position.z = 0.07
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
-                p.orientation.x = self.outQuat[1]
-                p.orientation.y = self.outQuat[2]
-                p.orientation.z = self.outQuat[3]
-                p.orientation.w = self.outQuat[0]
-                m.i_pose = p
-                m.i_max_trans_sec = 20.0
-                m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
-                print("Done with Phase #11")
+                # # Move 10) Push Down
+                # print("Phase #10: Push Down!")
+                # p.position.x = -0.258
+                # p.position.y = -0.505
+                # p.position.z = 0.055
+                # self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                # p.orientation.x = self.outQuat[1]
+                # p.orientation.y = self.outQuat[2]
+                # p.orientation.z = self.outQuat[3]
+                # p.orientation.w = self.outQuat[0]
+                # m.i_pose = p
+                # m.i_max_trans_sec = 10.0
+                # m.i_max_rot_sec = 30.0
+                # resp1 = add_two_ints(m)
+                # print("Done with Phase #10")
+                # time.sleep(5)
+
+                # # Move 11) Up again
+                # print("Phase #11: Up again!")
+                # p.position.x = -0.258
+                # p.position.y = -0.515
+                # p.position.z = 0.07
+                # self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                # p.orientation.x = self.outQuat[1]
+                # p.orientation.y = self.outQuat[2]
+                # p.orientation.z = self.outQuat[3]
+                # p.orientation.w = self.outQuat[0]
+                # m.i_pose = p
+                # m.i_max_trans_sec = 20.0
+                # m.i_max_rot_sec = 30.0
+                # resp1 = add_two_ints(m)
+                # print("Done with Phase #11")
+
                 time.sleep(1)
 
                 if self.use_gripper:
@@ -391,6 +435,23 @@ class ClampIt(object):
                         except rospy.ServiceException as e:
                             print("Service call failed: %s"%e)
                     time.sleep(1)
+
+
+                # Move 11) Up again
+                print("Phase #11: Up again!")
+                p.position.x = -0.258
+                p.position.y = -0.515
+                p.position.z = 0.1
+                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 60.0
+                m.i_max_rot_sec = 30.0
+                resp1 = add_two_ints(m)
+                print("Done with Phase #11")
 
             except rospy.ServiceException as e:
                 print("Service call failed: %s"%e)
