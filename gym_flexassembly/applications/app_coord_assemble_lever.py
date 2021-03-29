@@ -15,6 +15,11 @@ from geometry_msgs.msg import Pose
 from cosima_msgs.srv import GetClamp
 from cosima_msgs.srv import Move, MoveResponse, MoveRequest
 from cosima_msgs.srv import Assemble, AssembleResponse
+from cosima_msgs.srv import ContactSituation, ContactSituationResponse, ContactSituationRequest
+from cosima_msgs.srv import ContactForce, ContactForceResponse
+
+from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Wrench
 
 from std_msgs.msg import String
 from std_srvs.srv import Empty, EmptyResponse
@@ -268,7 +273,78 @@ class ClampIt(object):
                 print("Done with Phase #9")
                 time.sleep(1)
 
+                rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
+                try:
+                    switchCS = rospy.ServiceProxy('/css/updateContactSituationBlocking_srv', ContactSituation)
+                    c = ContactSituationRequest()
+                    c.kp_trans.x = 1600.0
+                    c.kp_trans.y = 1600.0
+                    c.kp_trans.z = 1600.0
+                    c.kp_rot.x = 300.0
+                    c.kp_rot.y = 300.0
+                    c.kp_rot.z = 100.0
+
+                    c.kd_trans.x = 80.0
+                    c.kd_trans.y = 80.0
+                    c.kd_trans.z = 80.0
+                    c.kd_rot.x = 1.2
+                    c.kd_rot.y = 1.2
+                    c.kd_rot.z = 1.0
+
+                    c.fdir_trans.x = 0.0
+                    c.fdir_trans.y = 1.0
+                    c.fdir_trans.z = 1.0
+                    c.fdir_rot.x = 1.0
+                    c.fdir_rot.y = 0.0
+                    c.fdir_rot.z = 0.0
+
+                    c.force_trans.x = 0.0
+                    c.force_trans.y = 5.0
+                    c.force_trans.z = 0.0
+                    c.force_rot.x = 0.0
+                    c.force_rot.y = 0.0
+                    c.force_rot.z = 0.0
+
+                    c.time = 1.0
+
+                    switchCS(c)
+                except rospy.ServiceException as e:
+                    print("Service call failed: %s"%e)
+
+                rospy.wait_for_service('/css/setFFVec_srv')
+                try:
+                    applyContactForce = rospy.ServiceProxy('/css/setFFVec_srv', ContactForce)
+                    w = Wrench()
+                    w.force.x = 0.0
+                    w.force.y = 5.0
+                    w.force.z = -40.0
+                    w.torque.x = 0.0
+                    w.torque.y = 0.0
+                    w.torque.z = 0.0
+
+                    applyContactForce(w)
+                except rospy.ServiceException as e:
+                    print("Service call failed: %s"%e)
+
+                time.sleep(5)
+
+                rospy.wait_for_service('/css/setFFVec_srv')
+                try:
+                    applyContactForce = rospy.ServiceProxy('/css/setFFVec_srv', ContactForce)
+                    w = Wrench()
+                    w.force.x = 0.0
+                    w.force.y = 5.0
+                    w.force.z = 0.0
+                    w.torque.x = 0.0
+                    w.torque.y = 0.0
+                    w.torque.z = 0.0
+
+                    applyContactForce(w)
+                except rospy.ServiceException as e:
+                    print("Service call failed: %s"%e)
+
                 return
+                # TODO DLW remove above!
 
                 # Move 10) Push Down
                 print("Phase #10: Push Down!")
