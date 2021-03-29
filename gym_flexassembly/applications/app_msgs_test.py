@@ -121,9 +121,14 @@ class ClampIt(object):
                 ####################################################################################################
                 # Move 10) Push Down
                 print("Phase #10: Push Down!")
+                # p.position.x = -0.258
+                # p.position.y = -0.53
+                # p.position.z = 0.046
+
                 p.position.x = -0.258
                 p.position.y = -0.53
-                p.position.z = 0.046
+                p.position.z = 0.06
+
                 # self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
                 # p.orientation.x = self.outQuat[1]
                 # p.orientation.y = self.outQuat[2]
