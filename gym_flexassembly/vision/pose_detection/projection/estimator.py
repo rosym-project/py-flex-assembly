@@ -7,7 +7,6 @@ from scipy.spatial.transform import Rotation as R
 from sklearn import linear_model
 
 import matplotlib
-matplotlib.rc('font', weight='bold', size=14)
 import matplotlib.pyplot as plt
 
 from pytransform3d import transformations as pt
@@ -395,6 +394,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--file', type=str, default=None)
+    parser.add_argument('--averaging_window', type=int, default=25,
+                        help='the detected pose is averaged over this many frames')
     args = parser.parse_args()
 
     cv.namedWindow('Display', cv.WINDOW_NORMAL)
@@ -407,30 +408,17 @@ if __name__ == '__main__':
     pipeline = rs.pipeline()
     pipeline.start(config)
 
-    # pos_arm_in_world = np.array([-301.44, -430.66, 618.01]) / 1000
-    # orn_arm_in_world = R.from_euler('zyx', [-137.15, 0, 179.99], degrees=True)
-    pos_arm_in_world = np.array([-399.42, -509.57, 623.96]) / 1000
-    orn_arm_in_world = R.from_euler('zyx', [136.31, 0.04, 179.68], degrees=True)
-    # orn_arm_in_world = R.from_euler('zyx', [180, 0, 180], degrees=True)
-    world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
-
-    calib_pt_arm = np.array([-323.30, -419.56, 550.15])
-    calib_pt_cam = np.array([-394.38, -470, 467.00])
-
-    pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000
-    pos_cam_in_arm[2] = -pos_cam_in_arm[2]
-    # pos_cam_in_arm = (calib_pt_cam - calib_pt_arm) / 1000
-    # pos_cam_in_arm[2] = -pos_cam_in_arm[2]
-
-    print(f'Offset {vec2str(pos_cam_in_arm)}')
-
-    pos_cam_in_arm = orn_arm_in_world.apply(pos_cam_in_arm)
-    print(f'Offset rot... {vec2str(pos_cam_in_arm)}')
-
     pos_b_in_world = np.array([0, 0, 0])
     orn_b_in_world = R.from_euler('zyx', [270, 0, 0], degrees=True)
     b2world = as_transform(pos_b_in_world, orn_b_in_world)
 
+    pos_arm_in_world = np.array([0, 0, 0.5])
+    orn_arm_in_world = R.from_euler('zyx', [0, 0, 0], degrees=True)
+    world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
+
+    calib_pt_arm = np.array([-323.30, -419.56, 550.15])
+    calib_pt_cam = np.array([-394.38, -470, 467.00])
+    pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000
     orn_cam_in_arm = R.from_euler('zyx', [135, 0, 0], degrees=True)
     arm2cam = as_transform(pos_cam_in_arm, orn_cam_in_arm)
 
@@ -439,26 +427,21 @@ if __name__ == '__main__':
     tm.add_transform("arm", "world", world2arm)
     tm.add_transform("cam", "arm", arm2cam)
 
-    t = tm.get_transform('arm', 'world')
-    orn = R.from_matrix(t[:3, :3])
-    pos = t[:3, -1] * 1000
-    print(f'Pos arm in world: {vec2str(pos)}')
-    print(f'Orn arm in world: {orn2str(orn)}')
 
-    t = tm.get_transform('cam', 'world')
-    orn = R.from_matrix(t[:3, :3])
-    pos = t[:3, -1] * 1000
-    print(f'Pos cam in world: {vec2str(pos)}')
-    print(f'Orn cam in world: {orn2str(orn)}')
+    pos_arm_in_world = np.array([-314.23, -514.34, 636.78]) / 1000
+    orn_arm_in_world = R.from_euler('zxy', [-45.17, 0.04, 179.69], degrees=True)
+    world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
 
-    # ax = tm.plot_frames_in('world', s=0.2)
-    # ax.set_xlim((0.05, -0.6))
-    # ax.set_ylim((0.05, -0.6))
-    # ax.set_zlim((0.0, 0.75))
-    # plt.show()
-    # exit(0)
+    tm.add_transform("arm", "world", world2arm)
 
-    estimator = PoseEstimator(transform_manager=tm)
+    ax = tm.plot_frames_in('world', s=0.1)
+    ax.set_xlim((-0.7, 0.01))
+    ax.set_ylim((-0.7, 0.01))
+    ax.set_zlim((-0.01, 0.7))
+    plt.show()
+    exit(0)
+
+    estimator = PoseEstimator(transform_manager=tm, window_size=args.averaging_window)
     try:
         while True:
             try:
@@ -477,10 +460,8 @@ if __name__ == '__main__':
                 pos_desired = np.array([-318.6022, -395.1886, 17.7866])
                 orn_desired = R.from_euler('zyx', [162.69, 0.32, -179.96], degrees=True)
                 print(f'Pos world: {vec2str(pos)}')
-                print(f'Desired:   {vec2str(pos_desired)}')
 
                 print(f'Orn world: {orn2str(orn)}')
-                print(f'Desired:   {orn2str(orn_desired)}')
 
                 # t = tm.get_transform('arm', 'world')
                 # orn = R.from_matrix(t[:3, :3])

@@ -21,7 +21,7 @@ class PoseService:
 
     def __init__(self, args):
         self.args = args
-        self.pose_estimator = PoseEstimator(debug=args.debug)
+        self.pose_estimator = PoseEstimator(debug=args.debug, window_size=args.averaging_window)
 
         self.publisher = rospy.Publisher(args.topic, Pose, queue_size=10)
         self.service = rospy.Service(args.topic, PoseEstimation, self.handle_request)
@@ -77,12 +77,13 @@ class PoseService:
 
 
 if __name__ == '__main__':
-    #TODO
-    parser = argparse.ArgumentParser(description='TODO')
+    parser = argparse.ArgumentParser(description='Create a ros service on the given topic to retrieve the pose of a detected clamp')
     parser.add_argument('--topic', type=str, default='pose_estimation',
                         help='the topic on which new poses are published')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--file', type=str)
+    parser.add_argument('--averaging_window', type=int, default=25,
+                        help='the detected pose is averaged over this many frames')
     args = parser.parse_args()
     print(args)
 
