@@ -385,42 +385,64 @@ class ClampIt(object):
                 except rospy.ServiceException as e:
                     print("Service call failed: %s"%e)
 
+                # time.sleep(1)
 
-                return
+                if self.use_gripper:
+                    if self.real:
+                        self.open_gripper()
+                    else:
+                        rospy.wait_for_service('/gripper1/open_gripper')
+                        try:
+                            open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
+                            open_g()
+                        except rospy.ServiceException as e:
+                            print("Service call failed: %s"%e)
+                    time.sleep(1)
 
 
-                # # Move 10) Push Down
-                # print("Phase #10: Push Down!")
-                # p.position.x = -0.258
-                # p.position.y = -0.505
-                # p.position.z = 0.055
-                # self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
-                # p.orientation.x = self.outQuat[1]
-                # p.orientation.y = self.outQuat[2]
-                # p.orientation.z = self.outQuat[3]
-                # p.orientation.w = self.outQuat[0]
-                # m.i_pose = p
-                # m.i_max_trans_sec = 10.0
-                # m.i_max_rot_sec = 30.0
-                # resp1 = add_two_ints(m)
-                # print("Done with Phase #10")
-                # time.sleep(5)
+                # Move 11) Regrasp
+                print("Phase #11: Regrasp")
+                p.position.x = -0.258
+                p.position.y = -0.53
+                p.position.z = 0.049
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 50.0
+                m.i_max_rot_sec = 30.0
+                resp1 = add_two_ints(m)
+                print("Done with Phase #11")
 
-                # # Move 11) Up again
-                # print("Phase #11: Up again!")
-                # p.position.x = -0.258
-                # p.position.y = -0.515
-                # p.position.z = 0.07
-                # self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
-                # p.orientation.x = self.outQuat[1]
-                # p.orientation.y = self.outQuat[2]
-                # p.orientation.z = self.outQuat[3]
-                # p.orientation.w = self.outQuat[0]
-                # m.i_pose = p
-                # m.i_max_trans_sec = 20.0
-                # m.i_max_rot_sec = 30.0
-                # resp1 = add_two_ints(m)
-                # print("Done with Phase #11")
+                if self.use_gripper:
+                    if self.real:
+                        self.close_gripper()
+                    else:
+                        rospy.wait_for_service('/gripper1/close_gripper')
+                        try:
+                            close_g = rospy.ServiceProxy('/gripper1/close_gripper', Empty)
+                            close_g()
+                        except rospy.ServiceException as e:
+                            print("Service call failed: %s"%e)
+                    time.sleep(1)
+
+                # Move 12) Slide
+                print("Phase #12: Slide")
+                p.position.x = -0.21
+                p.position.y = -0.53
+                p.position.z = 0.049
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 50.0
+                m.i_max_rot_sec = 30.0
+                resp1 = add_two_ints(m)
+                print("Done with Phase #12")
 
                 time.sleep(1)
 
@@ -437,25 +459,25 @@ class ClampIt(object):
                     time.sleep(1)
 
 
-                # Move 11) Up again
-                print("Phase #11: Up again!")
-                p.position.x = -0.258
-                p.position.y = -0.515
-                p.position.z = 0.1
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                # Move 13) Up Again
+                print("Phase #13: Up Again")
+                p.position.x = -0.21
+                p.position.y = -0.53
+                p.position.z = 0.15
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 60.0
+                m.i_max_trans_sec = 10.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
-                print("Done with Phase #11")
+                print("Done with Phase #13")
 
             except rospy.ServiceException as e:
                 print("Service call failed: %s"%e)
-        
+
         print("END")
 
     def close_gripper(self):
