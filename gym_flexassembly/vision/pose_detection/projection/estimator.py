@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 from pytransform3d import transformations as pt
 
-import gym_flexassembly.vision.pose_estimation.features as fts
-import gym_flexassembly.vision.pose_estimation.visualize as viz
+import gym_flexassembly.vision.pose_detection.projection.features as fts
+import gym_flexassembly.vision.pose_detection.projection.visualize as viz
 
 
 def as_transform(pos, orn):

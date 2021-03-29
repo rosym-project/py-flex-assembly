@@ -13,17 +13,8 @@ import roslib
 import rospy
 from geometry_msgs.msg import Pose, Point, Quaternion
 
-from gym_flexassembly.vision.pose_estimation.estimator import PoseEstimator
+from gym_flexassembly.vision.pose_detection.projection.estimator import PoseEstimator
 from py_flex_assembly.srv import PoseEstimation, PoseEstimationResponse
-
-# TODO:
-# * Verbindung zu Realsense (auch über File)
-# * Pose berechnen (im Vgl. zu Arm?)
-# * Pos und Orn mittel (über Parameter)
-# * Error Handling
-
-# * Berechnungszeit messen
-# * Überlegen ob Bilder über andere Komponente gegrabbed werden sollten...
 
 
 class PoseService:
