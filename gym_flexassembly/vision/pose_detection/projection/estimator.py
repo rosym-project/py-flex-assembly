@@ -457,23 +457,10 @@ if __name__ == '__main__':
                 t = tm.get_transform('clamp', 'world')
                 pos = t[:3, -1] * 1000
 
-                pos_desired = np.array([-318.6022, -395.1886, 17.7866])
-                orn_desired = R.from_euler('zyx', [162.69, 0.32, -179.96], degrees=True)
+                # pos_desired = np.array([-318.6022, -395.1886, 17.7866])
+                # orn_desired = R.from_euler('zyx', [162.69, 0.32, -179.96], degrees=True)
                 print(f'Pos world: {vec2str(pos)}')
-
                 print(f'Orn world: {orn2str(orn)}')
-
-                # t = tm.get_transform('arm', 'world')
-                # orn = R.from_matrix(t[:3, :3])
-                # pos = t[:3, -1] * 1000
-                # print(f'Pos arm in world: {vec2str(pos)}')
-                # print(f'Orn arm in world: {orn2str(orn)}')
-
-                # t = tm.get_transform('cam', 'world')
-                # orn = R.from_matrix(t[:3, :3])
-                # pos = t[:3, -1] * 1000
-                # print(f'Pos cam in world: {vec2str(pos)}')
-                # print(f'Orn cam in world: {orn2str(orn)}')
             except Exception as e:
                 print(f'Something went wrong! - {e}')
             print()
