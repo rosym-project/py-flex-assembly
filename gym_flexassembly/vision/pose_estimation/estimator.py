@@ -82,21 +82,17 @@ class Averaging():
 class AveragingRotation(Averaging):
 
     def update(self, new_value):
-        # compute new value as average
-        new_value = super().update(new_value)
-
-        # re_compute axes to be at length 1 and orthogonal
+        # re-compute new axes to be length 1
         _x = new_value[:, 0]
+        _x = _x / np.linalg.norm(_x)
         _y = new_value[:, 1]
+        _y = _y / np.linalg.norm(_y)
         _z = new_value[:, 2]
+        _z = _z / np.linalg.norm(_z)
+        new_value = np.array([_x, _y, _z]).T
 
-        _z = np.cross(_x, _y)
-        _y = np.cross(_z, _x)
-        self.value = np.array([_x / np.linalg.norm(_x),
-                               _y / np.linalg.norm(_y),
-                               _z / np.linalg.norm(_z)]).T
-        return self.value
-
+        # compute new value as average
+        return super().update(new_value)
 
 
 def reorder(bb1, bb2):
@@ -146,7 +142,7 @@ def compute_planes(img_depth, bb, ax=None):
     cv.drawContours(mask_outer, [bb.as_int()], 0, 0, -1)
     mask_outer = mask_outer == 255
 
-    interval_upper = [0.35, 0.65]
+    interval_upper = [0.2, 0.5]
     interval_lower = [0.4, 0.6]
 
     plane_upper = regress_depth_plane(mask, img_depth, interval_upper)
@@ -203,6 +199,7 @@ class PoseEstimator():
 
         frames_aligned = self.align.process(frames)
         bb_refined, side = self.process_aligned_frames(frames_aligned)
+
         pos, orn = self.process_unaligned_frames(frames, bb_refined, side)
 
         if self.debug:
@@ -300,16 +297,30 @@ class PoseEstimator():
 
         # compute 3d coordinates for unaligned bb
         intrin = frame_depth.get_profile().as_video_stream_profile().get_intrinsics()
-        pts3d = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_upper.predict([pt[::-1]])[0] / 1000), pts_ordered))
-        pts3d = np.array(pts3d)
+        pts3d_upper = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_upper.predict([pt[::-1]])[0] / 1000), pts_ordered))
+        pts3d_upper = np.array(pts3d_upper)
+
+        pts3d_lower = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_lower.predict([pt[::-1]])[0] / 1000), pts_ordered))
+        pts3d_lower = np.array(pts3d_lower)
 
         # compute x-, y- and z-directions in 3d
-        dir_x = pts3d[_order[0]] - pts3d[_order[1]]
-        dir_y = pts3d[_order[2]] - pts3d[_order[0]]
+        """
+        User upper rect to determine the width and length of the clamp
+        but use the lower plane for directions since it is more stable
+        """ 
+        dir_x_upper = pts3d_upper[_order[0]] - pts3d_upper[_order[1]]
+        dir_x_lower = pts3d_lower[_order[0]] - pts3d_lower[_order[1]]
+        dir_x = dir_x_lower / np.linalg.norm(dir_x_lower)
+        dir_x = dir_x * np.linalg.norm(dir_x_upper)
+
+        dir_y_upper = pts3d_upper[_order[2]] - pts3d_upper[_order[0]]
+        dir_y_lower = pts3d_lower[_order[2]] - pts3d_lower[_order[0]]
+        dir_y = dir_y_lower / np.linalg.norm(dir_y_lower)
+        dir_y = dir_y * np.linalg.norm(dir_y_upper)
+
         dir_z = np.cross(dir_x, dir_y)
         dir_z = dir_z / np.linalg.norm(dir_z)
         if dir_z[2] < 0:
-            print('Recompute z dir...')
             # z directory should point away from the camera which means z needs to be negative
             dir_z = -dir_z
 
@@ -319,8 +330,17 @@ class PoseEstimator():
             dir_y = ly * dir_y / np.linalg.norm(dir_y)
 
         # compute pose from bb and directions and average
-        new_pos = np.mean(pts3d, axis=0) + 0.5 * height * dir_z
+        new_pos = np.mean(pts3d_upper, axis=0) - 0.5 * height * dir_z
         pos = self.pos_averaging.update(new_pos)
+
+        """
+        NOTE: this is a magic number.
+        We calibrated the color-camera in relation to the arm
+        and not the depth camera. This is an offset in x-direction
+        corresponding to this offset.
+        """
+        unmeasure_offset = np.array([-0.065, 0, 0])
+        pos = pos + unmeasure_offset
 
         # compute rotations from directions
         new_rot_matrix = np.array([dir_x / np.linalg.norm(dir_x),
@@ -330,16 +350,12 @@ class PoseEstimator():
         orn = R.from_matrix(rot_matrix)
 
         if self.debug:
-            # print(f'X {dir_x / np.linalg.norm(dir_x)}')
-            # print(f'Y {dir_y / np.linalg.norm(dir_y)}')
-            # print(f'Z {dir_z / np.linalg.norm(dir_z)}')
-
             print(f'Height estimate {height:.3f}m from {new_height:.3f}m')
             print(f'Pos {vec2str(pos)}')
             print(f'Orn {orn2str(orn)}')
 
             # visualize pose in depth image
-            viz.visualize_pose(pos, orn, intrin, self.imgs['depth'])
+            viz.visualize_pose(pos - unmeasure_offset, orn, intrin, self.imgs['depth'])
 
             if self.tm is not None:
                 self.tm.add_transform('clamp', 'cam', as_transform(pos, orn))
@@ -394,29 +410,52 @@ if __name__ == '__main__':
     # pos_arm_in_world = np.array([-301.44, -430.66, 618.01]) / 1000
     # orn_arm_in_world = R.from_euler('zyx', [-137.15, 0, 179.99], degrees=True)
     pos_arm_in_world = np.array([-399.42, -509.57, 623.96]) / 1000
-    orn_arm_in_world = R.from_euler('zyx', [-136.31, 0.04, 179.68], degrees=True)
+    orn_arm_in_world = R.from_euler('zyx', [136.31, 0.04, 179.68], degrees=True)
+    # orn_arm_in_world = R.from_euler('zyx', [180, 0, 180], degrees=True)
     world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
 
-    pos_cam_in_arm = [-0.085, 0, 0.056]
-    pos_cam_in_arm = R.from_euler('zyx', [-45, 0, 0], degrees=True).apply(pos_cam_in_arm)
-    orn_cam_in_arm = R.from_euler('zyx', [45, 0, 0], degrees=True)
+    calib_pt_arm = np.array([-323.30, -419.56, 550.15])
+    calib_pt_cam = np.array([-394.38, -470, 467.00])
+
+    pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000
+    pos_cam_in_arm[2] = -pos_cam_in_arm[2]
+    # pos_cam_in_arm = (calib_pt_cam - calib_pt_arm) / 1000
+    # pos_cam_in_arm[2] = -pos_cam_in_arm[2]
+
+    print(f'Offset {vec2str(pos_cam_in_arm)}')
+
+    pos_cam_in_arm = orn_arm_in_world.apply(pos_cam_in_arm)
+    print(f'Offset rot... {vec2str(pos_cam_in_arm)}')
+
+    pos_b_in_world = np.array([0, 0, 0])
+    orn_b_in_world = R.from_euler('zyx', [270, 0, 0], degrees=True)
+    b2world = as_transform(pos_b_in_world, orn_b_in_world)
+
+    orn_cam_in_arm = R.from_euler('zyx', [135, 0, 0], degrees=True)
     arm2cam = as_transform(pos_cam_in_arm, orn_cam_in_arm)
 
     tm = TransformManager()
+    tm.add_transform("base", "world", b2world)
     tm.add_transform("arm", "world", world2arm)
     tm.add_transform("cam", "arm", arm2cam)
 
-    # t = tm.get_transform('arm', 'world')
-    # orn = R.from_matrix(t[:3, :3])
-    # pos = t[:3, -1] * 1000
-    # print(f'Pos arm in world: {vec2str(pos)}')
-    # print(f'Orn arm in world: {orn2str(orn)}')
+    t = tm.get_transform('arm', 'world')
+    orn = R.from_matrix(t[:3, :3])
+    pos = t[:3, -1] * 1000
+    print(f'Pos arm in world: {vec2str(pos)}')
+    print(f'Orn arm in world: {orn2str(orn)}')
 
-    # t = tm.get_transform('cam', 'world')
-    # orn = R.from_matrix(t[:3, :3])
-    # pos = t[:3, -1] * 1000
-    # print(f'Pos cam in world: {vec2str(pos)}')
-    # print(f'Orn cam in world: {orn2str(orn)}')
+    t = tm.get_transform('cam', 'world')
+    orn = R.from_matrix(t[:3, :3])
+    pos = t[:3, -1] * 1000
+    print(f'Pos cam in world: {vec2str(pos)}')
+    print(f'Orn cam in world: {orn2str(orn)}')
+
+    # ax = tm.plot_frames_in('world', s=0.2)
+    # ax.set_xlim((0.05, -0.6))
+    # ax.set_ylim((0.05, -0.6))
+    # ax.set_zlim((0.0, 0.75))
+    # plt.show()
     # exit(0)
 
     estimator = PoseEstimator(transform_manager=tm)
@@ -426,24 +465,34 @@ if __name__ == '__main__':
                 frames = pipeline.wait_for_frames()
         
                 pos, orn = estimator.estimate(frames)
+                # pos = pos + np.array([0.055, 0, 0])
+                # print(f'Pos {vec2str(pos)}')
+
+                t = tm.get_transform('clamp', 'base')
+                orn = R.from_matrix(t[:3, :3])
 
                 t = tm.get_transform('clamp', 'world')
-                orn = R.from_matrix(t[:3, :3])
                 pos = t[:3, -1] * 1000
+
+                pos_desired = np.array([-318.6022, -395.1886, 17.7866])
+                orn_desired = R.from_euler('zyx', [162.69, 0.32, -179.96], degrees=True)
                 print(f'Pos world: {vec2str(pos)}')
+                print(f'Desired:   {vec2str(pos_desired)}')
+
                 print(f'Orn world: {orn2str(orn)}')
+                print(f'Desired:   {orn2str(orn_desired)}')
 
-                t = tm.get_transform('arm', 'world')
-                orn = R.from_matrix(t[:3, :3])
-                pos = t[:3, -1] * 1000
-                print(f'Pos arm in world: {vec2str(pos)}')
-                print(f'Orn arm in world: {orn2str(orn)}')
+                # t = tm.get_transform('arm', 'world')
+                # orn = R.from_matrix(t[:3, :3])
+                # pos = t[:3, -1] * 1000
+                # print(f'Pos arm in world: {vec2str(pos)}')
+                # print(f'Orn arm in world: {orn2str(orn)}')
 
-                t = tm.get_transform('cam', 'world')
-                orn = R.from_matrix(t[:3, :3])
-                pos = t[:3, -1] * 1000
-                print(f'Pos cam in world: {vec2str(pos)}')
-                print(f'Orn cam in world: {orn2str(orn)}')
+                # t = tm.get_transform('cam', 'world')
+                # orn = R.from_matrix(t[:3, :3])
+                # pos = t[:3, -1] * 1000
+                # print(f'Pos cam in world: {vec2str(pos)}')
+                # print(f'Orn cam in world: {orn2str(orn)}')
             except Exception as e:
                 print(f'Something went wrong! - {e}')
             print()
@@ -454,6 +503,8 @@ if __name__ == '__main__':
             if key == ord('p'):
                 while key != ord('p'):
                     key = cv.waitKey(0)
+                    if key == ord('q'):
+                        exit(0)
             if key == ord('q'):
                 break
             elif key == ord('p'):
@@ -462,3 +513,4 @@ if __name__ == '__main__':
     finally:
         pipeline.stop()
         cv.destroyAllWindows()
+
