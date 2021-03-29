@@ -14,6 +14,7 @@ import rospy
 from geometry_msgs.msg import Pose, Point, Quaternion
 
 from gym_flexassembly.vision.pose_estimation.estimator import PoseEstimator
+from py_flex_assembly.srv import PoseEstimation, PoseEstimationResponse
 
 # TODO:
 # * Verbindung zu Realsense (auch über File)
@@ -32,7 +33,7 @@ class PoseService:
         self.pose_estimator = PoseEstimator(debug=args.debug)
 
         self.publisher = rospy.Publisher(args.topic, Pose, queue_size=10)
-        #self.service = rospy.Service('pose_estimations', Pose, self.handle_request)
+        self.service = rospy.Service(args.topic, PoseEstimation, self.handle_request)
 
         self.pose = Pose()
 
@@ -46,13 +47,13 @@ class PoseService:
 
 
     def handle_request(self, request):
-        return self.pose
+        return PoseEstimationResponse(self.pose)
 
     def run(self):
         self.rs_pipeline = rs.pipeline()
         self.rs_pipeline.start(self.rs_config)
 
-        rate = rospy.Rate(100)
+        rate = rospy.Rate(2)
         try:
             while True:
                 try:
@@ -67,9 +68,8 @@ class PoseService:
                         if cv.waitKey(10) == ord('q'):
                             break
                     else:
-                        rate.sleep()
+                        rospy.sleep(0.1)
                 except KeyboardInterrupt:
-                    print('KeyboardInterrupt...')
                     break 
                 except Exception as e:
                     print(f'Pose estimation failed: {e}')
@@ -85,10 +85,6 @@ class PoseService:
         return pose
 
 
-        
-
-
-
 if __name__ == '__main__':
     #TODO
     parser = argparse.ArgumentParser(description='TODO')
@@ -96,14 +92,11 @@ if __name__ == '__main__':
                         help='the topic on which new poses are published')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--file', type=str)
-    # parser.add_argument('--image', type=str, required=True,
-                        # help='the image file to be proessed')
-    # parser.add_argument('--data', type=str,
-                        # help='the data csv file (if available)')
     args = parser.parse_args()
     print(args)
 
-    rospy.init_node('pose_estimator', anonymous=True)
+    # disable signals is needed to handle keyboard interrupt
+    rospy.init_node('pose_estimator', anonymous=True, disable_signals=True)
 
     service = PoseService(args)
     service.run()

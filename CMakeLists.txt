@@ -69,6 +69,7 @@ add_service_files(
   ClampPose.srv
   DeleteClamp.srv
   SpawnClamp.srv
+  PoseEstimation.srv
 )
 
 ## Generate actions in the 'action' folder
