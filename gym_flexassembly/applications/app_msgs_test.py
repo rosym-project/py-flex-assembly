@@ -125,9 +125,44 @@ class ClampIt(object):
                 # p.position.y = -0.53
                 # p.position.z = 0.046
 
+                # Clamp 1
+                p.position.x = -0.348
+                p.position.y = -0.656
+
                 p.position.x = -0.258
                 p.position.y = -0.53
                 p.position.z = 0.06
+
+                # Clamp 1
+                p.position.x = -0.348
+                p.position.y = -0.63
+                p.position.z = 0.065
+
+                self.clamp1 = Pose()
+                # self.clamp1.position.z = 0.049
+                # # Below needs to be filled by the vision
+                # self.clamp1.position.x = -0.3
+                # self.clamp1.position.y = -0.656
+                self.clamp1.orientation.w = 0
+                self.clamp1.orientation.x = 0
+                self.clamp1.orientation.y = 1
+                self.clamp1.orientation.z = 0
+                self.clamp1Quat = pyquaternion.Quaternion(w=self.clamp1.orientation.w,x=self.clamp1.orientation.x,y=self.clamp1.orientation.y,z=self.clamp1.orientation.z)
+                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                # 
+
+                p.position.x = -0.258
+                p.position.y = -0.505
+                p.position.z = 0.074
+                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
 
                 # self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
                 # p.orientation.x = self.outQuat[1]
@@ -135,7 +170,7 @@ class ClampIt(object):
                 # p.orientation.z = self.outQuat[3]
                 # p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 10.0
+                m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #10")
