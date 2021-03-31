@@ -142,7 +142,7 @@ def compute_planes(img_depth, bb, ax=None):
     mask_outer = mask_outer == 255
 
     interval_upper = [0.2, 0.5]
-    interval_lower = [0.4, 0.6]
+    interval_lower = [0.4, 0.8]
 
     plane_upper = regress_depth_plane(mask, img_depth, interval_upper)
     plane_lower = regress_depth_plane(mask_outer, img_depth, interval_lower)
@@ -329,7 +329,7 @@ class PoseEstimator():
             dir_y = ly * dir_y / np.linalg.norm(dir_y)
 
         # compute pose from bb and directions and average
-        new_pos = np.mean(pts3d_upper, axis=0) - 0.5 * height * dir_z
+        new_pos = np.mean(pts3d_upper, axis=0) + 0.5 * height * dir_z
         pos = self.pos_averaging.update(new_pos)
 
         """
@@ -338,8 +338,9 @@ class PoseEstimator():
         and not the depth camera. This is an offset in x-direction
         corresponding to this offset.
         """
-        unmeasure_offset = np.array([-0.065, 0, 0])
-        pos = pos + unmeasure_offset
+        #unmeasure_offset = np.array([-0.065, 0, 0])
+        # unmeasure_offset = np.array([0.065, 0, 0])
+        # pos = pos + unmeasure_offset
 
         # compute rotations from directions
         new_rot_matrix = np.array([dir_x / np.linalg.norm(dir_x),
@@ -348,16 +349,18 @@ class PoseEstimator():
         rot_matrix = self.orn_averaging.update(new_rot_matrix)
         orn = R.from_matrix(rot_matrix)
 
+        if self.tm is not None:
+            self.tm.add_transform('clamp', 'cam', as_transform(pos, orn))
+
         if self.debug:
             print(f'Height estimate {height:.3f}m from {new_height:.3f}m')
             print(f'Pos {vec2str(pos)}')
             print(f'Orn {orn2str(orn)}')
 
             # visualize pose in depth image
-            viz.visualize_pose(pos - unmeasure_offset, orn, intrin, self.imgs['depth'])
+            viz.visualize_pose(pos, orn, intrin, self.imgs['depth'])
 
             if self.tm is not None:
-                self.tm.add_transform('clamp', 'cam', as_transform(pos, orn))
                 self.tm.plot_frames_in('world', ax=self.ax_transforms, s=0.2)
 
             self.imgs['figure'] = viz.figure_to_img(self.fig)
@@ -408,38 +411,35 @@ if __name__ == '__main__':
     pipeline = rs.pipeline()
     pipeline.start(config)
 
-    pos_b_in_world = np.array([0, 0, 0])
-    orn_b_in_world = R.from_euler('zyx', [270, 0, 0], degrees=True)
-    b2world = as_transform(pos_b_in_world, orn_b_in_world)
-
-    pos_arm_in_world = np.array([0, 0, 0.5])
-    orn_arm_in_world = R.from_euler('zyx', [0, 0, 0], degrees=True)
-    world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
-
-    calib_pt_arm = np.array([-323.30, -419.56, 550.15])
-    calib_pt_cam = np.array([-394.38, -470, 467.00])
-    pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000
-    orn_cam_in_arm = R.from_euler('zyx', [135, 0, 0], degrees=True)
-    arm2cam = as_transform(pos_cam_in_arm, orn_cam_in_arm)
-
     tm = TransformManager()
-    tm.add_transform("base", "world", b2world)
+
+    # init transformation form arm to cam
+    pos_arm_in_world = np.array([0.0, 0.0, 1.0])
+    orn_arm_in_world = R.from_quat([0.0, 0.0, 0.0, 1.0])
+    world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
     tm.add_transform("arm", "world", world2arm)
+    z = (550.15 - 467.00) / 1000
+    calib_pt_arm = np.array([-333.72, -491.74, 373.78])
+    calib_pt_cam = np.array([-407.27, -537.22, 539.82])
+    pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000
+    pos_cam_in_arm = R.from_euler('zyx', [0, 180, 0], degrees=True).apply(pos_cam_in_arm)
+    pos_cam_in_arm[2] = z
+    orn_cam_in_arm = R.from_euler('zyx', [45, 0, 0], degrees=True)
+    arm2cam = as_transform(pos_cam_in_arm, orn_cam_in_arm)
     tm.add_transform("cam", "arm", arm2cam)
 
-
-    pos_arm_in_world = np.array([-314.23, -514.34, 636.78]) / 1000
-    orn_arm_in_world = R.from_euler('zxy', [-45.17, 0.04, 179.69], degrees=True)
+    # set real arm pose
+    pos_arm_in_world = np.array([-0.250599, -0.596355, 0.451787])
+    orn_arm_in_world = R.from_quat([-0.924181, 0.381923, 0.00180704, 0.00464545])
     world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
-
     tm.add_transform("arm", "world", world2arm)
 
-    ax = tm.plot_frames_in('world', s=0.1)
-    ax.set_xlim((-0.7, 0.01))
-    ax.set_ylim((-0.7, 0.01))
-    ax.set_zlim((-0.01, 0.7))
-    plt.show()
-    exit(0)
+    # ax = tm.plot_frames_in('world', s=0.1)
+    # ax.set_xlim((-0.7, 0.01))
+    # ax.set_ylim((-0.7, 0.01))
+    # ax.set_zlim((-0.01, 0.7))
+    # plt.show()
+    # exit(0)
 
     estimator = PoseEstimator(transform_manager=tm, window_size=args.averaging_window)
     try:
@@ -448,26 +448,25 @@ if __name__ == '__main__':
                 frames = pipeline.wait_for_frames()
         
                 pos, orn = estimator.estimate(frames)
-                # pos = pos + np.array([0.055, 0, 0])
-                # print(f'Pos {vec2str(pos)}')
+                print(f'Pos in cam: {vec2str(pos)}')
+                print(f'Orn in cam: {orn2str(orn)}')
 
-                t = tm.get_transform('clamp', 'base')
-                orn = R.from_matrix(t[:3, :3])
+                transform = tm.get_transform('clamp', 'world')
+                orn = R.from_matrix(transform[:3, :3])
+                pos = transform[:3, -1] * 1000
 
-                t = tm.get_transform('clamp', 'world')
-                pos = t[:3, -1] * 1000
-
-                # pos_desired = np.array([-318.6022, -395.1886, 17.7866])
-                # orn_desired = R.from_euler('zyx', [162.69, 0.32, -179.96], degrees=True)
                 print(f'Pos world: {vec2str(pos)}')
                 print(f'Orn world: {orn2str(orn)}')
+
+                # the gripper has to be rotated 90 degrees with regards to the clamp orientation
+                orn = R.from_euler('zyx', [90, 0 ,0], degrees=True) * orn
+                print(f'Orn gripper: {orn2str(orn)}')
             except Exception as e:
                 print(f'Something went wrong! - {e}')
-            print()
+                pass
 
             cv.imshow('Display', estimator.create_img())
             key = cv.waitKey(1000 // 25)
-            # key = cv.waitKey(0)
             if key == ord('p'):
                 while key != ord('p'):
                     key = cv.waitKey(0)
