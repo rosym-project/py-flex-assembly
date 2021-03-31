@@ -206,7 +206,7 @@ def refine_bb(bounding_box, image):
     return BoundingBox(cv.minAreaRect(contours[0]))
 
 
-def detect_side(image, box):
+def detect_side(image, box, visualize=True):
     """
     Uses a Hough Circle Transform and post processing of the detected circles
     to detect the side of the clamp that has the hole in it.
@@ -297,14 +297,15 @@ def detect_side(image, box):
         color_2 = color_2.astype(np.float)
         color_2 /= pixel_2
 
-    # draw circles
-    if circles is not None:
-        circles = np.uint16(np.around(circles))
-        for i in circles:
-            center = (i[0], i[1])
-            # circle outline
-            radius = i[2]
-            cv.circle(image, center, radius, (0, 0, 255), 2)
+    if visualize:
+        # draw circles
+        if circles is not None:
+            circles = np.uint16(np.around(circles))
+            for i in circles:
+                center = (i[0], i[1])
+                # circle outline
+                radius = i[2]
+                cv.circle(image, center, radius, (0, 0, 255), 2)
 
     if count_1 > count_2:
         return 0
