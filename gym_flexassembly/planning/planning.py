@@ -12,6 +12,7 @@ import numpy as np
 import time
 import os
 from pybullet_planning.utils import INF
+from pybullet_planning import Pose, Point, Euler, unit_point, euler_from_quat
 from pybullet_planning import BASE_LINK, RED, BLUE, GREEN
 from pybullet_planning import load_pybullet, connect, wait_for_user, LockRenderer, has_gui, WorldSaver, HideOutput, \
     reset_simulation, disconnect, set_camera_pose, has_gui, set_camera, wait_for_duration, wait_if_gui, apply_alpha
@@ -31,6 +32,8 @@ from pybullet_planning.interfaces.env_manager import create_box
 
 from pybullet_planning.interfaces.robots.body import get_bodies
 # TODO clean up the imports
+
+from pybullet_planning import inverse_kinematics, sample_tool_ik, interval_generator
 
 import sys
 
@@ -52,7 +55,7 @@ class FlexPlanning(object):
         # Joint ranges for null space (todo: set them to proper range)
         self.jr = [7]*pandaNumDofs
         # Restposes for null space
-        self.rp = [0.98, 0.458, 0.31, -2.24, -0.30, 2.66, 2.32, 0.02, 0.02]
+        # self.rp = [0.98, 0.458, 0.31, -2.24, -0.30, 2.66, 2.32, 0.02, 0.02]
 
         print("Planner initialized for robot with id", robot)
 
@@ -62,14 +65,43 @@ class FlexPlanning(object):
         for body in get_bodies():
             if body != self._robot and not body in attachments:
                 self._obstacles.append(body)
+        p.stepSimulation()
+        self.rp = get_joint_positions(self._robot, jt.get_movable_joints(self._robot)[0:7])
+        print("E) Read robot with " + str(self.rp))
+
+
+        # print("ALL JOINTS: " + str(jt.get_movable_joints(self._robot)))
 
         # Get the joint-space configuration for the desired goal position
-        goalJntPos = p.calculateInverseKinematics(self._robot, 6, goalPosition, goalOrientation, self.ll, self.ul, self.jr, self.rp, maxNumIterations=5)
+        # goalJntPos = p.calculateInverseKinematics(self._robot, 9, goalPosition, goalOrientation, self.ll, self.ul, self.jr, self.rp, maxNumIterations=5)
+
+        # goalJntPos = p.calculateInverseKinematics(self._robot, 12, goalPosition) # goalOrientation
+        ikSolver = 0
+        jd=[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]
+        jrest=[1.5,-0.1,0.0,-2.0,0.0,1.0,1.57,0.0,0.0]
+
+        self.ll = [-2.96, -2.09, -2.96, -2.09, -2.96, -2.09, -3.05]
+        #upper limits for null space
+        self.ul = [2.96, 2.09, 2.96, 2.09, 2.96, 2.09, 3.05]
+        #joint ranges for null space
+        self.jr = [4.8, 4.0, 4.8, 4.0, 4.8, 4.0, 6.0]
+
+        count = 30
+        goalJntPos = None
+        while count > 0:
+            goalJntPos = p.calculateInverseKinematics(self._robot,11,goalPosition,goalOrientation,jointDamping=jd,solver=ikSolver, maxNumIterations=10000, residualThreshold=0.0001, restPoses=jrest, lowerLimits=self.ll, upperLimits=self.ul, jointRanges=self.jr)
+            # set_joint_positions(self._robot, jt.get_movable_joints(self._robot), goalJntPos)
+            for jj in range(len(jt.get_movable_joints(self._robot))):
+                p.resetJointState(self._robot, jt.get_movable_joints(self._robot)[jj], goalJntPos[jj])
+            p.stepSimulation()
+            count = count - 1
 
         print("GOAL POS: " + str(goalJntPos))
  
         # Plan the a coolision-free path
-        path = planning.plan_joint_motion(self._robot, jt.get_movable_joints(self._robot)[0:7], goalJntPos[0:7], obstacles=self._obstacles, attachments=attachments)
+        # path = planning.plan_joint_motion(self._robot, jt.get_movable_joints(self._robot)[0:7], goalJntPos[0:7], obstacles=self._obstacles, attachments=attachments)
+        path = None
+        path = planning.plan_joint_motion(self._robot, jt.get_movable_joints(self._robot)[0:7], goalJntPos[0:7])
 
         if path is None:
             print("\nNo plan found!\n", file=sys.stderr)
@@ -86,7 +118,9 @@ class FlexPlanning(object):
 
     def updateRobotConfiguration(self, robot_id, config):
         set_joint_positions(robot_id, jt.get_movable_joints(robot_id), config)
-        # print("Update robot " + str(robot_id) + " with", config)
+        # print("S) Update robot " + str(robot_id) + " with " + str(config) + " : TO = " + str(get_joint_positions(robot_id, jt.get_movable_joints(self._robot))[0:7]))
+        p.stepSimulation()
+        print("S) Read robot with " + str(get_joint_positions(robot_id, jt.get_movable_joints(robot_id)[0:7])))
 
     def updateObjectPoses(self, object_id, pos, orn):
         for body in get_bodies():

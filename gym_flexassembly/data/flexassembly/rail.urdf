@@ -12,7 +12,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-		<mesh filename="rail_small.stl" scale="1 1 1"/>
+		<mesh filename="Rail.obj" scale="1 1.15 1"/>
       </geometry>
        <material name="gray">
         <color rgba="0.5 0.5 0.5 1"/>
@@ -21,7 +21,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-	 	<mesh filename="rail_small.stl" scale="1 1 1"/>
+	 	<mesh filename="Rail_Coll.obj" scale="1 1.15 1"/>
       </geometry>
     </collision>
   </link>
