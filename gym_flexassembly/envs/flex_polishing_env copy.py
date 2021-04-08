@@ -299,7 +299,7 @@ class FlexPolishingEnv(EnvInterface):
         if self.kuka7_1_egp:
             self.kuka7_1_egp.update()
 
-        # self.getFrameManager().updateFramePoses()
+        self.getFrameManager().updateFramePoses()
 
         # pose_frame_tx = self._p.readUserDebugParameter(self.dp_frame_tx)
         # pose_frame_ty = self._p.readUserDebugParameter(self.dp_frame_ty)
@@ -335,75 +335,75 @@ class FlexPolishingEnv(EnvInterface):
         #                             targetPosition=0,
         #                             force=90000.0)
 
-        # if self.itercount > 100 and self.gogogo:
-        #     contacts = self._p.getContactPoints(bodyA=self.kuka14_1, bodyB=self.window_id, linkIndexB=0)
-        #     # contactFlag, bodyUniqueIdA, bodyUniqueIdB, linkIndexA, linkIndexB, positionOnA, positionOnB, contactNormalOnB, contactDistance, normalForce, lateralFriction1, lateralFrictionDir1, lateralFriction2, lateralFrictionDir2
-        #     for contact in contacts:
-        #         if contact[3] == 12:
-        #             # link_index = contact[3]
-        #             # print(link_index)
-        #             # ddd = 40000.0
-        #             # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
-        #             # print(contact[9])
+        if self.itercount > 100 and self.gogogo:
+            contacts = self._p.getContactPoints(bodyA=self.kuka14_1, bodyB=self.window_id, linkIndexB=0)
+            # contactFlag, bodyUniqueIdA, bodyUniqueIdB, linkIndexA, linkIndexB, positionOnA, positionOnB, contactNormalOnB, contactDistance, normalForce, lateralFriction1, lateralFrictionDir1, lateralFriction2, lateralFrictionDir2
+            for contact in contacts:
+                if contact[3] == 12:
+                    # link_index = contact[3]
+                    # print(link_index)
+                    # ddd = 40000.0
+                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
+                    # print(contact[9])
 
-        #             # self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
-        #             # self.itercount = 0
-        #             pass
-        #         elif contact[3] == 14:
-        #             # link_index = contact[3]
-        #             # print(link_index)
-        #             ddd = 1000.0
-        #             # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*contact[9]*0.001, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
+                    # self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
+                    # self.itercount = 0
+                    pass
+                elif contact[3] == 14:
+                    # link_index = contact[3]
+                    # print(link_index)
+                    ddd = 1000.0
+                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*contact[9]*0.001, [contact[9]/ddd, 0, (ddd-contact[9])/ddd], 4)
 
-        #             _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
-        #             # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*ft_sensor_forces[2]*0.001, [ft_sensor_forces[2]/ddd, 0, (ddd-ft_sensor_forces[2])/ddd], 4)
+                    _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
+                    # self._p.addUserDebugLine(contact[6], np.array(contact[6]) + np.array(contact[7])*ft_sensor_forces[2]*0.001, [ft_sensor_forces[2]/ddd, 0, (ddd-ft_sensor_forces[2])/ddd], 4)
 
-        #             # self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
-        #             # self.itercount = 0
-        #             # print(contact[9])
-        #         # if contact[3] == 12 or contact[3] == 13:
-        #         #     # contact[6]
-        #         #     _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
-        #         #     self.collect_contact.append([contact[6],ft_sensor_forces[2]])
-        #         #     self.itercount = 0
+                    # self.collect_contact.append([contact[6],np.array(contact[6]) + np.array(contact[7])*0.001*contact[9]*0.005])
+                    # self.itercount = 0
+                    # print(contact[9])
+                # if contact[3] == 12 or contact[3] == 13:
+                #     # contact[6]
+                #     _, _, ft_sensor_forces, _ = self._p.getJointState(self.kuka14_1, 9)
+                #     self.collect_contact.append([contact[6],ft_sensor_forces[2]])
+                #     self.itercount = 0
 
-        # # print(time.time_ns())
-        # if (time.time_ns() - self.startTime) > 1000:
-        #     self.startTime = time.time_ns()
-        #     keys = p.getKeyboardEvents()
-        #     for k, v in keys.items():
-        #         if (k == p.B3G_RETURN and (v & p.KEY_WAS_TRIGGERED)):
-        #             print("Draw")
-        #             self.gogogo = False
-        #             # print(self.collect_contact)
-        #             last = np.array([0,0,0])
-        #             count = 0
-        #             print("size: " + str(len(self.collect_contact)))
-        #             for a in self.collect_contact:
-        #                 atmp = np.array(a[0])
-        #                 if math.fabs(np.linalg.norm(last-atmp)) < 0.1:
-        #                     continue
-        #                 last = atmp
-        #                 self._p.addUserDebugLine(last, last + np.array([-0.001,0,0])*a[1], [1,0,0], 4)
-        #                 count = count + 1
-        #             print(count)
-        #         if (k == p.B3G_RIGHT_ARROW and (v & p.KEY_WAS_TRIGGERED)):
-        #             self.collect_contact = []
-        #             print("pressed")
+        # print(time.time_ns())
+        if (time.time_ns() - self.startTime) > 1000:
+            self.startTime = time.time_ns()
+            keys = p.getKeyboardEvents()
+            for k, v in keys.items():
+                if (k == p.B3G_RETURN and (v & p.KEY_WAS_TRIGGERED)):
+                    print("Draw")
+                    self.gogogo = False
+                    # print(self.collect_contact)
+                    last = np.array([0,0,0])
+                    count = 0
+                    print("size: " + str(len(self.collect_contact)))
+                    for a in self.collect_contact:
+                        atmp = np.array(a[0])
+                        if math.fabs(np.linalg.norm(last-atmp)) < 0.1:
+                            continue
+                        last = atmp
+                        self._p.addUserDebugLine(last, last + np.array([-0.001,0,0])*a[1], [1,0,0], 4)
+                        count = count + 1
+                    print(count)
+                if (k == p.B3G_RIGHT_ARROW and (v & p.KEY_WAS_TRIGGERED)):
+                    self.collect_contact = []
+                    print("pressed")
         
-        # self.itercount = self.itercount + 1
+        self.itercount = self.itercount + 1
 
 
-        # _, _, _, _, worldLinkFramePosition, worldLinkFrameOrientation = self._p.getLinkState(self.kuka14_1, 14)
-        # self._p.resetBasePositionAndOrientation(self.constraint_edge_glas_id, worldLinkFramePosition, worldLinkFrameOrientation)
+        _, _, _, _, worldLinkFramePosition, worldLinkFrameOrientation = self._p.getLinkState(self.kuka14_1, 14)
+        self._p.resetBasePositionAndOrientation(self.constraint_edge_glas_id, worldLinkFramePosition, worldLinkFrameOrientation)
 
-        # worldLinkFramePosition2, worldLinkFrameOrientation2 = self._p.getBasePositionAndOrientation(self.constraint_glas_id)
+        worldLinkFramePosition2, worldLinkFrameOrientation2 = self._p.getBasePositionAndOrientation(self.constraint_glas_id)
 
-        # third = (np.array(worldLinkFramePosition)-np.array([0.7,0.0,1.6])) / 3.0
+        third = (np.array(worldLinkFramePosition)-np.array([0.7,0.0,1.6])) / 3.0
 
-        # self.me_line_1 = p.addUserDebugLine(worldLinkFramePosition, np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1)
-        # self.me_line_1_a = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_a)
-        # self.me_line_1_b = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.7,0.0,1.6], [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_b)
+        self.me_line_1 = p.addUserDebugLine(worldLinkFramePosition, np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1)
+        self.me_line_1_a = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-np.array([0,0,0.05]), np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_a)
+        self.me_line_1_b = p.addUserDebugLine(np.array(worldLinkFramePosition)-third-third-np.array([0,0,-0.05]), [0.7,0.0,1.6], [0.0, 0.6, 0.85], 6, replaceItemUniqueId=self.me_line_1_b)
 
 
         # 
@@ -426,27 +426,27 @@ class FlexPolishingEnv(EnvInterface):
         # fw = self.getFrameManager().createFrame("fw", pos=[0,0,0], orn=[0,0,0,1], ref_id=-1, scale=2.5, dirtext=[0,0.25,0.25])
 
         
-        # fc = self.getFrameManager().createFrame("fc", ref_id=self.kuka14_1, ref_link_id=14, is_body_frame=True, scale=1.4, orn=[0,1,0,0])
-        # fc.setVisibility(2, False)
-        # fc.setVisibility(4, False)
+        fc = self.getFrameManager().createFrame("fc", ref_id=self.kuka14_1, ref_link_id=14, is_body_frame=True, scale=1.4, orn=[0,1,0,0])
+        fc.setVisibility(2, False)
+        fc.setVisibility(4, False)
 
-        # # fee = self.getFrameManager().createFrame("fee", ref_id=self.kuka14_1, ref_link_id=9, is_body_frame=True, scale=0.5, orn=[0,0,0,1], dirtext=[-0.15,0,0.15])
+        # fee = self.getFrameManager().createFrame("fee", ref_id=self.kuka14_1, ref_link_id=9, is_body_frame=True, scale=0.5, orn=[0,0,0,1], dirtext=[-0.15,0,0.15])
 
-        # fm = self.getFrameManager().createFrame("fm", pos=[0.7,0.0,1.6], orn=[0,0.707,0,0.707], ref_id=-1, scale=0.5, dirtext=[-0.15,0,0.15])
+        fm = self.getFrameManager().createFrame("fm", pos=[0.7,0.0,1.6], orn=[0,0.707,0,0.707], ref_id=-1, scale=0.5, dirtext=[-0.15,0,0.15])
 
-        # # fo1 = self.getFrameManager().createFrame("fo1", ref_id=self.kuka14_1, ref_link_id=-1, is_body_frame=True, scale=1.8)
+        # fo1 = self.getFrameManager().createFrame("fo1", ref_id=self.kuka14_1, ref_link_id=-1, is_body_frame=True, scale=1.8)
 
         
 
-        # fs = self.getFrameManager().createFrame("fs", ref_id=self.window_id, ref_link_id=-1, is_body_frame=True, scale=0.8, orn=[0,-0.707,0,0.707])
+        fs = self.getFrameManager().createFrame("fs", ref_id=self.window_id, ref_link_id=-1, is_body_frame=True, scale=0.8, orn=[0,-0.707,0,0.707])
 
-        # # fo2 = self.getFrameManager().createFrame("fo2", pos=[0,0.315,0], ref_id=fs.getFrameId(), scale=0.8, orn=[0,0.707,0,0.707])
+        # fo2 = self.getFrameManager().createFrame("fo2", pos=[0,0.315,0], ref_id=fs.getFrameId(), scale=0.8, orn=[0,0.707,0,0.707])
 
-        # self.constraint_glas_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/surface_glas.urdf", useFixedBase=True, globalScaling=1.0)
-        # p.resetBasePositionAndOrientation(self.constraint_glas_id, [0.72,0.13,1.12], [0,0,0,1])
+        self.constraint_glas_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/surface_glas.urdf", useFixedBase=True, globalScaling=1.0)
+        p.resetBasePositionAndOrientation(self.constraint_glas_id, [0.72,0.13,1.12], [0,0,0,1])
 
-        # self.constraint_edge_glas_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/edge_glas.urdf", useFixedBase=True, globalScaling=1.0)
-        # p.resetBasePositionAndOrientation(self.constraint_edge_glas_id, [0.72,0.13,1.12], [0,0,0,1])
+        self.constraint_edge_glas_id = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/objects/edge_glas.urdf", useFixedBase=True, globalScaling=1.0)
+        p.resetBasePositionAndOrientation(self.constraint_edge_glas_id, [0.72,0.13,1.12], [0,0,0,1])
 
 
 
