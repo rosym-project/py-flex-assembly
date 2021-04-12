@@ -1,0 +1,24 @@
+# Blender MTL File: 'dist_fine.blend'
+# Material Count: 2
+
+newmtl Alu
+Ns 255.000000
+Ka 0.560345 0.560345 0.560345
+Kd 0.400000 0.400000 0.400000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd AluBlueMat.png
+
+newmtl BlueRubber
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.000000 0.047143 0.800000
+Ks 0.094828 0.094828 0.094828
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd AluBlueMat.png

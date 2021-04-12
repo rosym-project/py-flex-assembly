@@ -63,6 +63,10 @@
   <exec_depend>vision-opencv</exec_depend>
   <exec_depend>vision-msgs</exec_depend>
 
+  <build_depend>cosima_msgs</build_depend>
+  <build_export_depend>cosima_msgs</build_export_depend>
+  <exec_depend>cosima_msgs</exec_depend>
+
 
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>

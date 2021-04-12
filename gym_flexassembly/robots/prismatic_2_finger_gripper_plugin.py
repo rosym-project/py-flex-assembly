@@ -14,7 +14,7 @@ import sys
 import threading
 
 class Prismatic2FingerGripperPlugin:
-    def __init__(self, connect_to_loaded_model_id, name, finger_1_joint_name, finger_2_joint_name, use_real_interface=True, closing_vel=-0.1, opening_vel=0.1, max_force=800.0):
+    def __init__(self, connect_to_loaded_model_id, name, finger_1_joint_name, finger_2_joint_name, use_real_interface=True, closing_vel=-0.05, opening_vel=0.05, max_force=100.0):
         self._use_real_interface = use_real_interface
         self._name = name
         self._connect_to_loaded_model_id = connect_to_loaded_model_id
@@ -118,8 +118,39 @@ class Prismatic2FingerGripperPlugin:
         self.cmd = self._opening_vel
 
         # Take care of the gripper mechanism reset
-        p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_1_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
-        p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_2_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
+        # p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_1_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
+        # p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_2_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
+
+        if self.cmd < 0:
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_1_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.0,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_2_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.0,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
+        else:
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_1_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.01,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_2_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.01,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
 
     def update(self):
         # TODO calculate convergence based on velocity and not position
@@ -139,8 +170,38 @@ class Prismatic2FingerGripperPlugin:
                     # Moving again
                     self._already_converged = False
 
-        p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_1_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
-        p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_2_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
+        # p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_1_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
+        # p.setJointMotorControl2(bodyIndex=self._connect_to_loaded_model_id, jointIndex=self._finger_2_joint_index, controlMode=p.VELOCITY_CONTROL, targetPosition=0.0, targetVelocity=self.cmd, force=self._max_force)
+        if self.cmd < 0:
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_1_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.0,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_2_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.0,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
+        else:
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_1_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.01,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
+            p.setJointMotorControl2(
+                        bodyIndex=self._connect_to_loaded_model_id,
+                        jointIndex=self._finger_2_joint_index,
+                        controlMode=p.POSITION_CONTROL,
+                        targetPosition=0.01,
+                        maxVelocity=self._opening_vel,
+                        force=self._max_force)
 
     def close(self):
         self.cmd = self._closing_vel

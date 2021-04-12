@@ -22,8 +22,12 @@ if len(sys.argv) >= 4:
     x = float(sys.argv[1])
     y = float(sys.argv[2])
     z = float(sys.argv[3])
-    if len(sys.argv) == 5:
-        topic = str(sys.argv[4])
+    qw = float(sys.argv[4])
+    qx = float(sys.argv[5])
+    qy = float(sys.argv[6])
+    qz = float(sys.argv[7])
+    # if len(sys.argv) == 5:
+    #     topic = str(sys.argv[4])
 else:
     sys.exit(1)
 
@@ -35,10 +39,10 @@ try:
     goal.position.y = y
     goal.position.z = z
 
-    goal.orientation.x = 0
-    goal.orientation.y = 1
-    goal.orientation.z = 0
-    goal.orientation.w = 0
+    goal.orientation.x = qx
+    goal.orientation.y = qy
+    goal.orientation.z = qz
+    goal.orientation.w = qw
     resp1 = add_two_ints(goal)
 except rospy.ServiceException as e:
     print("Service call failed: %s"%e)

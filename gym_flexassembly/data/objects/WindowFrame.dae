@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 2.83.5 commit date:2020-08-19, commit time:06:07, hash:c2b144df395f</authoring_tool>
+    </contributor>
+    <created>2021-01-27T19:08:19</created>
+    <modified>2021-01-27T19:08:19</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_effects>
+    <effect id="FrameMat-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <diffuse>
+              <color sid="diffuse">0.8 0.8 0.8 1</color>
+            </diffuse>
+            <index_of_refraction>
+              <float sid="ior">1.45</float>
+            </index_of_refraction>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_images/>
+  <library_materials>
+    <material id="FrameMat-material" name="FrameMat">
+      <instance_effect url="#FrameMat-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="FrameTop3_001-mesh" name="FrameTop3.001">
+      <mesh>
+        <source id="FrameTop3_001-mesh-positions">
+          <float_array id="FrameTop3_001-mesh-positions-array" count="108">-0.02499997 -0.4 4.58974e-5 -0.02499997 -0.4 0.05004596 -0.02499997 0.4 4.58974e-5 -0.02499997 0.4 4.58974e-5 -0.02499997 -0.4 0.05004596 -0.02499997 0.4 0.05004596 0.02499997 -0.4 4.58974e-5 0.02499997 -0.4 0.05004596 -0.02499997 -0.4 4.58974e-5 -0.02499997 -0.4 4.58974e-5 0.02499997 -0.4 0.05004596 -0.02499997 -0.4 0.05004596 0.02499997 -0.4 0.05004596 0.02499997 0.4 0.05004596 -0.02499997 -0.4 0.05004596 -0.02499997 -0.4 0.05004596 0.02499997 0.4 0.05004596 -0.02499997 0.4 0.05004596 0.02499997 0.4 0.05004596 0.02499997 0.4 4.58974e-5 -0.02499997 0.4 0.05004596 -0.02499997 0.4 0.05004596 0.02499997 0.4 4.58974e-5 -0.02499997 0.4 4.58974e-5 0.02499997 0.4 4.58974e-5 0.02499997 -0.4 4.58974e-5 -0.02499997 0.4 4.58974e-5 -0.02499997 0.4 4.58974e-5 0.02499997 -0.4 4.58974e-5 -0.02499997 -0.4 4.58974e-5 0.02499997 0.4 4.58974e-5 0.02499997 0.4 0.05004596 0.02499997 -0.4 4.58974e-5 0.02499997 -0.4 4.58974e-5 0.02499997 0.4 0.05004596 0.02499997 -0.4 0.05004596</float_array>
+          <technique_common>
+            <accessor source="#FrameTop3_001-mesh-positions-array" count="36" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="FrameTop3_001-mesh-normals">
+          <float_array id="FrameTop3_001-mesh-normals-array" count="18">-1 0 0 0 -1 0 0 0 1 0 1 0 0 0 -1 1 0 0</float_array>
+          <technique_common>
+            <accessor source="#FrameTop3_001-mesh-normals-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="FrameTop3_001-mesh-vertices">
+          <input semantic="POSITION" source="#FrameTop3_001-mesh-positions"/>
+        </vertices>
+        <triangles material="FrameMat-material" count="12">
+          <input semantic="VERTEX" source="#FrameTop3_001-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#FrameTop3_001-mesh-normals" offset="1"/>
+          <p>0 0 1 0 2 0 3 0 4 0 5 0 6 1 7 1 8 1 9 1 10 1 11 1 12 2 13 2 14 2 15 2 16 2 17 2 18 3 19 3 20 3 21 3 22 3 23 3 24 4 25 4 26 4 27 4 28 4 29 4 30 5 31 5 32 5 33 5 34 5 35 5</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="FrameLeft5-mesh" name="FrameLeft5">
+      <mesh>
+        <source id="FrameLeft5-mesh-positions">
+          <float_array id="FrameLeft5-mesh-positions-array" count="108">-0.02499997 -0.4 1.1 -0.02499997 -0.4 0 -0.02499997 -0.45 1.1 -0.02499997 -0.45 1.1 -0.02499997 -0.4 0 -0.02499997 -0.45 0 0.02499997 -0.4 0 0.02499997 -0.45 0 -0.02499997 -0.4 0 -0.02499997 -0.4 0 0.02499997 -0.45 0 -0.02499997 -0.45 0 0.02499997 -0.45 0 0.02499997 -0.45 1.1 -0.02499997 -0.45 0 -0.02499997 -0.45 0 0.02499997 -0.45 1.1 -0.02499997 -0.45 1.1 0.02499997 -0.45 1.1 0.02499997 -0.4 1.1 -0.02499997 -0.45 1.1 -0.02499997 -0.45 1.1 0.02499997 -0.4 1.1 -0.02499997 -0.4 1.1 0.02499997 -0.4 1.1 0.02499997 -0.4 0 -0.02499997 -0.4 1.1 -0.02499997 -0.4 1.1 0.02499997 -0.4 0 -0.02499997 -0.4 0 0.02499997 -0.4 0 0.02499997 -0.4 1.1 0.02499997 -0.45 0 0.02499997 -0.45 0 0.02499997 -0.4 1.1 0.02499997 -0.45 1.1</float_array>
+          <technique_common>
+            <accessor source="#FrameLeft5-mesh-positions-array" count="36" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="FrameLeft5-mesh-normals">
+          <float_array id="FrameLeft5-mesh-normals-array" count="18">-1 0 0 0 0 -1 0 -1 0 0 0 1 0 1 0 1 0 0</float_array>
+          <technique_common>
+            <accessor source="#FrameLeft5-mesh-normals-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="FrameLeft5-mesh-vertices">
+          <input semantic="POSITION" source="#FrameLeft5-mesh-positions"/>
+        </vertices>
+        <triangles material="FrameMat-material" count="12">
+          <input semantic="VERTEX" source="#FrameLeft5-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#FrameLeft5-mesh-normals" offset="1"/>
+          <p>0 0 1 0 2 0 3 0 4 0 5 0 6 1 7 1 8 1 9 1 10 1 11 1 12 2 13 2 14 2 15 2 16 2 17 2 18 3 19 3 20 3 21 3 22 3 23 3 24 4 25 4 26 4 27 4 28 4 29 4 30 5 31 5 32 5 33 5 34 5 35 5</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="FrameRight4-mesh" name="FrameRight4">
+      <mesh>
+        <source id="FrameRight4-mesh-positions">
+          <float_array id="FrameRight4-mesh-positions-array" count="108">-0.02499997 0.4 0 -0.02499997 0.4 1.1 -0.02499997 0.45 0 -0.02499997 0.45 0 -0.02499997 0.4 1.1 -0.02499997 0.45 1.1 0.02499997 0.4 1.1 0.02499997 0.45 1.1 -0.02499997 0.4 1.1 -0.02499997 0.4 1.1 0.02499997 0.45 1.1 -0.02499997 0.45 1.1 0.02499997 0.45 1.1 0.02499997 0.45 0 -0.02499997 0.45 1.1 -0.02499997 0.45 1.1 0.02499997 0.45 0 -0.02499997 0.45 0 0.02499997 0.45 0 0.02499997 0.4 0 -0.02499997 0.45 0 -0.02499997 0.45 0 0.02499997 0.4 0 -0.02499997 0.4 0 0.02499997 0.4 0 0.02499997 0.4 1.1 -0.02499997 0.4 0 -0.02499997 0.4 0 0.02499997 0.4 1.1 -0.02499997 0.4 1.1 0.02499997 0.4 1.1 0.02499997 0.4 0 0.02499997 0.45 1.1 0.02499997 0.45 1.1 0.02499997 0.4 0 0.02499997 0.45 0</float_array>
+          <technique_common>
+            <accessor source="#FrameRight4-mesh-positions-array" count="36" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="FrameRight4-mesh-normals">
+          <float_array id="FrameRight4-mesh-normals-array" count="18">-1 0 0 0 0 1 0 1 0 0 0 -1 0 -1 0 1 0 0</float_array>
+          <technique_common>
+            <accessor source="#FrameRight4-mesh-normals-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="FrameRight4-mesh-vertices">
+          <input semantic="POSITION" source="#FrameRight4-mesh-positions"/>
+        </vertices>
+        <triangles material="FrameMat-material" count="12">
+          <input semantic="VERTEX" source="#FrameRight4-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#FrameRight4-mesh-normals" offset="1"/>
+          <p>0 0 1 0 2 0 3 0 4 0 5 0 6 1 7 1 8 1 9 1 10 1 11 1 12 2 13 2 14 2 15 2 16 2 17 2 18 3 19 3 20 3 21 3 22 3 23 3 24 4 25 4 26 4 27 4 28 4 29 4 30 5 31 5 32 5 33 5 34 5 35 5</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="FrameTop3-mesh" name="FrameTop3">
+      <mesh>
+        <source id="FrameTop3-mesh-positions">
+          <float_array id="FrameTop3-mesh-positions-array" count="108">-0.02499997 -0.4 1.05 -0.02499997 -0.4 1.1 -0.02499997 0.4 1.05 -0.02499997 0.4 1.05 -0.02499997 -0.4 1.1 -0.02499997 0.4 1.1 0.02499997 -0.4 1.05 0.02499997 -0.4 1.1 -0.02499997 -0.4 1.05 -0.02499997 -0.4 1.05 0.02499997 -0.4 1.1 -0.02499997 -0.4 1.1 0.02499997 -0.4 1.1 0.02499997 0.4 1.1 -0.02499997 -0.4 1.1 -0.02499997 -0.4 1.1 0.02499997 0.4 1.1 -0.02499997 0.4 1.1 0.02499997 0.4 1.1 0.02499997 0.4 1.05 -0.02499997 0.4 1.1 -0.02499997 0.4 1.1 0.02499997 0.4 1.05 -0.02499997 0.4 1.05 0.02499997 0.4 1.05 0.02499997 -0.4 1.05 -0.02499997 0.4 1.05 -0.02499997 0.4 1.05 0.02499997 -0.4 1.05 -0.02499997 -0.4 1.05 0.02499997 0.4 1.05 0.02499997 0.4 1.1 0.02499997 -0.4 1.05 0.02499997 -0.4 1.05 0.02499997 0.4 1.1 0.02499997 -0.4 1.1</float_array>
+          <technique_common>
+            <accessor source="#FrameTop3-mesh-positions-array" count="36" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="FrameTop3-mesh-normals">
+          <float_array id="FrameTop3-mesh-normals-array" count="18">-1 0 0 0 -1 0 0 0 1 0 1 0 0 0 -1 1 0 0</float_array>
+          <technique_common>
+            <accessor source="#FrameTop3-mesh-normals-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="FrameTop3-mesh-vertices">
+          <input semantic="POSITION" source="#FrameTop3-mesh-positions"/>
+        </vertices>
+        <triangles material="FrameMat-material" count="12">
+          <input semantic="VERTEX" source="#FrameTop3-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#FrameTop3-mesh-normals" offset="1"/>
+          <p>0 0 1 0 2 0 3 0 4 0 5 0 6 1 7 1 8 1 9 1 10 1 11 1 12 2 13 2 14 2 15 2 16 2 17 2 18 3 19 3 20 3 21 3 22 3 23 3 24 4 25 4 26 4 27 4 28 4 29 4 30 5 31 5 32 5 33 5 34 5 35 5</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Window" name="Window" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <node id="FrameTop" name="FrameTop" type="NODE">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+          <instance_geometry url="#FrameTop3-mesh" name="FrameTop">
+            <bind_material>
+              <technique_common>
+                <instance_material symbol="FrameMat-material" target="#FrameMat-material"/>
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node id="FrameRight" name="FrameRight" type="NODE">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+          <instance_geometry url="#FrameRight4-mesh" name="FrameRight">
+            <bind_material>
+              <technique_common>
+                <instance_material symbol="FrameMat-material" target="#FrameMat-material"/>
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node id="FrameLeft" name="FrameLeft" type="NODE">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+          <instance_geometry url="#FrameLeft5-mesh" name="FrameLeft">
+            <bind_material>
+              <technique_common>
+                <instance_material symbol="FrameMat-material" target="#FrameMat-material"/>
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+        <node id="FrameBot" name="FrameBot" type="NODE">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+          <instance_geometry url="#FrameTop3_001-mesh" name="FrameBot">
+            <bind_material>
+              <technique_common>
+                <instance_material symbol="FrameMat-material" target="#FrameMat-material"/>
+              </technique_common>
+            </bind_material>
+          </instance_geometry>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
