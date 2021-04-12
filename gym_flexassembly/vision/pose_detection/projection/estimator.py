@@ -115,7 +115,7 @@ def reorder(bb1, bb2):
 
 
 def regress_depth_plane(mask, img_depth, interval=(0.25, 0.75)):
-    if mask.dtype != np.bool:
+    if mask.dtype != bool:
         raise ValueError(f'Boolean mask and not {mask.dtype} required!')
 
     depths = img_depth[mask]
@@ -288,9 +288,9 @@ class PoseEstimator():
             # visualize x and y in color image
             dir_x = pts_color[_order[0]] - pts_color[_order[1]]
             dir_y = pts_color[_order[2]] - pts_color[_order[0]]
-            c = np.mean(bb_aligned.as_points(), axis=0).astype(np.int)
-            cx = (c + 0.25 * dir_x).astype(np.int)
-            cy = (c + 0.25 * dir_y).astype(np.int)
+            c = np.mean(bb_aligned.as_points(), axis=0).astype(int)
+            cx = (c + 0.25 * dir_x).astype(int)
+            cy = (c + 0.25 * dir_y).astype(int)
             cv.line(self.imgs['color'], tuple(c), tuple(cx), (255, 0, 0), 2)
             cv.line(self.imgs['color'], tuple(c), tuple(cy), (0, 255, 0), 2)
             # visualize sides used for dir computation
