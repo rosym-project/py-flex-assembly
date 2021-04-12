@@ -29,7 +29,11 @@ class PoseService:
         self.tm = TransformManager()
         self.init_transfrom_manager()
 
-        self.pose_estimator = PoseEstimator(debug=args.debug, window_size=args.averaging_window, transform_manager=self.tm)
+        side_model = None
+        if args.side_model:
+            from gym_flexassembly.vision.pose_detection.projection.side_model import SidePredictor
+            side_model = SidePredictor(args.side_model)
+        self.pose_estimator = PoseEstimator(debug=args.debug, window_size=args.averaging_window, transform_manager=self.tm, side_model=side_model)
 
         self.publisher = rospy.Publisher(args.topic, Pose, queue_size=10)
         self.service = rospy.Service(args.topic, GetClamp, self.handle_request)
@@ -146,6 +150,7 @@ if __name__ == '__main__':
     parser.add_argument('--file', type=str)
     parser.add_argument('--averaging_window', type=int, default=25,
                         help='the detected pose is averaged over this many frames')
+    parser.add_argument('--side_model', type=str, default=None)
     args = parser.parse_args()
     print(args)
 
