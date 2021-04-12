@@ -166,10 +166,9 @@ def get_order(_pts, _side):
         else:
             return [3, 2, 0]
 
-
 class PoseEstimator():
 
-    def __init__(self, window_size=25, debug=True, transform_manager=None):
+    def __init__(self, window_size=25, debug=True, transform_manager=None, side_model=None):
         self.filter_unaligned = FilterList()
         self.filter_aligned = FilterList()
         self.align = rs.align(rs.stream.color)
@@ -179,6 +178,7 @@ class PoseEstimator():
         self.orn_averaging = AveragingRotation(window_size)
 
         self.debug = debug
+        self.side_model = side_model
         self.tm = transform_manager
 
         self.imgs = {'color': None, 'depth': None, 'bbdet': None, 'figure': None}
@@ -236,11 +236,14 @@ class PoseEstimator():
 
         # refine bb for color image
         bb_refined = fts.refine_bb(bb_aligned, img_color)
+
+        if self.side_model is None:
+            side = fts.detect_side(img_color, bb_refined.as_points())
+        else:
+            side = fts.detect_side_2(img_color, bb_refined, self.side_model)
+
         if self.debug:
             cv.drawContours(self.imgs['color'], [bb_refined.as_int()], -1, (255, 0, 0), 3)
-
-        side = fts.detect_side(img_color, bb_refined.as_points())
-        if self.debug:
             fts.visualize_features(self.imgs['color'], bb_refined, side)
 
         return bb_refined, side
@@ -397,6 +400,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--file', type=str, default=None)
+    parser.add_argument('--side_model', type=str, default=None)
     parser.add_argument('--averaging_window', type=int, default=25,
                         help='the detected pose is averaged over this many frames')
     args = parser.parse_args()
@@ -441,7 +445,12 @@ if __name__ == '__main__':
     # plt.show()
     # exit(0)
 
-    estimator = PoseEstimator(transform_manager=tm, window_size=args.averaging_window)
+    side_model = None
+    if args.side_model:
+        from gym_flexassembly.vision.pose_detection.projection.side_model import SidePredictor
+        side_model = SidePredictor(args.side_model)
+
+    estimator = PoseEstimator(transform_manager=tm, window_size=args.averaging_window, side_model=side_model)
     try:
         while True:
             try:
