@@ -205,6 +205,43 @@ def refine_bb(bounding_box, image):
     # calculate an oriented bounding box
     return BoundingBox(cv.minAreaRect(contours[0]))
 
+def img_from_half(img_color, half):
+    ys = half[:, 0]
+    xs = half[:, 1]
+    ys = (ys.min(), ys.max())
+    xs = (xs.min(), xs.max())
+    h = ys[1] - ys[0]
+    w = xs[1] - xs[0]
+
+    if h < w:
+        diff = (w - h) // 2
+        ys = (ys[0] - diff, ys[1] + diff)
+    else:
+        diff = (h - w) // 2
+        xs = (xs[0] - diff, xs[1] + diff)
+
+    return img_color[xs[0]:xs[1], ys[0]:ys[1]]
+
+def detect_side_2(image, bb, side_model):
+    box = bb.as_int()
+    if np.linalg.norm(box[0] - box[1]) < np.linalg.norm(box[1] - box[2]):
+        half_1 = [box[0], box[1]]
+        half_2 = [box[3], box[2]]
+    else:
+        half_1 = [box[1], box[2]]
+        half_2 = [box[0], box[3]]
+    middle = [(half_1[0] + half_2[0]) / 2, (half_1[1] + half_2[1]) / 2]
+    middle.reverse()
+    half_1.extend(middle)
+    half_1 = np.round(np.array(half_1)).astype(np.int)
+
+    img = img_from_half(image, half_1)
+    pred = side_model.predict(img)
+    
+    # title = 'hole' if pred == 0 else 'other'
+    # cv.imshow(title, img)
+
+    return pred
 
 def detect_side(image, box, visualize=True):
     """
