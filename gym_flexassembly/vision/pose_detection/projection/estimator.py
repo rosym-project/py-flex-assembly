@@ -190,148 +190,149 @@ class PoseEstimator():
 
 
     def process_frames(self, frames):
-        frame_depth = frames.get_depth_frame()
-        frame_depth = self.filter_list.process(frame_depth).as_depth_frame()
-        img_depth = np.asanyarray(frame_depth.get_data())
+        try:
+            frame_depth = frames.get_depth_frame()
+            frame_depth = self.filter_list.process(frame_depth).as_depth_frame()
+            img_depth = np.asanyarray(frame_depth.get_data())
 
-        frame_color = frames.get_color_frame()
-        img_color = np.asanyarray(frame_color.get_data())
-        img_color = cv.cvtColor(img_color, cv.COLOR_RGB2BGR)
+            frame_color = frames.get_color_frame()
+            img_color = np.asanyarray(frame_color.get_data())
+            img_color = cv.cvtColor(img_color, cv.COLOR_RGB2BGR)
 
-        if self.debug:
-            self.imgs['color'] = img_color
-            self.imgs['depth'] = viz.display_depth_image(img_depth)
-            self.imgs['bbdet'] = np.zeros((*img_depth.shape, 3), np.uint8)
+            if self.debug:
+                self.imgs['color'] = img_color
+                self.imgs['depth'] = viz.display_depth_image(img_depth)
+                self.imgs['bbdet'] = np.zeros((*img_depth.shape, 3), np.uint8)
 
-            if self.imgs['figure'] is None:
-                self.imgs['figure'] = np.zeros((*img_depth.shape, 3), np.uint8)
+                if self.imgs['figure'] is None:
+                    self.imgs['figure'] = np.zeros((*img_depth.shape, 3), np.uint8)
 
-        bb_unaligned = fts.detect_bbs(self.tm, frame_depth, vis=self.imgs['bbdet'])[0]
-        if self.debug:
-            cv.drawContours(self.imgs['depth'], [bb_unaligned.as_int()], -1, (0, 255, 0), 2)
+            bb_unaligned = fts.detect_bbs(self.tm, frame_depth, vis=self.imgs['bbdet'])[0]
+            if self.debug:
+                cv.drawContours(self.imgs['depth'], [bb_unaligned.as_int()], -1, (0, 255, 0), 2)
 
-        bb_color = []
-        for _pt in bb_unaligned.as_points():
-            bb_color.append(fts.depth_to_color_pixel(_pt, frame_depth, frame_color))
-        bb_color = np.array(bb_color).astype(int)
-        bb_aligned = fts.BoundingBox(cv.minAreaRect(bb_color))
-        if self.debug:
-            cv.drawContours(self.imgs['color'], [bb_aligned.as_int()], -1, (255, 0, 0), 3)
+            bb_color = []
+            for _pt in bb_unaligned.as_points():
+                bb_color.append(fts.depth_to_color_pixel(_pt, frame_depth, frame_color))
+            bb_color = np.array(bb_color).astype(int)
+            bb_aligned = fts.BoundingBox(cv.minAreaRect(bb_color))
+            if self.debug:
+                cv.drawContours(self.imgs['color'], [bb_aligned.as_int()], -1, (255, 0, 0), 3)
 
-        if self.side_model is None:
-            side = fts.detect_side(img_color, bb_aligned.as_points())
-        else:
-            side = fts.detect_side_2(img_color, bb_aligned, self.side_model)
-        if self.debug:
-            fts.visualize_features(self.imgs['color'], bb_aligned, side)
+            if self.side_model is None:
+                side = fts.detect_side(img_color, bb_aligned.as_points())
+            else:
+                side = fts.detect_side_2(img_color, bb_aligned, self.side_model)
+            if self.debug:
+                fts.visualize_features(self.imgs['color'], bb_aligned, side)
 
-        # compute planes through depth values in bbs (upper = clamp, lower = table) 
-        if self.debug:
-            plane_upper, plane_lower = compute_planes(img_depth, bb_unaligned, ax=self.ax_planes)
-        else:
-            plane_upper, plane_lower = compute_planes(img_depth, bb_unaligned)
+            # compute planes through depth values in bbs (upper = clamp, lower = table) 
+            if self.debug:
+                plane_upper, plane_lower = compute_planes(img_depth, bb_unaligned, ax=self.ax_planes)
+            else:
+                plane_upper, plane_lower = compute_planes(img_depth, bb_unaligned)
 
-        # estimate hight as dist of bb center at upper and lower plane
-        bb_center = np.array(bb_unaligned.as_rotated_rect()[0])[::-1]
-        new_height = plane_lower.predict([bb_center])[0]
-        new_height = new_height - plane_upper.predict([bb_center])[0]
-        new_height = new_height / 1000
-        if new_height < 0:
-            # negative height is a clue that the bb detection did not find the clamp
-            raise RuntimeError(f'Predicted negative height {new_height}')
-        # average over 10 latest values
-        height = self.height_averaging.update(new_height)
+            # estimate hight as dist of bb center at upper and lower plane
+            bb_center = np.array(bb_unaligned.as_rotated_rect()[0])[::-1]
+            new_height = plane_lower.predict([bb_center])[0]
+            new_height = new_height - plane_upper.predict([bb_center])[0]
+            new_height = new_height / 1000
+            if new_height < 0:
+                # negative height is a clue that the bb detection did not find the clamp
+                raise RuntimeError(f'Predicted negative height {new_height}')
+            # average over 10 latest values
+            height = self.height_averaging.update(new_height)
 
-        # reorder pts in unaligned bb to match points in aligned bb
-        pts_color = bb_aligned.as_int()
-        pts_ordered = reorder(bb_aligned, bb_unaligned)
-        _order = get_order(pts_color, side)
+            # reorder pts in unaligned bb to match points in aligned bb
+            pts_color = bb_aligned.as_int()
+            pts_ordered = reorder(bb_aligned, bb_unaligned)
+            _order = get_order(pts_color, side)
 
-        if self.debug:
-            # visualize x and y in color image
-            dir_x = pts_color[_order[0]] - pts_color[_order[1]]
-            dir_y = pts_color[_order[2]] - pts_color[_order[0]]
-            c = np.mean(bb_aligned.as_points(), axis=0).astype(int)
-            cx = (c + 0.25 * dir_x).astype(int)
-            cy = (c + 0.25 * dir_y).astype(int)
-            cv.line(self.imgs['color'], tuple(c), tuple(cx), (255, 0, 0), 2)
-            cv.line(self.imgs['color'], tuple(c), tuple(cy), (0, 255, 0), 2)
-            # visualize sides used for dir computation
-            cv.line(self.imgs['depth'], tuple(pts_ordered[_order[0]].astype(int)), tuple(pts_ordered[_order[1]].astype(int)), (255, 0, 0), 3)
-            cv.line(self.imgs['depth'], tuple(pts_ordered[_order[0]].astype(int)), tuple(pts_ordered[_order[2]].astype(int)), (0, 0, 255), 3)
+            if self.debug:
+                # visualize x and y in color image
+                dir_x = pts_color[_order[0]] - pts_color[_order[1]]
+                dir_y = pts_color[_order[2]] - pts_color[_order[0]]
+                c = np.mean(bb_aligned.as_points(), axis=0).astype(int)
+                cx = (c + 0.25 * dir_x).astype(int)
+                cy = (c + 0.25 * dir_y).astype(int)
+                cv.line(self.imgs['color'], tuple(c), tuple(cx), (255, 0, 0), 2)
+                cv.line(self.imgs['color'], tuple(c), tuple(cy), (0, 255, 0), 2)
+                # visualize sides used for dir computation
+                cv.line(self.imgs['depth'], tuple(pts_ordered[_order[0]].astype(int)), tuple(pts_ordered[_order[1]].astype(int)), (255, 0, 0), 3)
+                cv.line(self.imgs['depth'], tuple(pts_ordered[_order[0]].astype(int)), tuple(pts_ordered[_order[2]].astype(int)), (0, 0, 255), 3)
 
-        # compute 3d coordinates for unaligned bb
-        intrin = frame_depth.get_profile().as_video_stream_profile().get_intrinsics()
-        pts3d_upper = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_upper.predict([pt[::-1]])[0] / 1000), pts_ordered))
-        pts3d_upper = np.array(pts3d_upper)
+            # compute 3d coordinates for unaligned bb
+            intrin = frame_depth.get_profile().as_video_stream_profile().get_intrinsics()
+            pts3d_upper = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_upper.predict([pt[::-1]])[0] / 1000), pts_ordered))
+            pts3d_upper = np.array(pts3d_upper)
 
-        pts3d_lower = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_lower.predict([pt[::-1]])[0] / 1000), pts_ordered))
-        pts3d_lower = np.array(pts3d_lower)
+            pts3d_lower = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_lower.predict([pt[::-1]])[0] / 1000), pts_ordered))
+            pts3d_lower = np.array(pts3d_lower)
 
-        # compute x-, y- and z-directions in 3d
-        """
-        User upper rect to determine the width and length of the clamp
-        but use the lower plane for directions since it is more stable
-        """ 
-        dir_x_upper = pts3d_upper[_order[0]] - pts3d_upper[_order[1]]
-        dir_x_lower = pts3d_lower[_order[0]] - pts3d_lower[_order[1]]
-        dir_x = dir_x_lower / np.linalg.norm(dir_x_lower)
-        dir_x = dir_x * np.linalg.norm(dir_x_upper)
+            # compute x-, y- and z-directions in 3d
+            """
+            User upper rect to determine the width and length of the clamp
+            but use the lower plane for directions since it is more stable
+            """ 
+            dir_x_upper = pts3d_upper[_order[0]] - pts3d_upper[_order[1]]
+            dir_x_lower = pts3d_lower[_order[0]] - pts3d_lower[_order[1]]
+            dir_x = dir_x_lower / np.linalg.norm(dir_x_lower)
+            dir_x = dir_x * np.linalg.norm(dir_x_upper)
 
-        dir_y_upper = pts3d_upper[_order[2]] - pts3d_upper[_order[0]]
-        dir_y_lower = pts3d_lower[_order[2]] - pts3d_lower[_order[0]]
-        dir_y = dir_y_lower / np.linalg.norm(dir_y_lower)
-        dir_y = dir_y * np.linalg.norm(dir_y_upper)
+            dir_y_upper = pts3d_upper[_order[2]] - pts3d_upper[_order[0]]
+            dir_y_lower = pts3d_lower[_order[2]] - pts3d_lower[_order[0]]
+            dir_y = dir_y_lower / np.linalg.norm(dir_y_lower)
+            dir_y = dir_y * np.linalg.norm(dir_y_upper)
 
-        dir_z = np.cross(dir_x, dir_y)
-        dir_z = dir_z / np.linalg.norm(dir_z)
-        if dir_z[2] < 0:
-            # z directory should point away from the camera which means z needs to be negative
-            dir_z = -dir_z
+            dir_z = np.cross(dir_x, dir_y)
+            dir_z = dir_z / np.linalg.norm(dir_z)
+            if dir_z[2] < 0:
+                # z directory should point away from the camera which means z needs to be negative
+                dir_z = -dir_z
 
-            # recompute y directions because of change z direction
-            ly = np.linalg.norm(dir_y)
-            dir_y = np.cross(dir_z, dir_x)
-            dir_y = ly * dir_y / np.linalg.norm(dir_y)
+                # recompute y directions because of change z direction
+                ly = np.linalg.norm(dir_y)
+                dir_y = np.cross(dir_z, dir_x)
+                dir_y = ly * dir_y / np.linalg.norm(dir_y)
 
-        # compute pose from bb and directions and average
-        new_pos = np.mean(pts3d_upper, axis=0) + 0.5 * height * dir_z
-        pos = self.pos_averaging.update(new_pos)
+            # compute pose from bb and directions and average
+            new_pos = np.mean(pts3d_upper, axis=0) + 0.5 * height * dir_z
+            pos = self.pos_averaging.update(new_pos)
 
-        """
-        NOTE: this is a magic number.
-        We calibrated the color-camera in relation to the arm
-        and not the depth camera. This is an offset in x-direction
-        corresponding to this offset.
-        """
-        #unmeasure_offset = np.array([-0.065, 0, 0])
-        # unmeasure_offset = np.array([0.065, 0, 0])
-        # pos = pos + unmeasure_offset
+            """
+            NOTE: this is a magic number.
+            We calibrated the color-camera in relation to the arm
+            and not the depth camera. This is an offset in x-direction
+            corresponding to this offset.
+            """
+            #unmeasure_offset = np.array([-0.065, 0, 0])
+            # unmeasure_offset = np.array([0.065, 0, 0])
+            # pos = pos + unmeasure_offset
 
-        # compute rotations from directions
-        new_rot_matrix = np.array([dir_x / np.linalg.norm(dir_x),
-                                   dir_y / np.linalg.norm(dir_y),
-                                   dir_z]).T
-        rot_matrix = self.orn_averaging.update(new_rot_matrix)
-        orn = R.from_matrix(rot_matrix)
-
-        if self.tm is not None:
-            self.tm.add_transform('clamp', 'cam', fts.as_transform(pos, orn))
-
-        if self.debug:
-            print(f'Height estimate {height:.3f}m from {new_height:.3f}m')
-            print(f'Pos {vec2str(pos)}')
-            print(f'Orn {orn2str(orn)}')
-
-            # visualize pose in depth image
-            viz.visualize_pose(pos, orn, intrin, self.imgs['depth'])
+            # compute rotations from directions
+            new_rot_matrix = np.array([dir_x / np.linalg.norm(dir_x),
+                                       dir_y / np.linalg.norm(dir_y),
+                                       dir_z]).T
+            rot_matrix = self.orn_averaging.update(new_rot_matrix)
+            orn = R.from_matrix(rot_matrix)
 
             if self.tm is not None:
-                self.tm.plot_frames_in('world', ax=self.ax_transforms, s=0.2)
+                self.tm.add_transform('clamp', 'cam', fts.as_transform(pos, orn))
 
+            if self.debug:
+                print(f'Height estimate {height:.3f}m from {new_height:.3f}m')
+                print(f'Pos {vec2str(pos)}')
+                print(f'Orn {orn2str(orn)}')
+
+                # visualize pose in depth image
+                viz.visualize_pose(pos, orn, intrin, self.imgs['depth'])
+
+            return pos, orn
+        except Exception as e:
+            raise e
+        finally:
+            self.tm.plot_frames_in('world', ax=self.ax_transforms, s=0.2)
             self.imgs['figure'] = viz.figure_to_img(self.fig)
-
-        return pos, orn
 
 
     def reset_figure(self):
