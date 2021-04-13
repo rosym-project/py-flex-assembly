@@ -136,10 +136,12 @@ def build_model(num_classes=2, weights=None, device=None):
 class SidePredictor():
 
     def __init__(self, weights_file, device=None):
-        self.model = build_model(weights=weights_file, device=device)
+        # self.device = device if device is not None else default_device()
+        self.device = torch.device("cpu")
+
+        self.model = build_model(weights=weights_file, device=self.device)
         self.model.eval()
 
-        self.device = device if device is not None else default_device()
         self.transform = transforms.Compose([
             transforms.Resize(224),
             transforms.ToTensor(),

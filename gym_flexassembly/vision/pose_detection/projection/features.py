@@ -162,7 +162,7 @@ def detect_bounding_box(depth, min_area=200, viz=None):
     return BoundingBox(rects[-1])
 
 
-def compute_table_plane_image(transform_manager, frame_depth, table_height=0.025):
+def compute_table_plane_image(transform_manager, frame_depth, table_height=0.02):
     """
     Compute a depth image representing the table plane.
     This is done by entering three points of the table near to the camera position (in x,y)
@@ -178,8 +178,9 @@ def compute_table_plane_image(transform_manager, frame_depth, table_height=0.025
     """
     intrinsics = frame_depth.profile.as_video_stream_profile().intrinsics
     pos_cam = transform_manager.get_transform('cam', 'world')[:3, -1]
+    print(pos_cam)
     pos_table = pos_cam.copy()
-    pos_table[2] = table_height + 0.01 # actually consider points slightly above the table
+    pos_table[2] = table_height + 0.015 # actually consider points slightly above the table
     orn_table = R.from_quat([0, 0, 0, 1])
     offsets = np.array([[0, 0.03, 0], [-0.03, -0.03, 0], [0.03, -0.03, 0]])
 
@@ -191,6 +192,7 @@ def compute_table_plane_image(transform_manager, frame_depth, table_height=0.025
         transform_manager.add_transform(coord_str, 'world', as_transform(pos_table + offset, orn_table))
         # retrieve table point in cam coordinates
         pos_table_in_cam = transform_manager.get_transform(coord_str, 'cam')[:3, -1]
+        # print(pos_table_in_cam)
         # compute pixel coordinates of point in depth image
         pixel = rs.rs2_project_point_to_pixel(intrinsics, pos_table_in_cam)
         pixels.append(pixel)

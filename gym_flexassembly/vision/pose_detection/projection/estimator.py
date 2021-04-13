@@ -128,7 +128,7 @@ def compute_planes(img_depth, bb, ax=None):
     cv.drawContours(mask_outer, [bb.as_int()], 0, 0, -1)
     mask_outer = mask_outer == 255
 
-    interval_upper = [0.2, 0.5]
+    interval_upper = [0.4, 0.6]
     interval_lower = [0.4, 0.8]
 
     plane_upper = regress_depth_plane(mask, img_depth, interval_upper)
@@ -242,6 +242,9 @@ class PoseEstimator():
                 raise RuntimeError(f'Predicted negative height {new_height}')
             # average over 10 latest values
             height = self.height_averaging.update(new_height)
+
+            # TODO HACK
+            height = 0.05
 
             # reorder pts in unaligned bb to match points in aligned bb
             pts_color = bb_aligned.as_int()

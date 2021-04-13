@@ -56,10 +56,10 @@ class PoseService:
         world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
         self.tm.add_transform("arm", "world", world2arm)
 
-        z = (550.15 - 467.00) / 1000
+        z = (550.15 - 467.00) / 1000.00 - 0.241
         calib_pt_arm = np.array([-333.72, -491.74, 373.78])
         calib_pt_cam = np.array([-407.27, -537.22, 539.82])
-        pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000
+        pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000.00
         pos_cam_in_arm = R.from_euler('zyx', [0, 180, 0], degrees=True).apply(pos_cam_in_arm)
         pos_cam_in_arm[2] = z
         orn_cam_in_arm = R.from_euler('zyx', [45, 0, 0], degrees=True)
@@ -76,7 +76,7 @@ class PoseService:
 
         orn_w = R.from_matrix(self.tm.get_transform('clamp', 'world')[:3, :3])
         # the gripper has to be rotated 90 degrees with regards to the clamp orientation
-        orn_w = R.from_euler('zyx', [90, 0 ,0], degrees=True) * orn_w
+        orn_w = R.from_euler('zyx', [45, 0 ,0], degrees=True) * orn_w
         orn_wq = orn_w.as_quat()
         response.orientation.x = orn_wq[0]
         response.orientation.y = orn_wq[1]
