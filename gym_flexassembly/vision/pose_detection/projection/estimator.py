@@ -318,7 +318,7 @@ class PoseEstimator():
                 dir_y = ly * dir_y / np.linalg.norm(dir_y)
 
             # compute pose from bb and directions and average
-            new_pos = np.mean(pts3d_upper, axis=0) + 0.5 * height * dir_z
+            new_pos = np.mean(pts3d_upper, axis=0) + 0.5 * height * dir_z + dir_x * 0.32
             pos = self.pos_averaging.update(new_pos)
 
             """

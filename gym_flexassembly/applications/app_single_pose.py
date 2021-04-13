@@ -59,18 +59,19 @@ class SinglePose(object):
         rospy.wait_for_service('pose_estimation')
         time.sleep(1)
         try:
+            
             add_two_ints = rospy.ServiceProxy('/css/move_srv', Move)
 
             # Move 1) Feed same position for initialization
             print("Phase #1: Feed back position to initialization!")
             m.i_pose = p
-            m.i_max_trans_sec = 30.0
-            m.i_max_rot_sec = 20.0
+            m.i_max_trans_sec = 10.0
+            m.i_max_rot_sec = 15.0
             resp1 = add_two_ints(m)
 
-            time.sleep(10)
-            print("GET IMAGE")
+            time.sleep(2)
 
+            print("GET IMAGE")
             estimate = rospy.ServiceProxy('pose_estimation', GetClamp)
             estimation = estimate().i_pose
             pos = estimation.position
@@ -84,13 +85,15 @@ class SinglePose(object):
 
             p.position.x = estimation.position.x
             p.position.y = estimation.position.y
-            p.position.z = 0.15
+            p.position.z = 0.1
             p.orientation = estimation.orientation
 
             m.i_pose = p
-            m.i_max_trans_sec = 30.0
+            m.i_max_trans_sec = 20.0
             m.i_max_rot_sec = 20.0
             resp1 = add_two_ints(m)
+
+            # time.sleep(8)
 
 
         except rospy.ServiceException as e:
