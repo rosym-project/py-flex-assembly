@@ -196,6 +196,8 @@ def compute_table_plane_image(transform_manager, frame_depth, table_height=0.025
         pixels.append(pixel)
         # save depth value of table position
         depths.append(pos_table_in_cam[2])
+
+        transform_manager.remove_transform(coord_str, 'world')
     pixels = np.array(pixels)
     depths = np.array(depths)
 
@@ -212,7 +214,7 @@ def compute_table_plane_image(transform_manager, frame_depth, table_height=0.025
     return plane
 
 
-def compute_bbs(img_plane, frame_depth):
+def compute_bbs(img_plane, frame_depth, vis=None):
     """
     Compute bounding boxes of objects nearer to the camera than
     the plane image.
@@ -226,6 +228,8 @@ def compute_bbs(img_plane, frame_depth):
     img = cv.erode(img, np.ones((3, 3)), iterations=2)
     # find boxes
     cnts, _ = cv.findContours(img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    if vis is not None:
+        np.copyto(vis, img.repeat(3).reshape(vis.shape))
     return list(map(lambda cnt: BoundingBox(cv.minAreaRect(cnt)), cnts))
 
 
@@ -246,13 +250,24 @@ def filter_bbs(bbs):
     return list(filter(ratio_filter, bbs))
 
 
-def detect_bbs(transform_manager, frame_depth):
+def detect_bbs(transform_manager, frame_depth, vis=None):
     """
     Detect multiple bounding boxes around clamps in an image.
     """
     img_plane = compute_table_plane_image(transform_manager, frame_depth)
-    bbs = compute_bbs(img_plane, frame_depth)
-    return filter_bbs(bbs)
+    bbs = compute_bbs(img_plane, frame_depth, vis=vis)
+    bbs = filter_bbs(bbs)
+
+    if vis is not None:
+        color_from = np.array([255, 0, 0])
+        color_to = np.array([0, 255, 0])
+        for i, bb in enumerate(bbs):
+            w = 1.0 if len(bbs) == 1 else i / (len(bbs) - 1)
+            color = (1.0 - w) * color_from + w * color_to
+            color = color.astype(np.int).tolist()
+            cv.drawContours(vis, [bb.as_int()], -1, color, 3)
+
+    return bbs
 
 
 def refine_bb(bounding_box, image):

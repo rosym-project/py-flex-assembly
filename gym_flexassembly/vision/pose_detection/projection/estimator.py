@@ -15,19 +15,6 @@ import gym_flexassembly.vision.pose_detection.projection.features as fts
 import gym_flexassembly.vision.pose_detection.projection.visualize as viz
 
 
-def as_transform(pos, orn):
-    """
-    Convert pose into transform as used by pytransform3d
-    """
-    # get rotation as wxyz quaternion
-    orn_q = orn.as_quat()
-    orn_q = [orn_q[-1], *orn_q[:-1]]
-
-    # create pose and return transform
-    _pose = np.hstack((pos, orn_q))
-    return pt.transform_from_pq(_pose)
-
-
 def vec2str(vec):
     return str(list(map(lambda _v: f"{f'{_v:.4f}':>7}", vec)))
 
@@ -169,10 +156,7 @@ def get_order(_pts, _side):
 class PoseEstimator():
 
     def __init__(self, window_size=25, debug=True, transform_manager=None, side_model=None):
-        self.filter_unaligned = FilterList()
-        self.filter_aligned = FilterList()
-        self.align = rs.align(rs.stream.color)
-
+        self.filter_list = FilterList()
         self.height_averaging = Averaging(window_size)
         self.pos_averaging = Averaging(window_size)
         self.orn_averaging = AveragingRotation(window_size)
@@ -196,10 +180,7 @@ class PoseEstimator():
             self.reset_figure()
             since = time.time()
 
-        frames_aligned = self.align.process(frames)
-        bb_refined, side = self.process_aligned_frames(frames_aligned)
-
-        pos, orn = self.process_unaligned_frames(frames, bb_refined, side)
+        pos, orn = self.process_frames(frames)
 
         if self.debug:
             took = time.time() - since
@@ -207,17 +188,15 @@ class PoseEstimator():
 
         return pos, orn
 
-    def process_aligned_frames(self, frames):
-        # first process aligned frames
-        frame_color = frames.get_color_frame()
-        frame_depth = frames.get_depth_frame()
-        # post-process depth frame
-        frame_depth = self.filter_aligned.process(frame_depth)
 
-        # retrieve color and depth images
+    def process_frames(self, frames):
+        frame_depth = frames.get_depth_frame()
+        frame_depth = self.filter_list.process(frame_depth).as_depth_frame()
+        img_depth = np.asanyarray(frame_depth.get_data())
+
+        frame_color = frames.get_color_frame()
         img_color = np.asanyarray(frame_color.get_data())
         img_color = cv.cvtColor(img_color, cv.COLOR_RGB2BGR)
-        img_depth = np.asanyarray(frame_depth.get_data())
 
         if self.debug:
             self.imgs['color'] = img_color
@@ -227,40 +206,24 @@ class PoseEstimator():
             if self.imgs['figure'] is None:
                 self.imgs['figure'] = np.zeros((*img_depth.shape, 3), np.uint8)
 
-        bb_aligned = fts.detect_bounding_box(fts.flatten(img_depth), viz=self.imgs['bbdet'])
+        bb_unaligned = fts.detect_bbs(self.tm, frame_depth, vis=self.imgs['bbdet'])[0]
+        if self.debug:
+            cv.drawContours(self.imgs['depth'], [bb_unaligned.as_int()], -1, (0, 255, 0), 2)
 
-        # scale bb to fit color image (post-processing reduces size)
-        scale_h = img_color.shape[1] / img_depth.shape[1]
-        scale_w = img_color.shape[0] / img_depth.shape[0]
-        bb_aligned.scale(scale_h, scale_w)
-
-        # refine bb for color image
-        bb_refined = fts.refine_bb(bb_aligned, img_color)
+        bb_color = []
+        for _pt in bb_unaligned.as_points():
+            bb_color.append(fts.depth_to_color_pixel(_pt, frame_depth, frame_color))
+        bb_color = np.array(bb_color).astype(int)
+        bb_aligned = fts.BoundingBox(cv.minAreaRect(bb_color))
+        if self.debug:
+            cv.drawContours(self.imgs['color'], [bb_aligned.as_int()], -1, (255, 0, 0), 3)
 
         if self.side_model is None:
-            side = fts.detect_side(img_color, bb_refined.as_points())
+            side = fts.detect_side(img_color, bb_aligned.as_points())
         else:
-            side = fts.detect_side_2(img_color, bb_refined, self.side_model)
-
+            side = fts.detect_side_2(img_color, bb_aligned, self.side_model)
         if self.debug:
-            cv.drawContours(self.imgs['color'], [bb_refined.as_int()], -1, (255, 0, 0), 3)
-            fts.visualize_features(self.imgs['color'], bb_refined, side)
-
-        return bb_refined, side
-
-    def process_unaligned_frames(self, frames, bb_aligned, side):
-        frame_depth = frames.get_depth_frame()
-        frame_depth = self.filter_unaligned.process(frame_depth)
-
-        # retrieve depth image
-        img_depth = np.asanyarray(frame_depth.get_data())
-        # find bb
-        bb_unaligned = fts.detect_bounding_box(fts.flatten(img_depth), viz=self.imgs['bbdet'])
-
-        if self.debug:
-            # visualize bb in depth image
-            self.imgs['depth'] = viz.display_depth_image(img_depth)
-            cv.drawContours(self.imgs['depth'], [bb_unaligned.as_int()], -1, (0, 255, 0), 2)
+            fts.visualize_features(self.imgs['color'], bb_aligned, side)
 
         # compute planes through depth values in bbs (upper = clamp, lower = table) 
         if self.debug:
@@ -353,7 +316,7 @@ class PoseEstimator():
         orn = R.from_matrix(rot_matrix)
 
         if self.tm is not None:
-            self.tm.add_transform('clamp', 'cam', as_transform(pos, orn))
+            self.tm.add_transform('clamp', 'cam', fts.as_transform(pos, orn))
 
         if self.debug:
             print(f'Height estimate {height:.3f}m from {new_height:.3f}m')
@@ -420,7 +383,7 @@ if __name__ == '__main__':
     # init transformation form arm to cam
     pos_arm_in_world = np.array([0.0, 0.0, 1.0])
     orn_arm_in_world = R.from_quat([0.0, 0.0, 0.0, 1.0])
-    world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
+    world2arm = fts.as_transform(pos_arm_in_world, orn_arm_in_world)
     tm.add_transform("arm", "world", world2arm)
     z = (550.15 - 467.00) / 1000
     calib_pt_arm = np.array([-333.72, -491.74, 373.78])
@@ -429,14 +392,18 @@ if __name__ == '__main__':
     pos_cam_in_arm = R.from_euler('zyx', [0, 180, 0], degrees=True).apply(pos_cam_in_arm)
     pos_cam_in_arm[2] = z
     orn_cam_in_arm = R.from_euler('zyx', [45, 0, 0], degrees=True)
-    arm2cam = as_transform(pos_cam_in_arm, orn_cam_in_arm)
+    arm2cam = fts.as_transform(pos_cam_in_arm, orn_cam_in_arm)
     tm.add_transform("cam", "arm", arm2cam)
 
     # set real arm pose
     pos_arm_in_world = np.array([-0.250599, -0.596355, 0.451787])
     orn_arm_in_world = R.from_quat([-0.924181, 0.381923, 0.00180704, 0.00464545])
-    world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
+    world2arm = fts.as_transform(pos_arm_in_world, orn_arm_in_world)
     tm.add_transform("arm", "world", world2arm)
+
+    pos_cam = np.array([-0.3, -0.3, 0.544 + 0.025])
+    orn_cam = R.from_euler('zyx', [90, 180, 0], degrees=True)
+    tm.add_transform("cam", "world", fts.as_transform(pos_cam, orn_cam))
 
     # ax = tm.plot_frames_in('world', s=0.1)
     # ax.set_xlim((-0.7, 0.01))
