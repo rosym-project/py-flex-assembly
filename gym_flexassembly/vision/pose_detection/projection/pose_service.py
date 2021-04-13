@@ -4,6 +4,7 @@ import argparse
 import math
 import os
 import sys
+import time
 
 import cv2 as cv
 import numpy as np
@@ -67,6 +68,10 @@ class PoseService:
         self.tm.add_transform("cam", "arm", arm2cam)
 
     def handle_request(self, request):
+        self.pose_estimator.reset()
+        while self.pose_estimator.iterations < self.args.averaging_window:
+            time.sleep(0.1)
+
         response = Pose()
 
         pos_w = self.tm.get_transform('clamp', 'world')[:3, -1]

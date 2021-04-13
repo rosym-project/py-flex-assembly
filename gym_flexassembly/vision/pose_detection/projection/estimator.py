@@ -51,10 +51,11 @@ class FilterList:
 
 class Averaging():
 
-    def __init__(self, window_size, initial_value=None):
+    def __init__(self, window_size, initial_value):
        self.min_weight = 1.0 / window_size
        self.weight = 1.0
        self.value = initial_value
+       self.initial_value = initial_value
 
     def update(self, new_value):
         if self.value is None:
@@ -64,8 +65,19 @@ class Averaging():
 
         return self.value
 
+    def reset(self):
+        self.weight = 1.0
+        self.value = self.initial_value
+
+
+base_rot = np.array([[1, 0, 0],
+                     [0, 1, 0],
+                     [0, 0, 1]])
 
 class AveragingRotation(Averaging):
+
+    def __init__(self, window_size):
+        super().__init__(window_size, base_rot)
 
     def update(self, new_value):
         # re-compute new axes to be length 1
@@ -157,8 +169,8 @@ class PoseEstimator():
 
     def __init__(self, window_size=25, debug=True, transform_manager=None, side_model=None):
         self.filter_list = FilterList()
-        self.height_averaging = Averaging(window_size)
-        self.pos_averaging = Averaging(window_size)
+        self.height_averaging = Averaging(window_size, 0)
+        self.pos_averaging = Averaging(window_size, np.array([0, 0, 0]))
         self.orn_averaging = AveragingRotation(window_size)
 
         self.debug = debug
@@ -174,6 +186,8 @@ class PoseEstimator():
             else:
                 self.ax_planes = self.fig.add_subplot(1, 1, 1, projection='3d')
 
+        self.iterations = 0
+
 
     def estimate(self, frames):
         if self.debug:
@@ -188,6 +202,11 @@ class PoseEstimator():
 
         return pos, orn
 
+    def reset(self):
+        self.iterations = 0
+        self.height_averaging.reset()
+        self.pos_averaging.reset()
+        self.orn_averaging.reset()
 
     def process_frames(self, frames):
         try:
@@ -336,6 +355,8 @@ class PoseEstimator():
         finally:
             self.tm.plot_frames_in('world', ax=self.ax_transforms, s=0.2)
             self.imgs['figure'] = viz.figure_to_img(self.fig)
+
+            self.iterations += 1
 
 
     def reset_figure(self):
