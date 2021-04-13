@@ -85,6 +85,12 @@ class ClampIt(object):
 
         rospy.init_node('coordcc', anonymous=False)
 
+        # receive ext wrench
+        rospy.Subscriber("/robot/wrench", Wrench, self.listener_ft_wrench)
+        self.wrench_data = None
+        self.wrench_data_internal = None
+        self.lock_wrench = threading.Lock()
+
         if not self.skip_first_phase:
             # Open Gripper
             if self.use_gripper:
@@ -552,14 +558,14 @@ class ClampIt(object):
                     c.kd_rot.y = 1.2
                     c.kd_rot.z = 1.0
 
-                    c.fdir_trans.x = 1.0
+                    c.fdir_trans.x = 0.0
                     c.fdir_trans.y = 0.0
                     c.fdir_trans.z = 0.0
                     c.fdir_rot.x = 0.0
                     c.fdir_rot.y = 0.0
                     c.fdir_rot.z = 0.0
 
-                    c.force_trans.x = 1.5
+                    c.force_trans.x = 0.0
                     c.force_trans.y = 0.0
                     c.force_trans.z = 0.0
                     c.force_rot.x = 0.0
@@ -575,6 +581,22 @@ class ClampIt(object):
                     print("Service call failed: %s"%e)
 
                 #######################
+
+                # Move 16) UP FINALLY
+                print("Phase #16: UP FINALLY")
+                p.position.x = -0.29
+                p.position.y = -0.535
+                p.position.z = 0.2
+                self.outQuat = pyquaternion.Quaternion(w=-0.0351002,x=-0.353731,y=0.934325,z=-0.0260594) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=0.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 50.0
+                m.i_max_rot_sec = 30.0
+                resp1 = add_two_ints(m)
+                print("Done with Phase #16")
          
                 # 3)
                 # p.position.x = -0.245
@@ -619,6 +641,44 @@ class ClampIt(object):
         time.sleep(0.01)
         self.ser.write([int('00000010', 2)])
         self.ser.close()
+
+    def listener_ft_wrench(self, data):
+        self.lock_wrench.acquire()
+        self.wrench_data = data
+        self.lock_wrench.release()
+
+    # def moveGuarded(self, cart_direction=[0,0,0], step_width_in_m=0.00001, max_force_in_n=40.0):
+    #     # Quaternion(w, x, y, z)
+    #     dire = np.array(cart_direction)
+    #     step = dire * step_width_in_m
+    #     # If no wrench reading return
+    #     self.lock_wrench.acquire()
+    #     self.wrench_data_internal = self.wrench_data
+    #     self.lock_wrench.release()
+    #     if self.wrench_data_internal == None:
+    #         print("Returning, no wrench reading!")
+    #         return
+        
+    #     force = np.array([self.wrench_data_internal.force.x, self.wrench_data_internal.force.y, self.wrench_data_internal.force.z])
+    #     force_length = np.linalg.norm(force * dire)
+
+    #     print("Start Guarded Move")
+    #     # add time-based smoothing?
+    #     while force_length < max_force_in_n:
+    #         self.cur = self.cur + step
+    #         self.ros_t.translation.x = self.cur[0]
+    #         self.ros_t.translation.y = self.cur[1]
+    #         self.ros_t.translation.z = self.cur[2]
+    #         self.pub_traj.publish(self.cart_traj_point)
+    #         self.rate.sleep()
+
+    #         self.lock_wrench.acquire()
+    #         self.wrench_data_internal = self.wrench_data
+    #         self.lock_wrench.release()
+    #         force = np.array([self.wrench_data_internal.force.x, self.wrench_data_internal.force.y, self.wrench_data_internal.force.z])
+    #         force_length = np.linalg.norm(force * dire)
+
+    #     print("Force Sensed!")
 
 if __name__ == "__main__":
     c = ClampIt()
