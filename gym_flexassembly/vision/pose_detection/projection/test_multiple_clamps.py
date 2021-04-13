@@ -23,70 +23,73 @@ def as_transform(pos, orn):
     _pose = np.hstack((pos, orn_q))
     return pt.transform_from_pq(_pose)
 
-# TODO
-# * Gegeben Pose des Arms:
-# * Füge einige Koordinaten des Tisches in der Nähe darunter in Welt-Koords ein
-# * Teste mit der Realsense Funktion, ob die Punkte auf dem Tiefenbild sichtbar sind, und ob die Abstände übereinstimmen...
-
 # create object to align depth and color images
 config = rs.config()
-#config.enable_device_from_file('./realsense_recordings/bags_2/new_01.bag')
 config.enable_device_from_file('./realsense_recordings/multiple_clamps.bag')
 pipeline = rs.pipeline()
 pipeline.start(config)
 
 tm = TransformManager()
-# init transformation form arm to cam
-# pos_arm_in_world = np.array([0.0, 0.0, 1.0])
-# orn_arm_in_world = R.from_quat([0.0, 0.0, 0.0, 1.0])
-# world2arm = as_transform(pos_arm_in_world, orn_arm_in_world)
-# tm.add_transform("arm", "world", world2arm)
-# z = (550.15 - 467.00) / 1000 
-# z = z - 0.026
-# calib_pt_arm = np.array([-333.72, -491.74, 373.78])
-# calib_pt_cam = np.array([-407.27, -537.22, 539.82])
-# pos_cam_in_arm = (calib_pt_arm - calib_pt_cam) / 1000
-# pos_cam_in_arm = R.from_euler('zyx', [0, 180, 0], degrees=True).apply(pos_cam_in_arm)
-# pos_cam_in_arm[2] = z
-# orn_cam_in_arm = R.from_euler('zyx', [45 + 90, 0, 0], degrees=True)
-# arm2cam = as_transform(pos_cam_in_arm, orn_cam_in_arm)
-# tm.add_transform("cam", "arm", arm2cam)
-
-# set real arm pose
-# pos_arm = np.array([-301.44, -430.66, 618.01]) / 1000
-# orn_arm = R.from_euler('zyx', [-137.15, 0, 179.99], degrees=True)
-# world2arm = as_transform(pos_arm, orn_arm)
-# tm.add_transform("arm", "world", world2arm)
-
-table_height = 0.025
-
-pos_cam = np.array([-0.3, -0.3, 0.544 + table_height])
+pos_cam = np.array([-0.3, -0.3, 0.544 + 0.025])
 orn_cam = R.from_euler('zyx', [90, 180, 0], degrees=True)
 tm.add_transform("cam", "world", as_transform(pos_cam, orn_cam))
-print(pos_cam)
 
-pos_table = tm.get_transform('cam', 'world')[:3, -1].copy()
-print('pos table', pos_table)
-pos_table[2] = table_height + 0.01
+from sklearn import linear_model
+def compute_table_plane_image(transform_manager, frame_depth, table_height=0.025):
+    """
+    Compute a depth image representing the table plane.
+    This is done by entering three points of the table near to the camera position (in x,y)
+    into the transform manager.
+    Then, these points are retrieved in camera coordinates and projected onto the image
+    retrieved by the camera.
+    Afterwards a plane is fitted to these three points and an according depth image is
+    created and returned.
 
-_pos_table = pos_table + np.array([0.05, 0.05, 0])
-print('_pos table', _pos_table)
-orn_table = R.from_quat([0, 0, 0, 1])
-tm.add_transform("table1", "world", as_transform(_pos_table, orn_table))
+    params:
+    transform_manager: a transform manager containing a transformation from 'cam' to 'world'
+    frame_depth: the depth frame as received from the realsense pipeline
+    """
+    intrinsics = frame_depth.profile.as_video_stream_profile().intrinsics
+    pos_cam = tm.get_transform('cam', 'world')[:3, -1]
+    pos_table = pos_cam.copy()
+    pos_table[2] = table_height + 0.01 # actually consider points slightly above the table
+    orn_table = R.from_quat([0, 0, 0, 1])
+    offsets = np.array([[0, 0.03, 0], [-0.03, -0.03, 0], [0.03, -0.03, 0]])
 
-_pos_table = pos_table + np.array([-0.05, 0.05, 0])
-tm.add_transform("table2", "world", as_transform(_pos_table, orn_table))
+    pixels = []
+    depths = []
+    for i, offset in enumerate(offsets):
+        coord_str = f'table_{i}'
+        # add table point in world coordinates
+        tm.add_transform(coord_str, 'world', as_transform(pos_table + offset, orn_table))
+        # retrieve table point in cam coordinates
+        pos_table_in_cam = tm.get_transform(coord_str, 'cam')[:3, -1]
+        # compute pixel coordinates of point in depth image
+        pixel = rs.rs2_project_point_to_pixel(intrin, pos_table_in_cam)
+        pixels.append(pixel)
+        # save depth value of table position
+        depths.append(pos_table_in_cam[2])
 
-_pos_table = pos_table + np.array([0.05, -0.05, 0])
-tm.add_transform("table3", "world", as_transform(_pos_table, orn_table))
+        if i == 0:
+            print(pos_table + offset)
+            print(pos_table_in_cam)
+            print(pixel)
+    pixels = np.array(pixels)
+    depths = np.array(depths)
 
+    # fit plane to points
+    inputs = np.array([pixels[:, 0], pixels[:,1]]).T
+    depths = depths * 1000 # from meters to millimeters
+    model = linear_model.LinearRegression().fit(inputs, depths)
+    print(inputs)
 
-# ax = tm.plot_frames_in('world', s=0.2)
-# ax.set_xlim((-0.7, 0))
-# ax.set_ylim((-0.7, 0))
-# ax.set_zlim((0, 0.75))
-# plt.show()
-# exit(0)
+    print(frame_depth.width)
+    # compute plane depth image
+    xx = np.arange(frame_depth.width)[::-1]
+    yy = np.arange(frame_depth.height)[::-1]
+    xx, yy = np.meshgrid(xx, yy)
+    plane = model.intercept_ + model.coef_[1] * xx + model.coef_[0] * yy
+    return plane
 
 
 fl = FilterList()
@@ -129,6 +132,9 @@ def spiral(radius):
 
 
 def depth_to_color_pixel(pixel, frame_depth, frame_color):
+    """
+    Map a pixel of a depth frame to a pixel in a non-aligned color frame.
+    """
     intrin_depth = frame_depth.profile.as_video_stream_profile().intrinsics
     intrin_color = frame_color.profile.as_video_stream_profile().intrinsics
 
@@ -147,12 +153,15 @@ def depth_to_color_pixel(pixel, frame_depth, frame_color):
     if depth == 0.0:
         raise RuntimeError('Unkown depth value...')
 
-    pt = rs.rs2_deproject_pixel_to_point(intrin_depth, pixel, depth)
-    pt = rs.rs2_transform_point_to_point(extrin_depth_to_color, pt)
-    pixel_color = rs.rs2_project_point_to_pixel(intrin_color, pt)
+    _pt = rs.rs2_deproject_pixel_to_point(intrin_depth, pixel, depth)
+    _pt = rs.rs2_transform_point_to_point(extrin_depth_to_color, _pt)
+    pixel_color = rs.rs2_project_point_to_pixel(intrin_color, _pt)
     return pixel_color
 
 def color_to_depth_pixel(pixel, frame_depth, frame_color, depth_scale):
+    """
+    Map a pixel of a color frame to a pixel in a non-aligned depth frame.
+    """
     intrin_depth = frame_depth.profile.as_video_stream_profile().intrinsics
     intrin_color = frame_color.profile.as_video_stream_profile().intrinsics
 
@@ -171,6 +180,47 @@ def color_to_depth_pixel(pixel, frame_depth, frame_color, depth_scale):
             pixel)
     return pixel_depth
 
+
+def compute_bbs(img_plane, frame_depth):
+    """
+    Compute bounding boxes of objects nearer to the camera than
+    the plane image.
+    """
+    img_depth = np.asanyarray(frame_depth.get_data())
+    img_depth = np.where(img_plane < img_depth, 0, img_depth)
+    img = img_depth / img_depth.max()
+    img = np.where(img > 0.1, 255, 0).astype(np.uint8)
+    # perform closing to fill small holes in depth image
+    img = cv.dilate(img, np.ones((3, 3)), iterations=2)
+    img = cv.erode(img, np.ones((3, 3)), iterations=2)
+    # find boxes
+    cnts, _ = cv.findContours(img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    return list(map(lambda cnt: fts.BoundingBox(cv.minAreaRect(cnt)), cnts))
+
+def filter_bbs(bbs):
+    """
+    Filter bounding boxes by their ratio of long side to short side.
+    The bounding box of a clamp should be inside 3 < ratio < 6.
+    """
+    # TODO: as another filter we could test, if the 3d bounding box matches in length/depth
+    def ratio_filter(bb):
+        try:
+            long_side_length = max(bb.w, bb.h)
+            short_side_length = min(bb.w, bb.h)
+            ratio = long_side_length / short_side_length
+            return 3 < ratio < 6
+        except ZeroDivisionError:
+            return False
+    return list(filter(ratio_filter, bbs))
+
+def detect_bbs(transform_manager, frame_depth):
+    """
+    Detect multiple bounding boxes around clamps in an image.
+    """
+    img_plane = compute_table_plane_image(transform_manager, frame_depth)
+    bbs = compute_bbs(img_plane, frame_depth)
+    return filter_bbs(bbs)
+
 depth_scale = pipeline.get_active_profile().get_device().first_depth_sensor().get_depth_scale()
 while True:
     frames = pipeline.wait_for_frames()
@@ -180,71 +230,43 @@ while True:
 
     intrin = frame_depth.get_profile().as_video_stream_profile().get_intrinsics()
 
-    pos_tabl1_in_cam = tm.get_transform('table1', 'cam')[:3, -1]
-    pos_tabl2_in_cam = tm.get_transform('table2', 'cam')[:3, -1]
-    pos_tabl3_in_cam = tm.get_transform('table3', 'cam')[:3, -1]
+    # retrieve color and depth images
+    # img_color = np.asanyarray(frame_color.get_data())
+    # img_color = cv.cvtColor(img_color, cv.COLOR_RGB2BGR)
+    # img_depth = np.asanyarray(frame_depth.get_data())
 
+    # plane = compute_table_plane_image(tm, frame_depth)
 
-    as_pixel1 = np.array(rs.rs2_project_point_to_pixel(intrin, pos_tabl1_in_cam))
-    as_pixel2 = np.array(rs.rs2_project_point_to_pixel(intrin, pos_tabl2_in_cam))
-    as_pixel3 = np.array(rs.rs2_project_point_to_pixel(intrin, pos_tabl3_in_cam))
-    print('As Pixel', as_pixel1)
+    # # Only consider parts of the depth image over the table plane
+    # img_depth = np.where(plane < img_depth, 0, img_depth)
+    # img = img_depth / img_depth.max()
+    # img = np.where(img > 0.1, 255, 0).astype(np.uint8)
+    # # perform closing to fill small holes in depth img
+    # img = cv.dilate(img, np.ones((3, 3)), iterations=2)
+    # img = cv.erode(img, np.ones((3, 3)), iterations=2)
+    # # find boxes
+    # cnts, _ = cv.findContours(img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    # bbs = list(map(lambda cnt: fts.BoundingBox(cv.minAreaRect(cnt)), cnts))
 
-    xs = np.array([as_pixel1[0], as_pixel2[0], as_pixel3[0]])
-    ys = np.array([as_pixel1[1], as_pixel2[1], as_pixel3[1]])
-    zs = [pos_tabl1_in_cam[2], pos_tabl2_in_cam[2], pos_tabl3_in_cam[2]]
-    zs = np.array(zs) * 1000
-    inputs = np.array([xs, ys]).T
-    from sklearn import linear_model
-    model = linear_model.LinearRegression().fit(inputs, zs)
+    # # TODO: as another filter we could test, if the 3d bounding box matches in length/depth
+    # def ratio_filter(bb):
+        # try:
+            # long_side_length = max(bb.w, bb.h)
+            # short_side_length = min(bb.w, bb.h)
+            # ratio = long_side_length / short_side_length
+            # return 3 < ratio < 6
+        # except ZeroDivisionError:
+            # print('Ratio zero?', bb.w, bb.h)
+            # print(bb)
+            # return False
+
+    # bbs = list(filter(ratio_filter, bbs))
+    bbs = detect_bbs(tm, frame_depth)
 
     # retrieve color and depth images
     img_color = np.asanyarray(frame_color.get_data())
     img_color = cv.cvtColor(img_color, cv.COLOR_RGB2BGR)
     img_depth = np.asanyarray(frame_depth.get_data())
-
-    xx = np.arange(img_depth.shape[1])[::-1]
-    yy = np.arange(img_depth.shape[0])[::-1]
-    xx, yy = np.meshgrid(xx, yy)
-    plane = model.intercept_ + model.coef_[1] * xx + model.coef_[0] * yy
-
-    _x = np.arange(xs.min() - 100, xs.max() + 100, (xs.max() + 200 - xs.min()) / 11)
-    _y = np.arange(ys.min() - 100, ys.max() + 100, (200 + ys.max() - ys.min()) / 11)
-    xx, yy = np.meshgrid(_x, _y)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, projection='3d')
-    ax.set_zlim([510, 530])
-    ax.scatter(xs, ys, zs, s=50)
-    inputs = np.array([xx.ravel(),yy.ravel()])
-    outputs = model.predict(inputs.T).reshape(xx.shape)
-    ax.plot_surface(xx, yy, outputs, rstride=1, cstride=1, alpha=0.2)
-    # plt.show()
-    
-    # Only consider parts of the depth image over the table plane
-    img_depth = np.where(plane < img_depth, 0, img_depth)
-    img = img_depth / img_depth.max()
-    img = np.where(img > 0.1, 255, 0).astype(np.uint8)
-    # perform closing to fill small holes in depth img
-    img = cv.dilate(img, np.ones((3, 3)), iterations=2)
-    img = cv.erode(img, np.ones((3, 3)), iterations=2)
-    # find boxes
-    cnts, _ = cv.findContours(img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-    bbs = list(map(lambda cnt: fts.BoundingBox(cv.minAreaRect(cnt)), cnts))
-
-    # TODO: as another filter we could test, if the 3d bounding box matches in length/depth
-    def ratio_filter(bb):
-        try:
-            long_side_length = max(bb.w, bb.h)
-            short_side_length = min(bb.w, bb.h)
-            ratio = long_side_length / short_side_length
-            return 3 < ratio < 6
-        except ZeroDivisionError:
-            print('Ratio zero?', bb.w, bb.h)
-            print(bb)
-            return False
-
-    bbs = list(filter(ratio_filter, bbs))
 
     scale_h = img_color.shape[1] / img_depth.shape[1]
     scale_w = img_color.shape[0] / img_depth.shape[0]
@@ -254,9 +276,9 @@ while True:
     for bb in bbs:
         bb_color = []
         cv.drawContours(img_depth, [bb.as_int()], -1, (0, 255, 0), 2)
-        for pt in bb.as_points():
+        for _pt in bb.as_points():
             try:
-                res = depth_to_color_pixel(pt, frame_depth, frame_color)
+                res = depth_to_color_pixel(_pt, frame_depth, frame_color)
                 _res = np.array(res).astype(int)
                 bb_color.append(_res)
                 cv.circle(img_color, tuple(_res), 5, (0, 255, 0), -1)
