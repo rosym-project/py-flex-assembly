@@ -18,7 +18,8 @@ import roslib
 import rospy
 from geometry_msgs.msg import Pose, Point, Quaternion
 
-from gym_flexassembly.vision.pose_detection.projection.estimator import PoseEstimator, as_transform
+from gym_flexassembly.vision.pose_detection.projection.estimator import PoseEstimator
+from gym_flexassembly.vision.pose_detection.projection.features import as_transform
 from cosima_msgs.srv import GetClamp, GetClampResponse
 
 
@@ -129,6 +130,10 @@ class PoseService:
                 except KeyboardInterrupt:
                     break 
                 except Exception as e:
+                    if args.debug:
+                        cv.imshow('Display', self.pose_estimator.create_img())
+                        if cv.waitKey(100) == ord('q'):
+                            break
                     print(f'Pose estimation failed: {e}')
         finally:
             self.rs_pipeline.stop()
