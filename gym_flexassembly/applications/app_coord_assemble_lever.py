@@ -85,6 +85,12 @@ class ClampIt(object):
 
         rospy.init_node('coordcc', anonymous=False)
 
+        # receive ext wrench
+        rospy.Subscriber("/robot/wrench", Wrench, self.listener_ft_wrench)
+        self.wrench_data = None
+        self.wrench_data_internal = None
+        self.lock_wrench = threading.Lock()
+
         if not self.skip_first_phase:
             # Open Gripper
             if self.use_gripper:
@@ -328,7 +334,23 @@ class ClampIt(object):
                 except rospy.ServiceException as e:
                     print("Service call failed: %s"%e)
 
-                time.sleep(5)
+                self.lock_wrench.acquire()
+                self.wrench_data_internal = self.wrench_data
+                self.lock_wrench.release()
+                if self.wrench_data_internal == None:
+                    print("Sleeping for 5 secs. Fallback: no wrench reading!")
+                    time.sleep(5)
+                else:
+                    since = time.time()
+                    while (time.time() - since) < 5.0:
+                        self.lock_wrench.acquire()
+                        self.wrench_data_internal = self.wrench_data
+                        self.lock_wrench.release()
+                        if self.wrench_data_internal.force.z > 38.0:
+                            break
+                        time.sleep(0.2)
+
+                # time.sleep(0.5)
 
                 rospy.wait_for_service('/css/setFFVec_srv')
                 try:
@@ -493,6 +515,11 @@ class ClampIt(object):
         time.sleep(0.01)
         self.ser.write([int('00000010', 2)])
         self.ser.close()
+
+    def listener_ft_wrench(self, data):
+        self.lock_wrench.acquire()
+        self.wrench_data = data
+        self.lock_wrench.release()
 
 if __name__ == "__main__":
     c = ClampIt()
