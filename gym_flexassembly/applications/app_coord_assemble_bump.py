@@ -85,6 +85,12 @@ class ClampIt(object):
 
         rospy.init_node('coordcc', anonymous=False)
 
+        # receive ext wrench
+        rospy.Subscriber("/robot/wrench", Wrench, self.listener_ft_wrench)
+        self.wrench_data = None
+        self.wrench_data_internal = None
+        self.lock_wrench = threading.Lock()
+
         if not self.skip_first_phase:
             # Open Gripper
             if self.use_gripper:
@@ -619,6 +625,44 @@ class ClampIt(object):
         time.sleep(0.01)
         self.ser.write([int('00000010', 2)])
         self.ser.close()
+
+    def listener_ft_wrench(self, data):
+        self.lock_wrench.acquire()
+        self.wrench_data = data
+        self.lock_wrench.release()
+
+    # def moveGuarded(self, cart_direction=[0,0,0], step_width_in_m=0.00001, max_force_in_n=40.0):
+    #     # Quaternion(w, x, y, z)
+    #     dire = np.array(cart_direction)
+    #     step = dire * step_width_in_m
+    #     # If no wrench reading return
+    #     self.lock_wrench.acquire()
+    #     self.wrench_data_internal = self.wrench_data
+    #     self.lock_wrench.release()
+    #     if self.wrench_data_internal == None:
+    #         print("Returning, no wrench reading!")
+    #         return
+        
+    #     force = np.array([self.wrench_data_internal.force.x, self.wrench_data_internal.force.y, self.wrench_data_internal.force.z])
+    #     force_length = np.linalg.norm(force * dire)
+
+    #     print("Start Guarded Move")
+    #     # add time-based smoothing?
+    #     while force_length < max_force_in_n:
+    #         self.cur = self.cur + step
+    #         self.ros_t.translation.x = self.cur[0]
+    #         self.ros_t.translation.y = self.cur[1]
+    #         self.ros_t.translation.z = self.cur[2]
+    #         self.pub_traj.publish(self.cart_traj_point)
+    #         self.rate.sleep()
+
+    #         self.lock_wrench.acquire()
+    #         self.wrench_data_internal = self.wrench_data
+    #         self.lock_wrench.release()
+    #         force = np.array([self.wrench_data_internal.force.x, self.wrench_data_internal.force.y, self.wrench_data_internal.force.z])
+    #         force_length = np.linalg.norm(force * dire)
+
+    #     print("Force Sensed!")
 
 if __name__ == "__main__":
     c = ClampIt()
