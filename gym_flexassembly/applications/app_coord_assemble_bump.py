@@ -558,14 +558,14 @@ class ClampIt(object):
                     c.kd_rot.y = 1.2
                     c.kd_rot.z = 1.0
 
-                    c.fdir_trans.x = 1.0
+                    c.fdir_trans.x = 0.0
                     c.fdir_trans.y = 0.0
                     c.fdir_trans.z = 0.0
                     c.fdir_rot.x = 0.0
                     c.fdir_rot.y = 0.0
                     c.fdir_rot.z = 0.0
 
-                    c.force_trans.x = 1.5
+                    c.force_trans.x = 0.0
                     c.force_trans.y = 0.0
                     c.force_trans.z = 0.0
                     c.force_rot.x = 0.0
@@ -581,6 +581,22 @@ class ClampIt(object):
                     print("Service call failed: %s"%e)
 
                 #######################
+
+                # Move 16) UP FINALLY
+                print("Phase #16: UP FINALLY")
+                p.position.x = -0.29
+                p.position.y = -0.535
+                p.position.z = 0.2
+                self.outQuat = pyquaternion.Quaternion(w=-0.0351002,x=-0.353731,y=0.934325,z=-0.0260594) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=0.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 50.0
+                m.i_max_rot_sec = 30.0
+                resp1 = add_two_ints(m)
+                print("Done with Phase #16")
          
                 # 3)
                 # p.position.x = -0.245
