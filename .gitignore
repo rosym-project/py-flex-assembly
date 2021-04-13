@@ -140,3 +140,5 @@ gym_flexassembly/vision/calibration
 
 # Resnet model
 resnet18_sides.model
+
+side_model.pth
