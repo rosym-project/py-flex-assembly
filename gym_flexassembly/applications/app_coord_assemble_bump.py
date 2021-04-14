@@ -146,29 +146,40 @@ class ClampIt(object):
                 # print("Done with Phase #2")
                 # time.sleep(2)
 
-                # # Move 3) Move to observer pose
-                # print("Phase #3: Move to observer pose!")
-                # p.position.x = -0.25
-                # p.position.y = -0.594722
-                # p.position.z = 0.45
-                # self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
-                # p.orientation.x = self.outQuat[1]
-                # p.orientation.y = self.outQuat[2]
-                # p.orientation.z = self.outQuat[3]
-                # p.orientation.w = self.outQuat[0]
-                # m.i_pose = p
-                # m.i_max_trans_sec = 8.0
-                # m.i_max_rot_sec = 20.0
-                # resp1 = add_two_ints(m)
-                # print("Done with Phase #3")
-                # time.sleep(1)
+                # Move 3) Move to observer pose
+                print("Phase #3: Move to observer pose!")
+                p.position.x = -0.25
+                p.position.y = -0.594722
+                p.position.z = 0.45
+                self.outQuat = pyquaternion.Quaternion(w=-0.0351002,x=-0.353731,y=0.934325,z=-0.0260594) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=0.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 10.0
+                m.i_max_rot_sec = 30.0
+                resp1 = add_two_ints(m)
+                print("Done with Phase #3")
+                time.sleep(1)
+
+                print("GET IMAGE")
+                estimate = rospy.ServiceProxy('pose_estimation', GetClamp)
+                estimation = estimate().i_pose
+                pos = estimation.position
+                pos = np.array([pos.x, pos.y, pos.z])
+                _pos = pos * 1000
+                print(f'Pos [{_pos[0]:.2f}, {_pos[1]:.2f}, {_pos[2]:.2f}]')
+                self.clamp1.position = estimation.position
+                self.clamp1.orientation = estimation.orientation
+                self.clamp1Quat = pyquaternion.Quaternion(w=self.clamp1.orientation.w,x=self.clamp1.orientation.x,y=self.clamp1.orientation.y,z=self.clamp1.orientation.z)
 
                 # Move 4) Move to pre grasp clamp 1
                 print("Phase #4: Move to pre grasp clamp 1!")
                 p.position.x = self.clamp1.position.x
                 p.position.y = self.clamp1.position.y
                 p.position.z = 0.1
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = self.clamp1Quat
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -185,7 +196,7 @@ class ClampIt(object):
                 p.position.x = self.clamp1.position.x
                 p.position.y = self.clamp1.position.y
                 p.position.z = 0.065
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = self.clamp1Quat
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -216,7 +227,7 @@ class ClampIt(object):
                 p.position.x = self.clamp1.position.x
                 p.position.y = self.clamp1.position.y
                 p.position.z = 0.12
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = self.clamp1Quat
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -233,7 +244,7 @@ class ClampIt(object):
                 p.position.x = -0.258
                 p.position.y = -0.56
                 p.position.z = 0.1
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -250,7 +261,7 @@ class ClampIt(object):
                 p.position.x = -0.258
                 p.position.y = -0.53
                 p.position.z = 0.075
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -267,7 +278,7 @@ class ClampIt(object):
                 p.position.x = -0.258
                 p.position.y = -0.505
                 p.position.z = 0.074
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -297,7 +308,7 @@ class ClampIt(object):
                 p.position.x = -0.258
                 p.position.y = -0.53
                 p.position.z = 0.1
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -325,7 +336,7 @@ class ClampIt(object):
                 p.position.x = -0.245
                 p.position.y = -0.505
                 p.position.z = 0.1
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -393,7 +404,7 @@ class ClampIt(object):
                 # except rospy.ServiceException as e:
                 #     print("Service call failed: %s"%e)
 
-                time.sleep(2)
+                time.sleep(1)
 
                 rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
                 try:
@@ -436,11 +447,12 @@ class ClampIt(object):
                     print("Service call failed: %s"%e)
 
                 # Move 13) Up Rotate side
+                side_deg = -25.0
                 print("Phase #13: Up Rotate side")
                 p.position.x = -0.245
                 p.position.y = -0.505
-                p.position.z = 0.15
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, 1, 0], angle=30.0 / 180.0 * 3.14159265)
+                p.position.z = 0.1
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, 1, 0], angle=side_deg / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -455,8 +467,8 @@ class ClampIt(object):
                 print("Phase #14: LEFT")
                 p.position.x = -0.29
                 p.position.y = -0.535
-                p.position.z = 0.12
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, 1, 0], angle=30.0 / 180.0 * 3.14159265)
+                p.position.z = 0.1
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, 1, 0], angle=side_deg / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -472,7 +484,7 @@ class ClampIt(object):
                 p.position.x = -0.29
                 p.position.y = -0.535
                 p.position.z = 0.04
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, 1, 0], angle=30.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, 1, 0], angle=side_deg / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -538,7 +550,7 @@ class ClampIt(object):
                 # except rospy.ServiceException as e:
                 #     print("Service call failed: %s"%e)
 
-                time.sleep(8)
+                time.sleep(3)
 
                 rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
                 try:
@@ -587,7 +599,7 @@ class ClampIt(object):
                 p.position.x = -0.29
                 p.position.y = -0.535
                 p.position.z = 0.2
-                self.outQuat = pyquaternion.Quaternion(w=-0.0351002,x=-0.353731,y=0.934325,z=-0.0260594) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=0.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
