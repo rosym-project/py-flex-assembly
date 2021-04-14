@@ -222,6 +222,12 @@ def compute_bbs(img_plane, frame_depth, vis=None):
     the plane image.
     """
     img_depth = np.asanyarray(frame_depth.get_data())
+    # TODO HACK to exclude the rail
+    img_depth[134:230, 270:350] = 0
+    
+    # from gym_flexassembly.vision.pose_detection.projection.visualize import display_depth_image
+    # cv.imshow('Depth', display_depth_image(img_depth))
+
     img_depth = np.where(img_plane < img_depth, 0, img_depth)
     img = img_depth / img_depth.max()
     img = np.where(img > 0.1, 255, 0).astype(np.uint8)

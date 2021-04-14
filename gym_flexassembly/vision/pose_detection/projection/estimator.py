@@ -177,8 +177,8 @@ def get_order(_pts, _side):
 
 
 expected_length_long = 0.08
-expected_length_short = 0.018
-def filter_by_length(bb, img_depth, frame_depth, range_percent=0.2):
+expected_length_short = 0.02
+def filter_by_length(bb, img_depth, frame_depth, range_percent=0.3):
     plane_upper, _ = compute_planes(img_depth, bb)
     intrin = frame_depth.get_profile().as_video_stream_profile().get_intrinsics()
 
@@ -197,14 +197,16 @@ def filter_by_length(bb, img_depth, frame_depth, range_percent=0.2):
     short_side_3d = np.array(short_side_3d)
 
     length_long = np.linalg.norm(long_side_3d[0] - long_side_3d[1])
+    print("length_long = " + str(length_long))
     length_short = np.linalg.norm(short_side_3d[0] - short_side_3d[1])
+    print("length_short = " + str(length_short))
 
     offset_long = expected_length_short * range_percent
     in_range_long = expected_length_long - offset_long <= length_long <= expected_length_long + offset_long
 
     offset_short = expected_length_short * range_percent
     in_range_short = expected_length_short - offset_short <= length_short <= expected_length_short + offset_short
-    return in_range_short and in_range_short
+    return in_range_long and in_range_short
 
 
 class PoseEstimator():

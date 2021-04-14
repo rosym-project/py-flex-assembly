@@ -93,7 +93,39 @@ class SinglePose(object):
             m.i_max_rot_sec = 20.0
             resp1 = add_two_ints(m)
 
-            # time.sleep(8)
+            time.sleep(10)
+
+            p.position.z = 0.065
+            m.i_pose = p
+            m.i_max_trans_sec = 30.0
+            m.i_max_rot_sec = 30.0
+            resp1 = add_two_ints(m)
+
+            time.sleep(1)
+
+            rospy.wait_for_service('/gripper1/close_gripper')
+            try:
+                close_g = rospy.ServiceProxy('/gripper1/close_gripper', Empty)
+                close_g()
+            except rospy.ServiceException as e:
+                print("Service call failed: %s"%e)
+
+            time.sleep(10)
+
+            rospy.wait_for_service('/gripper1/open_gripper')
+            try:
+                open_g = rospy.ServiceProxy('/gripper1/open_gripper', Empty)
+                open_g()
+            except rospy.ServiceException as e:
+                print("Service call failed: %s"%e)
+
+            time.sleep(0.5)
+
+            p.position.z = 0.1
+            m.i_pose = p
+            m.i_max_trans_sec = 30.0
+            m.i_max_rot_sec = 30.0
+            resp1 = add_two_ints(m)
 
 
         except rospy.ServiceException as e:
