@@ -73,7 +73,6 @@ class Averaging():
 base_rot = np.array([[1, 0, 0],
                      [0, 1, 0],
                      [0, 0, 1]])
-
 class AveragingRotation(Averaging):
 
     def __init__(self, window_size):
@@ -91,6 +90,17 @@ class AveragingRotation(Averaging):
 
         # compute new value as average
         return super().update(new_value)
+
+
+class AveragingSide(Averaging):
+
+    def __init__(self, window_size):
+        super().__init__(window_size, 0)
+
+    def update(self, new_value):
+        new_value = super().update(new_value)
+        print(f'Average side: {new_value}')
+        return 1.0 if new_value >= 0.5 else 0.0
 
 
 def reorder(bb1, bb2):
@@ -165,6 +175,38 @@ def get_order(_pts, _side):
         else:
             return [3, 2, 0]
 
+
+expected_length_long = 0.08
+expected_length_short = 0.018
+def filter_by_length(bb, img_depth, frame_depth, range_percent=0.2):
+    plane_upper, _ = compute_planes(img_depth, bb)
+    intrin = frame_depth.get_profile().as_video_stream_profile().get_intrinsics()
+
+    pts = bb.as_points()
+    if np.linalg.norm(pts[0] - pts[1]) > np.linalg.norm(pts[1] - pts[2]):
+        long_side  = [pts[0], pts[1]]
+        short_side = [pts[1], pts[2]]
+    else:
+        long_side  = [pts[1], pts[2]]
+        short_side = [pts[0], pts[1]]
+
+    long_side_3d = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_upper.predict([pt[::-1]])[0] / 1000), long_side))
+    long_side_3d = np.array(long_side_3d)
+
+    short_side_3d = list(map(lambda pt: rs.rs2_deproject_pixel_to_point(intrin, pt, plane_upper.predict([pt[::-1]])[0] / 1000), short_side))
+    short_side_3d = np.array(short_side_3d)
+
+    length_long = np.linalg.norm(long_side_3d[0] - long_side_3d[1])
+    length_short = np.linalg.norm(short_side_3d[0] - short_side_3d[1])
+
+    offset_long = expected_length_short * range_percent
+    in_range_long = expected_length_long - offset_long <= length_long <= expected_length_long + offset_long
+
+    offset_short = expected_length_short * range_percent
+    in_range_short = expected_length_short - offset_short <= length_short <= expected_length_short + offset_short
+    return in_range_short and in_range_short
+
+
 class PoseEstimator():
 
     def __init__(self, window_size=25, debug=True, transform_manager=None, side_model=None):
@@ -172,6 +214,7 @@ class PoseEstimator():
         self.height_averaging = Averaging(window_size, 0)
         self.pos_averaging = Averaging(window_size, np.array([0, 0, 0]))
         self.orn_averaging = AveragingRotation(window_size)
+        self.side_averaging = AveragingSide(window_size)
 
         self.debug = debug
         self.side_model = side_model
@@ -207,6 +250,7 @@ class PoseEstimator():
         self.height_averaging.reset()
         self.pos_averaging.reset()
         self.orn_averaging.reset()
+        self.side_averaging.reset()
 
     def process_frames(self, frames):
         try:
@@ -226,7 +270,10 @@ class PoseEstimator():
                 if self.imgs['figure'] is None:
                     self.imgs['figure'] = np.zeros((*img_depth.shape, 3), np.uint8)
 
-            bb_unaligned = fts.detect_bbs(self.tm, frame_depth, vis=self.imgs['bbdet'])[0]
+            bbs = fts.detect_bbs(self.tm, frame_depth, vis=self.imgs['bbdet'])
+            bbs = list(filter(lambda bb: filter_by_length(bb, img_depth, frame_depth), bbs))
+            #bb_unaligned = fts.detect_bbs(self.tm, frame_depth, vis=self.imgs['bbdet'])[0]
+            bb_unaligned = bbs[0]
             if self.debug:
                 cv.drawContours(self.imgs['depth'], [bb_unaligned.as_int()], -1, (0, 255, 0), 2)
 
@@ -242,6 +289,7 @@ class PoseEstimator():
                 side = fts.detect_side(img_color, bb_aligned.as_points())
             else:
                 side = fts.detect_side_2(img_color, bb_aligned, self.side_model)
+            side = self.side_averaging.update(side)
             if self.debug:
                 fts.visualize_features(self.imgs['color'], bb_aligned, side)
 
