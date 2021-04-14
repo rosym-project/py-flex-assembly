@@ -136,7 +136,7 @@ class ClampIt(object):
                 p.position.x = -0.0452333
                 p.position.y = -0.594722
                 p.position.z = 0.301398
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=-0.0351002,x=-0.353731,y=0.934325,z=-0.0260594) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=0.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -156,7 +156,7 @@ class ClampIt(object):
                 p.position.x = -0.25
                 p.position.y = -0.594722
                 p.position.z = 0.35
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=-0.0351002,x=-0.353731,y=0.934325,z=-0.0260594) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=0.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -179,8 +179,6 @@ class ClampIt(object):
                 self.clamp1.orientation = estimation.orientation
                 self.clamp1Quat = pyquaternion.Quaternion(w=self.clamp1.orientation.w,x=self.clamp1.orientation.x,y=self.clamp1.orientation.y,z=self.clamp1.orientation.z)
 
-                self.clamp1Quat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
-
                 # Move 4) Move to pre grasp clamp 1
                 print("Phase #4: Move to pre grasp clamp 1!")
                 p.position.x = self.clamp1.position.x
@@ -198,8 +196,6 @@ class ClampIt(object):
                 resp1 = add_two_ints(m)
                 print("Done with Phase #4")
                 time.sleep(1)
-
-                return
 
                 # Move 5) Move to grasp clamp 1
                 print("Phase #5: Move to grasp clamp 1!")
@@ -256,15 +252,14 @@ class ClampIt(object):
                 p.position.x = -0.258
                 p.position.y = -0.56
                 p.position.z = 0.1
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
-                #  * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) 
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
                 m.i_max_trans_sec = 20.0
-                m.i_max_rot_sec = 20.0
+                m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #7")
                 time.sleep(1)
@@ -274,8 +269,7 @@ class ClampIt(object):
                 p.position.x = -0.258
                 p.position.y = -0.53
                 p.position.z = 0.075
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
-                # * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -287,14 +281,12 @@ class ClampIt(object):
                 print("Done with Phase #8")
                 time.sleep(1)
 
-                return
-
                 # Move 9) Move straight to Rail
                 print("Phase #9: Move straight to Rail!")
                 p.position.x = -0.258
                 p.position.y = -0.505
                 p.position.z = 0.074
-                self.outQuat = self.clamp1Quat * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=15 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -448,13 +440,12 @@ class ClampIt(object):
                             print("Service call failed: %s"%e)
                     time.sleep(1)
 
-
                 # Move 11) Regrasp
                 print("Phase #11: Regrasp")
                 p.position.x = -0.258
                 p.position.y = -0.53
                 p.position.z = 0.049
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -482,7 +473,7 @@ class ClampIt(object):
                 p.position.x = -0.21
                 p.position.y = -0.53
                 p.position.z = 0.049
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
@@ -513,7 +504,7 @@ class ClampIt(object):
                 p.position.x = -0.21
                 p.position.y = -0.53
                 p.position.z = 0.15
-                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
+                self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]

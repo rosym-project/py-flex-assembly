@@ -64,10 +64,23 @@ class SinglePose(object):
 
             # Move 1) Feed same position for initialization
             print("Phase #1: Feed back position to initialization!")
+
+
+            p.position.x = -0.258
+            p.position.y = -0.56
+            p.position.z = 0.1
+            self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
+            p.orientation.x = self.outQuat[1]
+            p.orientation.y = self.outQuat[2]
+            p.orientation.z = self.outQuat[3]
+            p.orientation.w = self.outQuat[0]
+
             m.i_pose = p
-            m.i_max_trans_sec = 10.0
-            m.i_max_rot_sec = 15.0
+            m.i_max_trans_sec = 30.0
+            m.i_max_rot_sec = 30.0
             resp1 = add_two_ints(m)
+
+            return
 
             time.sleep(2)
 
