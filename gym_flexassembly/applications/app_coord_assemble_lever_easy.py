@@ -108,10 +108,12 @@ class ClampIt(object):
             
             # Wait for movement service
             rospy.wait_for_service('/css/move_srv')
+            rospy.wait_for_service('/css/move_async_srv')
             rospy.wait_for_service('pose_estimation')
             time.sleep(1)
             try:
-                add_two_ints = rospy.ServiceProxy('/css/move_srv', Move)
+                move_service = rospy.ServiceProxy('/css/move_srv', Move)
+                move_async_service = rospy.ServiceProxy('/css/move_async_srv', Move)
 
                 # Move 1) Feed same position for initialization
                 print("Phase #1: Feed back position to initialization!")
@@ -126,7 +128,7 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 10.0
                 m.i_max_rot_sec = 20.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #1")
 
                 time.sleep(2)
@@ -144,7 +146,7 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 8.0
                 m.i_max_rot_sec = 10.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #2")
                 time.sleep(2)
 
@@ -164,7 +166,7 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 8.0
                 m.i_max_rot_sec = 20.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #3")
                 time.sleep(1)
 
@@ -193,7 +195,7 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 5.0
                 m.i_max_rot_sec = 8.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #4")
                 time.sleep(1)
 
@@ -211,7 +213,7 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 10.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #5")
                 time.sleep(1)
 
@@ -243,14 +245,14 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #6")
                 time.sleep(1)
 
                 # Move 7) Move to rail drag pose
                 print("Phase #7: Move to rail drag pose!")
                 p.position.x = -0.258
-                p.position.y = -0.56
+                p.position.y = -0.57
                 p.position.z = 0.1
                 self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
@@ -260,15 +262,16 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #7")
                 time.sleep(1)
 
                 # Move 8) Move Down
                 print("Phase #8: Move Down!")
                 p.position.x = -0.258
-                p.position.y = -0.53
-                p.position.z = 0.075
+                p.position.y = -0.57
+                p.position.z = 0.0
+                # p.position.z = 0.0
                 self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
@@ -277,28 +280,84 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 50.0
                 m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
+                resp1 = move_async_service(m)
                 print("Done with Phase #8")
-                time.sleep(1)
+
+                rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
+                try:
+                    switchCS = rospy.ServiceProxy('/css/updateContactSituationBlocking_srv', ContactSituation)
+                    c = ContactSituationRequest()
+                    c.kp_trans.x = 1600.0
+                    c.kp_trans.y = 1600.0
+                    c.kp_trans.z = 1600.0
+                    c.kp_rot.x = 300.0
+                    c.kp_rot.y = 300.0
+                    c.kp_rot.z = 100.0
+
+                    c.kd_trans.x = 80.0
+                    c.kd_trans.y = 80.0
+                    c.kd_trans.z = 80.0
+                    c.kd_rot.x = 1.2
+                    c.kd_rot.y = 1.2
+                    c.kd_rot.z = 1.0
+
+                    c.fdir_trans.x = 0.0
+                    c.fdir_trans.y = 0.0
+                    c.fdir_trans.z = 1.0
+                    c.fdir_rot.x = 0.0
+                    c.fdir_rot.y = 0.0
+                    c.fdir_rot.z = 0.0
+
+                    c.force_trans.x = 0.0
+                    c.force_trans.y = 0.0
+                    c.force_trans.z = -4.0
+                    c.force_rot.x = 0.0
+                    c.force_rot.y = 0.0
+                    c.force_rot.z = 0.0
+
+                    c.time = 0.1
+
+                    c.update_pose_first = False
+
+                    self.lock_wrench.acquire()
+                    self.wrench_data_internal = self.wrench_data
+                    self.lock_wrench.release()
+                    if self.wrench_data_internal == None:
+                        print("Sleeping for 5 secs. Fallback: no wrench reading!")
+                        time.sleep(3)
+                    else:
+                        since = time.time()
+                        while (time.time() - since) < 7.0:
+                            self.lock_wrench.acquire()
+                            self.wrench_data_internal = self.wrench_data
+                            self.lock_wrench.release()
+                            if self.wrench_data_internal.force.z > 6.0:
+                                break
+                            time.sleep(0.2)
+
+                    switchCS(c)
+                except rospy.ServiceException as e:
+                    print("Service call failed: %s"%e)
 
                 # Move 9) Move straight to Rail
+
+                rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
                 print("Phase #9: Move straight to Rail!")
                 p.position.x = -0.258
-                p.position.y = -0.505
-                p.position.z = 0.074
+                p.position.y = -0.5
+                p.position.z = 0.0
                 self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=45.0 / 180.0 * 3.14159265) * pyquaternion.Quaternion(axis=[1, -1, 0], angle=-15 / 180.0 * 3.14159265)
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 90.0
+                m.i_max_trans_sec = 50.0
                 m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
+                resp1 = move_async_service(m)
                 print("Done with Phase #9")
-                time.sleep(1)
+                # time.sleep(1)
 
-                rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
                 try:
                     switchCS = rospy.ServiceProxy('/css/updateContactSituationBlocking_srv', ContactSituation)
                     c = ContactSituationRequest()
@@ -324,27 +383,47 @@ class ClampIt(object):
                     c.fdir_rot.z = 0.0
 
                     c.force_trans.x = 0.0
-                    c.force_trans.y = 5.0
+                    c.force_trans.y = 10.0
                     c.force_trans.z = 0.0
                     c.force_rot.x = 0.0
                     c.force_rot.y = 0.0
                     c.force_rot.z = 0.0
 
-                    c.time = 1.0
+                    c.time = 1.5
 
                     c.update_pose_first = False
+
+                    self.lock_wrench.acquire()
+                    self.wrench_data_internal = self.wrench_data
+                    self.lock_wrench.release()
+                    if self.wrench_data_internal == None:
+                        print("Sleeping for 5 secs. Fallback: no wrench reading!")
+                        time.sleep(3)
+                    else:
+                        since = time.time()
+                        while (time.time() - since) < 20.0:
+                            self.lock_wrench.acquire()
+                            self.wrench_data_internal = self.wrench_data
+                            self.lock_wrench.release()
+                            if self.wrench_data_internal.force.y < -6.0:
+                                print("Y reached!")
+                                break
+                            time.sleep(0.2)
+                        print("Escaped!")
 
                     switchCS(c)
                 except rospy.ServiceException as e:
                     print("Service call failed: %s"%e)
+
+                time.sleep(1)
 
                 rospy.wait_for_service('/css/setFFVec_srv')
                 try:
                     applyContactForce = rospy.ServiceProxy('/css/setFFVec_srv', ContactForce)
                     w = Wrench()
                     w.force.x = 0.0
-                    w.force.y = 5.0
-                    w.force.z = -40.0
+                    w.force.y = 10.0
+                    w.force.z = -35.0
                     w.torque.x = 0.0
                     w.torque.y = 0.0
                     w.torque.z = 0.0
@@ -371,12 +450,14 @@ class ClampIt(object):
 
                 # time.sleep(0.5)
 
+                
+
                 rospy.wait_for_service('/css/setFFVec_srv')
                 try:
                     applyContactForce = rospy.ServiceProxy('/css/setFFVec_srv', ContactForce)
                     w = Wrench()
                     w.force.x = 0.0
-                    w.force.y = 5.0
+                    w.force.y = 0.0
                     w.force.z = 0.0
                     w.torque.x = 0.0
                     w.torque.y = 0.0
@@ -440,6 +521,8 @@ class ClampIt(object):
                             print("Service call failed: %s"%e)
                     time.sleep(1)
 
+                return
+
                 # Move 11) Regrasp
                 print("Phase #11: Regrasp")
                 p.position.x = -0.258
@@ -452,8 +535,8 @@ class ClampIt(object):
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
                 m.i_max_trans_sec = 50.0
-                m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
+                m.i_max_rot_sec = 20.0
+                resp1 = move_service(m)
                 print("Done with Phase #11")
 
                 if self.use_gripper:
@@ -481,7 +564,7 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 50.0
                 m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #12")
 
                 time.sleep(1)
@@ -512,7 +595,7 @@ class ClampIt(object):
                 m.i_pose = p
                 m.i_max_trans_sec = 10.0
                 m.i_max_rot_sec = 30.0
-                resp1 = add_two_ints(m)
+                resp1 = move_service(m)
                 print("Done with Phase #13")
 
             except rospy.ServiceException as e:

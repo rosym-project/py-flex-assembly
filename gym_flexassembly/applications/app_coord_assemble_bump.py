@@ -111,8 +111,26 @@ class ClampIt(object):
             try:
                 add_two_ints = rospy.ServiceProxy('/css/move_srv', Move)
 
-                # # Move 1) Feed same position for initialization
-                # print("Phase #1: Feed back position to initialization!")
+                # Move 1) Feed same position for initialization
+                print("Phase #1: Feed back position to initialization!")
+                p.position.x = -0.0452333
+                p.position.y = -0.594722
+                p.position.z = 0.301398
+                self.outQuat = pyquaternion.Quaternion(w=-0.0351002,x=-0.353731,y=0.934325,z=-0.0260594) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=0.0 / 180.0 * 3.14159265)
+                p.orientation.x = self.outQuat[1]
+                p.orientation.y = self.outQuat[2]
+                p.orientation.z = self.outQuat[3]
+                p.orientation.w = self.outQuat[0]
+                m.i_pose = p
+                m.i_max_trans_sec = 30.0
+                m.i_max_rot_sec = 20.0
+                resp1 = add_two_ints(m)
+                print("Done with Phase #1")
+
+                time.sleep(2)
+
+                # # Move 2) Rotate to initial observer pose
+                # print("Phase #2: Rotate to initial observer pose!")
                 # p.position.x = -0.0452333
                 # p.position.y = -0.594722
                 # p.position.z = 0.301398
@@ -122,26 +140,8 @@ class ClampIt(object):
                 # p.orientation.z = self.outQuat[3]
                 # p.orientation.w = self.outQuat[0]
                 # m.i_pose = p
-                # m.i_max_trans_sec = 30.0
+                # m.i_max_trans_sec = 10.0
                 # m.i_max_rot_sec = 20.0
-                # resp1 = add_two_ints(m)
-                # print("Done with Phase #1")
-
-                # time.sleep(2)
-
-                # # Move 2) Rotate to initial observer pose
-                # print("Phase #2: Rotate to initial observer pose!")
-                # p.position.x = -0.0452333
-                # p.position.y = -0.594722
-                # p.position.z = 0.301398
-                # self.outQuat = pyquaternion.Quaternion(w=0,x=0,y=1,z=0) * pyquaternion.Quaternion(axis=[0, 0, 1], angle=-135.0 / 180.0 * 3.14159265)
-                # p.orientation.x = self.outQuat[1]
-                # p.orientation.y = self.outQuat[2]
-                # p.orientation.z = self.outQuat[3]
-                # p.orientation.w = self.outQuat[0]
-                # m.i_pose = p
-                # m.i_max_trans_sec = 8.0
-                # m.i_max_rot_sec = 10.0
                 # resp1 = add_two_ints(m)
                 # print("Done with Phase #2")
                 # time.sleep(2)
@@ -157,7 +157,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 10.0
+                m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 20.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #3")
@@ -185,7 +185,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 10.0
+                m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 20.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #4")
