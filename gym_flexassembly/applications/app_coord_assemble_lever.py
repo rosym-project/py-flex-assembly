@@ -124,7 +124,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 30.0
+                m.i_max_trans_sec = 10.0
                 m.i_max_rot_sec = 20.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #1")
@@ -191,8 +191,8 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 30.0
-                m.i_max_rot_sec = 40.0
+                m.i_max_trans_sec = 10.0
+                m.i_max_rot_sec = 20.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #4")
                 time.sleep(1)
@@ -209,7 +209,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 60.0
+                m.i_max_trans_sec = 50.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #5")
@@ -241,7 +241,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 30.0
+                m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #6")

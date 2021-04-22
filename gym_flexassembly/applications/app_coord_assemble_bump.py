@@ -158,7 +158,7 @@ class ClampIt(object):
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
                 m.i_max_trans_sec = 10.0
-                m.i_max_rot_sec = 30.0
+                m.i_max_rot_sec = 20.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #3")
                 time.sleep(1)
@@ -202,7 +202,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 60.0
+                m.i_max_trans_sec = 50.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #5")
@@ -226,14 +226,14 @@ class ClampIt(object):
                 print("Phase #6: Move back to pre grasp clamp 1!")
                 p.position.x = self.clamp1.position.x
                 p.position.y = self.clamp1.position.y
-                p.position.z = 0.12
+                p.position.z = 0.24
                 self.outQuat = self.clamp1Quat
                 p.orientation.x = self.outQuat[1]
                 p.orientation.y = self.outQuat[2]
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 30.0
+                m.i_max_trans_sec = 20.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #6")
@@ -342,7 +342,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 50.0
+                m.i_max_trans_sec = 40.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #12")
@@ -550,7 +550,7 @@ class ClampIt(object):
                 # except rospy.ServiceException as e:
                 #     print("Service call failed: %s"%e)
 
-                time.sleep(3)
+                time.sleep(1.5)
 
                 rospy.wait_for_service('/css/updateContactSituationBlocking_srv')
                 try:
@@ -605,7 +605,7 @@ class ClampIt(object):
                 p.orientation.z = self.outQuat[3]
                 p.orientation.w = self.outQuat[0]
                 m.i_pose = p
-                m.i_max_trans_sec = 50.0
+                m.i_max_trans_sec = 30.0
                 m.i_max_rot_sec = 30.0
                 resp1 = add_two_ints(m)
                 print("Done with Phase #16")

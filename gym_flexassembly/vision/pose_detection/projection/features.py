@@ -180,7 +180,7 @@ def compute_table_plane_image(transform_manager, frame_depth, table_height=0.02)
     pos_cam = transform_manager.get_transform('cam', 'world')[:3, -1]
     print(pos_cam)
     pos_table = pos_cam.copy()
-    pos_table[2] = table_height + 0.015 # actually consider points slightly above the table
+    pos_table[2] = table_height + 0.0 # actually consider points slightly above the table
     orn_table = R.from_quat([0, 0, 0, 1])
     offsets = np.array([[0, 0.03, 0], [-0.03, -0.03, 0], [0.03, -0.03, 0]])
 
