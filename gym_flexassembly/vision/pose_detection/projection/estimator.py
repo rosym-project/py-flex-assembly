@@ -1,4 +1,5 @@
 import time
+import traceback
 
 import cv2 as cv
 import numpy as np
@@ -455,11 +456,15 @@ if __name__ == '__main__':
 
     tm = TransformManager()
 
+    pos_cam = np.array([-0.3, -0.3, 0.53 + 0.025])
+    orn_cam = R.from_euler('zyx', [90, 180, 0], degrees=True)
+    tm.add_transform("cam", "world", fts.as_transform(pos_cam, orn_cam))
+
     # init transformation form arm to cam
-    pos_arm_in_world = np.array([0.0, 0.0, 1.0])
-    orn_arm_in_world = R.from_quat([0.0, 0.0, 0.0, 1.0])
-    world2arm = fts.as_transform(pos_arm_in_world, orn_arm_in_world)
-    tm.add_transform("arm", "world", world2arm)
+    # pos_arm_in_world = np.array([0.0, 0.0, 1.0])
+    # orn_arm_in_world = R.from_quat([0.0, 0.0, 0.0, 1.0])
+    # world2arm = fts.as_transform(pos_arm_in_world, orn_arm_in_world)
+    # tm.add_transform("arm", "world", world2arm)
     z = (550.15 - 467.00) / 1000
     calib_pt_arm = np.array([-333.72, -491.74, 373.78])
     calib_pt_cam = np.array([-407.27, -537.22, 539.82])
@@ -467,25 +472,16 @@ if __name__ == '__main__':
     pos_cam_in_arm = R.from_euler('zyx', [0, 180, 0], degrees=True).apply(pos_cam_in_arm)
     pos_cam_in_arm[2] = z
     orn_cam_in_arm = R.from_euler('zyx', [45, 0, 0], degrees=True)
-    arm2cam = fts.as_transform(pos_cam_in_arm, orn_cam_in_arm)
-    tm.add_transform("cam", "arm", arm2cam)
+    # arm2cam = fts.as_transform(pos_cam_in_arm, orn_cam_in_arm)
+    #tm.add_transform("cam", "arm", arm2cam)
+    cam2arm = fts.as_transform(-pos_cam_in_arm, orn_cam_in_arm.inv())
+    tm.add_transform("arm", "cam", cam2arm)
 
     # set real arm pose
-    pos_arm_in_world = np.array([-0.250599, -0.596355, 0.451787])
-    orn_arm_in_world = R.from_quat([-0.924181, 0.381923, 0.00180704, 0.00464545])
-    world2arm = fts.as_transform(pos_arm_in_world, orn_arm_in_world)
-    tm.add_transform("arm", "world", world2arm)
-
-    pos_cam = np.array([-0.3, -0.3, 0.544 + 0.025])
-    orn_cam = R.from_euler('zyx', [90, 180, 0], degrees=True)
-    tm.add_transform("cam", "world", fts.as_transform(pos_cam, orn_cam))
-
-    # ax = tm.plot_frames_in('world', s=0.1)
-    # ax.set_xlim((-0.7, 0.01))
-    # ax.set_ylim((-0.7, 0.01))
-    # ax.set_zlim((-0.01, 0.7))
-    # plt.show()
-    # exit(0)
+    # pos_arm_in_world = np.array([-0.250599, -0.596355, 0.451787])
+    # orn_arm_in_world = R.from_quat([-0.924181, 0.381923, 0.00180704, 0.00464545])
+    # world2arm = fts.as_transform(pos_arm_in_world, orn_arm_in_world)
+    # tm.add_transform("arm", "world", world2arm)
 
     side_model = None
     if args.side_model:
@@ -514,6 +510,7 @@ if __name__ == '__main__':
                 print(f'Orn gripper: {orn2str(orn)}')
             except Exception as e:
                 print(f'Something went wrong! - {e}')
+                traceback.print_exc()
                 pass
 
             cv.imshow('Display', estimator.create_img())
