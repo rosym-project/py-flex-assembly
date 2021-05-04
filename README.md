@@ -24,7 +24,7 @@ sudo apt install ros-noetic-ros-base
 ```
 Install ROS python dependencies for catkin (not catkin_make)
 ```bash
-sudo apt install python3-pip python3-rosdep python3-catkin-tools python3-wstool python3-vcstool python3-osrf-pycommon
+sudo apt install python3-pip python3-rosdep python3-catkin-tools python3-wstool python3-vcstool python3-osrf-pycommon python3-empy
 ```
 Initialize ROS system dependency tool
 ```bash
