@@ -44,8 +44,8 @@ from gym_flexassembly.envs.env_interface import EnvInterface
 from gym_flexassembly.constraints import frame
 
 ## ROS IMPORTS
-#import rospy
-#from geometry_msgs.msg import Pose, Point, Quaternion
+import rospy
+from geometry_msgs.msg import Pose, Point, Quaternion
 
 class FlexAssemblyEnv(EnvInterface):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50} # TODO do we need this?)
@@ -153,13 +153,13 @@ class FlexAssemblyEnv(EnvInterface):
         # self._camera_map[tmp_name] = {'model_id':realsense_camera_id, 'link_id':None}
         
         ## Coordinate Systems
-        #coordinate_system_1_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
-        #self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_1_offset_world, [0,-0.131,0.991,0])
-        #coordinate_system_2_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
-        #self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_2_offset_world, [0,-0.131,0.991,0])
-        #coordinate_system_3_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
-        #self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_3_offset_world, [0,-0.131,0.991,0])
-        #self.object_ids['coordinate_systems'] = [coordinate_system_1_id, coordinate_system_2_id, coordinate_system_3_id]
+        coordinate_system_1_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
+        self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_1_offset_world, [0,-0.131,0.991,0])
+        coordinate_system_2_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
+        self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_2_offset_world, [0,-0.131,0.991,0])
+        coordinate_system_3_id = self._p.loadURDF(os.path.join(self._urdfRoot_flexassembly+"/objects/", "coordinate_system.urdf"))
+        self._p.resetBasePositionAndOrientation(coordinate_system_1_id, workpiece_3_offset_world, [0,-0.131,0.991,0])
+        self.object_ids['coordinate_systems'] = [coordinate_system_1_id, coordinate_system_2_id, coordinate_system_3_id]
 
         # Enable rendering again
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 1)
@@ -167,11 +167,10 @@ class FlexAssemblyEnv(EnvInterface):
     def loadRobot(self):
         # Disable rendering
         self._p.configureDebugVisualizer(self._p.COV_ENABLE_RENDERING, 0)
-        # os.path.join(flexassembly_data.getDataPath(), "robots/epfl-iiwa14/iiwa14.urdf")
         # Load robot KUKA IIWA 14
-        self.kuka14_1 = p.loadURDF("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf", useFixedBase=True)
+        self.kuka14_1 = p.loadURDF(os.path.join(flexassembly_data.getDataPath(), "robots/epfl-iiwa14/iiwa14.urdf"), useFixedBase=True)
         if self._use_real_interface:
-            f = open("/home/flex/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/data/robots/epfl-iiwa14/iiwa14.urdf","r") # TODO
+            f = open(os.path.join(flexassembly_data.getDataPath(), "robots/epfl-iiwa14/iiwa14.urdf"),"r") # TODO
             self.upload_urdf(f.read(), "robot_description")
         
         self._p.resetBasePositionAndOrientation(self.kuka14_1, [0,-0.2,0.4], [0,0,0,1])
