@@ -112,6 +112,10 @@ source devel/setup.bash
 
 ## Usage
 
+## Demo
+
+Have a look at the [demo](./demo) description for how to setup and run a demonstration in the laboratory.
+
 ## General Part
 ```bash
 source /opt/ros/noetic/setup.bash
