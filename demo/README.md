@@ -12,10 +12,13 @@ The order should be:
 2. (Optional) Charge the robot
     1. Connect the charging cable
     2. Select the KMR robot on the controller
-    3. Activate the charging process by navigating to BMS, then the socket charge menu and then pressing the charing button
+    3. Activate the charging process by navigating to BMS -> Charging Process Control -> press the `Start socket charge` button
 3. Select the IIWA robot
 4. Put the robot into its automatic control mode (turn the key, select AUT and then turn the key back)
-5. Select the T1FRITorqueControl Application and start it
+5. Select the T1FRITorqueControl Application, start it and navigate through the menus:
+    1. Magic! (**Attention:** the arm will spin quite fast to its starting position when this button is pressed!)
+    2. Calc
+    3. 1
 
 ### Computer
 1. Turn on the computer (_Note:_ Sometimes it does not boot if USB devices are connected. Then just unplug all USB cables.)
