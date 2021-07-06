@@ -4,11 +4,11 @@ SESSION_NAME="flexassembly-demo"
 BASE_DIR=${HOME}/system/flexassembly_dev_ws/
 
 #TODO: replace commands
-COMMAND_GRIPPER_SERVER="echo start gripper server"
-COMMAND_VISION="echo start vision"
-COMMAND_MOVEMENT_SERVER="echo start movement server"
-COMMAND_DEMO_BUMP="echo bump"
-COMMAND_DEMO_LEVER="echo lever"
+COMMAND_GRIPPER_SERVER="python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py"
+COMMAND_VISION="python3 -m gym_flexassembly.vision.pose_detection.projection.pose_service --side_model gym_flexassembly/vision/pose_detection/projection/side_model.pth --debug"
+COMMAND_MOVEMENT_SERVER="rosrun rtt_ros deployer /home/kogrob/system/flexassembly_dev_ws/src/cosima-controller/scripts/real_tests/test_real_qp.ops"
+COMMAND_DEMO_BUMP="python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_bump.py"
+COMMAND_DEMO_LEVER="python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_lever.py"
 
 ############## START TMUX SESSION #####################################
 attach() {
@@ -45,13 +45,14 @@ tmux send-keys     -t ${SESSION_NAME}:1 "$COMMAND_GRIPPER_SERVER" Enter
 tmux new-window -d -t ${SESSION_NAME}:2 -c ${BASE_DIR}
 tmux rename-window -t ${SESSION_NAME}:2 "movement"
 tmux send-keys     -t ${SESSION_NAME}:2 "source devel/setup.zsh" Enter
-tmux send-keys     -t ${SESSION_NAME}:2 "source /opt/xbot/setup.zsh" Enter
+tmux send-keys     -t ${SESSION_NAME}:2 "source /opt/xbot/setup.sh" Enter
 tmux send-keys     -t ${SESSION_NAME}:2 "$COMMAND_MOVEMENT_SERVER" Enter
 
 # create window for vision
 tmux new-window -d -t ${SESSION_NAME}:3 -c ${BASE_DIR}
 tmux rename-window -t ${SESSION_NAME}:3 "vision"
 tmux send-keys     -t ${SESSION_NAME}:3 "source devel/setup.zsh" Enter
+tmux send-keys     -t ${SESSION_NAME}:3 "cd src/py-flex-assembly" Enter
 tmux send-keys     -t ${SESSION_NAME}:3 "$COMMAND_VISION" Enter
 
 # create window for demo components
