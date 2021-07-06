@@ -3,13 +3,13 @@
 DIR_SCRIPT=$(dirname $0)
 #TODO: setup correct gripper file
 #GRIPPER_USB_DEVICE="/dev/ttyUSB0"
-GRIPPER_USB_DEVICE="gripper_file"
+GRIPPER_USB_DEVICE="/dev/ttyUSB0"
 #TODO: enter sunrise and fri ip addresses!
-NETWORK_ADDRESSES=(127.0.0.1 localhost google.com)
+NETWORK_ADDRESSES=(172.31.1.10 192.170.10.2)
 
 ############## CHECK GRIPPER ########################################
 echo -n "CHECK gripper device file $GRIPPER_USB_DEVICE..."
-if ! [[ -f $GRIPPER_USB_DEVICE ]]; then
+if ! [[ -e $GRIPPER_USB_DEVICE ]]; then
     echo "FAIL"
     echo "Gripper device file $GRIPPER_USB_DEVICE is not available!"
     echo "Maybe the USB cable is not connected?"
