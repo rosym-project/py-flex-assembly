@@ -32,7 +32,7 @@ The order should be:
         1. `source /opt/ros/noetic/setup.zsh`
         2. `roscore`
     2. Terminal 2:
-        1. `sudo chmod 777 /dev/ttyUSB0`
+        1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
         2. `python3 $HOME/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py`
     3. Terminal 3: (_Note:_ the order in which the envs are sourced is important)
         1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
