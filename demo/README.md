@@ -26,18 +26,18 @@ The order should be:
     1. Two LAN cables have to be connected to the correct ports on the robot as well as the correct ports of the computer.
     2. Connect the USB cable of the camera. For the best camera video resolution, it has to be connected to the port marked with SS on the back of the computer.
     3. Connect the USB cable of the gripper.
-3. Run [verify_demo.zsh](./verify_demo.zsh) to verify that all cables are connected correctly. The script will also query you to provide the sudo password to setup permissions for the gripper device file if not already set.
-4. Now there are two options: If you are familiar with tmux, you can start the script [start_demo_tmux.zsh](./start_demo_tmux.zsh) which will start all required components in a tmux session, or you start them by hand:
+3. Run [verify_demo.zsh](./verify_demo.zsh) `$HOME/system/flexassembly_dev_ws/src/py-flex-assembly/demo/verify_demo.zsh` to verify that all cables are connected correctly. The script will also query you to provide the sudo password to setup permissions for the gripper device file if not already set.
+4. Now there are two options: If you are familiar with tmux, you can start the script [start_demo_tmux.zsh](./start_demo_tmux.zsh) `$HOME/system/flexassembly_dev_ws/src/py-flex-assembly/demo/start_demo_tmux.zsh` which will start all required components in a tmux session, or you start them by hand:
     1. Terminal 1:
         1. `source /opt/ros/noetic/setup.zsh`
         2. `roscore`
     2. Terminal 2:
         1. `sudo chmod 777 /dev/ttyUSB0`
-        2. `python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py`
+        2. `python3 $HOME/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py`
     3. Terminal 3: (_Note:_ the order in which the envs are sourced is important)
         1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
         2. `source /opt/xbot/setup.sh`
-        3. `rosrun rtt_ros deployer /home/kogrob/system/flexassembly_dev_ws/src/cosima-controller/scripts/real_tests/test_real_qp.ops`
+        3. `rosrun rtt_ros deployer $HOME/system/flexassembly_dev_ws/src/cosima-controller/scripts/real_tests/test_real_qp.ops`
     4. Terminal 4:
         1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
         2. `cd ${HOME}/system/flexassembly_dev_ws/src/py-flex-assembly`
@@ -45,8 +45,8 @@ The order should be:
     5. Terminal 5:
         1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
 5. In terminal 5 (tmux window demo), the commands for starting the demo have to be executed. In the tmux session they will already be written out so that only pressing enter remains. (_ATTENTION:_ currently the vision only supports the detection of a single clamp. Thus only a single one should be placed on the table. In addition, wile the scripts are running make sure to have a hand on the emergency shutdown at all times.) There are two options:
-    1. `python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_lever.py` This can only be used to place the first clamp, because of the way the robot moves the clamp on the rail.
-    2. `python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_bump.py` This command can be used either to place the first or the second clamp on the rail.
+    1. `python3 $HOME/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_lever.py` This can only be used to place the first clamp, because of the way the robot moves the clamp on the rail.
+    2. `python3 $HOME/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_bump.py` This command can be used either to place the first or the second clamp on the rail.
 
 ## Known Failures
 * Sometimes the movement component will crash. Then, a red error message is displayed on the robot controller. To fix this, perform the following steps:
