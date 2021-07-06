@@ -4,11 +4,11 @@ SESSION_NAME="flexassembly-demo"
 BASE_DIR=${HOME}/system/flexassembly_dev_ws/
 
 #TODO: replace commands
-COMMAND_GRIPPER_SERVER="python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py"
+COMMAND_GRIPPER_SERVER="python3 ${HOME}/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py"
 COMMAND_VISION="python3 -m gym_flexassembly.vision.pose_detection.projection.pose_service --side_model gym_flexassembly/vision/pose_detection/projection/side_model.pth --debug"
-COMMAND_MOVEMENT_SERVER="rosrun rtt_ros deployer /home/kogrob/system/flexassembly_dev_ws/src/cosima-controller/scripts/real_tests/test_real_qp.ops"
-COMMAND_DEMO_BUMP="python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_bump.py"
-COMMAND_DEMO_LEVER="python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_lever.py"
+COMMAND_MOVEMENT_SERVER="rosrun rtt_ros deployer ${HOME}/system/flexassembly_dev_ws/src/cosima-controller/scripts/real_tests/test_real_qp.ops"
+COMMAND_DEMO_BUMP="python3 ${HOME}/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_bump.py"
+COMMAND_DEMO_LEVER="python3 ${HOME}/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_lever.py"
 
 ############## START TMUX SESSION #####################################
 attach() {
