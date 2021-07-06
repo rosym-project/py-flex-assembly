@@ -33,19 +33,20 @@ The order should be:
         2. `roscore`
     2. Terminal 2:
         1. `sudo chmod 777 /dev/ttyUSB0`
-        2. `TODO gripper command`
+        2. `python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_gripper_if.py`
     3. Terminal 3: (_Note:_ the order in which the envs are sourced is important)
         1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
         2. `source /opt/xbot/setup.sh`
-        3. `TODO server command`
+        3. `rosrun rtt_ros deployer /home/kogrob/system/flexassembly_dev_ws/src/cosima-controller/scripts/real_tests/test_real_qp.ops`
     4. Terminal 4:
         1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
-        2. `TODO vision command`
+        2. `cd ${HOME}/system/flexassembly_dev_ws/src/py-flex-assembly`
+        2. `python3 -m gym_flexassembly.vision.pose_detection.projection.pose_service --side_model gym_flexassembly/vision/pose_detection/projection/side_model.pth --debug`
     5. Terminal 5:
         1. `source ${HOME}/system/flexassembly_dev_ws/devel/setup.zsh`
 5. In terminal 5 (tmux window demo), the commands for starting the demo have to be executed. In the tmux session they will already be written out so that only pressing enter remains. (_ATTENTION:_ currently the vision only supports the detection of a single clamp. Thus only a single one should be placed on the table. In addition, wile the scripts are running make sure to have a hand on the emergency shutdown at all times.) There are two options:
-    1. `TODO command` This can only be used to place the first clamp, because of the way the robot moves the clamp on the rail.
-    2. `TODO command` This command can be used either to place the first or the second clamp on the rail.
+    1. `python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_lever.py` This can only be used to place the first clamp, because of the way the robot moves the clamp on the rail.
+    2. `python3 /home/kogrob/system/flexassembly_dev_ws/src/py-flex-assembly/gym_flexassembly/applications/app_coord_assemble_bump.py` This command can be used either to place the first or the second clamp on the rail.
 
 ## Known Failures
 * Sometimes the movement component will crash. Then, a red error message is displayed on the robot controller. To fix this, perform the following steps:
